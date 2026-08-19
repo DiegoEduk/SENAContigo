@@ -27,6 +27,14 @@ async def get_me(
     return await IdentityService.get_user_by_id(db, current_user.user_id)
 
 
+@router.post("/seed")
+async def run_seed_endpoint():
+    """Ejecutar o forzar el poblamiento de datos iniciales en la base de datos."""
+    from app.seed import seed_data
+    await seed_data()
+    return {"status": "ok", "message": "Poblamiento de datos iniciales ejecutado exitosamente."}
+
+
 @users_router.get("", response_model=List[UsuarioRead])
 async def list_users(
     skip: int = 0,
