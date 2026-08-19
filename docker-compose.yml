@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_DB: senacontigo
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgrespassword2026
+      POSTGRES_PASSWORD: sdfwpostgr23424++
     ports:
       - "5432:5432"
     volumes:
@@ -40,10 +40,10 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgrespassword2026@db:5432/senacontigo
+      DATABASE_URL: postgresql+asyncpg://postgres:sdfwpostgr23424++@db:5432/senacontigo
       REDIS_URL: redis://redis:6379/0
       ENVIRONMENT: production
-      SECRET_KEY: SENACONTIGO_SUPER_SECURE_SECRET_KEY_2026_PRODUCTION
+      SECRET_KEY: sdfkljj3#$#$%345sadf**9898sdfl32asldjf=)/#$¿¿weqwer
       CORS_ORIGINS: "*"
     depends_on:
       db:

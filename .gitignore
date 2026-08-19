@@ -36,3 +36,12 @@ htmlcov/
 # OS generated
 .DS_Store
 Thumbs.db
+
+# files
+SenaContigo.odt
+SenaContigo.pdf
+SenaContigo02.odt
+SenaContigo02.pdf
+walkthrough01.md
+PE-04_1.xml
+
