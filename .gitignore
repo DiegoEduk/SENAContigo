@@ -1,0 +1,38 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Environment & local variables
+.env
+.env.local
+venv/
+env/
+ENV/
+.venv
+
+# Database & sqlite local dumps
+*.db
+*.sqlite
+*.sqlite3
+senacontigo.db
+pdf_content.txt
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE & Editors
+.vscode/
+.idea/
+*.swp
+*~
+.~lock.*
+
+# OS generated
+.DS_Store
+Thumbs.db

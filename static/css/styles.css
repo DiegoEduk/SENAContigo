@@ -1,0 +1,130 @@
+/* SENAContigo Theme Styles */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --sena-green: #39A900;
+  --sena-green-dark: #2E8800;
+  --sena-green-light: #EBF8E1;
+  --sena-blue: #00324D;
+  --sena-blue-dark: #002235;
+  --sena-dark: #0F172A;
+  --sena-gray-50: #F8FAFC;
+  --sena-gray-100: #F1F5F9;
+  --sena-gray-200: #E2E8F0;
+  --sena-gray-600: #475569;
+  --sena-gray-800: #1E293B;
+
+  /* Level Colors */
+  --lvl-0: #39A900; /* Sin Afectacion */
+  --lvl-1: #0284C7; /* Leve */
+  --lvl-2: #D97706; /* Moderada */
+  --lvl-3: #EA580C; /* Grave */
+  --lvl-4: #DC2626; /* Critica */
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--sena-gray-50);
+  color: var(--sena-dark);
+  min-height: 100vh;
+}
+
+/* Glassmorphism & Cards */
+.sena-card {
+  background: #ffffff;
+  border: 1px solid var(--sena-gray-200);
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sena-card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+}
+
+.sena-header {
+  background: linear-gradient(135deg, var(--sena-blue-dark) 0%, var(--sena-blue) 100%);
+}
+
+.bg-sena-green {
+  background-color: var(--sena-green);
+}
+
+.bg-sena-green:hover {
+  background-color: var(--sena-green-dark);
+}
+
+.text-sena-green {
+  color: var(--sena-green);
+}
+
+.border-sena-green {
+  border-color: var(--sena-green);
+}
+
+/* Level Badges */
+.badge-level-0 {
+  background-color: #DCFCE7;
+  color: #15803D;
+  border: 1px solid #86EFAC;
+}
+
+.badge-level-1 {
+  background-color: #E0F2FE;
+  color: #0369A1;
+  border: 1px solid #7DD3FC;
+}
+
+.badge-level-2 {
+  background-color: #FEF3C7;
+  color: #B45309;
+  border: 1px solid #FCD34D;
+}
+
+.badge-level-3 {
+  background-color: #FFEDD5;
+  color: #C2410C;
+  border: 1px solid #FDBA74;
+}
+
+.badge-level-4 {
+  background-color: #FEE2E2;
+  color: #B91C1C;
+  border: 1px solid #FCA5A5;
+}
+
+/* Survey Card Radio Selector */
+.option-radio-card {
+  border: 2px solid var(--sena-gray-200);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.option-radio-card:hover {
+  border-color: var(--sena-green);
+  background-color: var(--sena-green-light);
+}
+
+.option-radio-card.selected {
+  border-color: var(--sena-green);
+  background-color: var(--sena-green-light);
+  box-shadow: 0 0 0 2px rgba(57, 169, 0, 0.2);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--sena-gray-100);
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}

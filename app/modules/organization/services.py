@@ -1,0 +1,88 @@
+from typing import List
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
+from app.core.exceptions import DuplicateResourceException, NotFoundException
+from app.modules.organization.models import CentroFormacion, Regional
+from app.modules.organization.schemas import CentroFormacionCreate, CentroFormacionUpdate, RegionalCreate, RegionalUpdate
+
+
+class OrganizationService:
+    # Regionales
+    @staticmethod
+    async def list_regionales(session: AsyncSession) -> List[Regional]:
+        stmt = select(Regional).options(selectinload(Regional.centros))
+        res = await session.execute(stmt)
+        return list(res.scalars().all())
+
+    @staticmethod
+    async def get_regional_by_id(session: AsyncSession, regional_id: int) -> Regional:
+        stmt = select(Regional).where(Regional.id == regional_id).options(selectinload(Regional.centros))
+        res = await session.execute(stmt)
+        reg = res.scalar_one_or_none()
+        if not reg:
+            raise NotFoundException("Regional", regional_id)
+        return reg
+
+    @staticmethod
+    async def create_regional(session: AsyncSession, reg_in: RegionalCreate) -> Regional:
+        stmt = select(Regional).where(Regional.codigo_regional == reg_in.codigo_regional)
+        res = await session.execute(stmt)
+        if res.scalar_one_or_none():
+            raise DuplicateResourceException(f"Ya existe una regional con código '{reg_in.codigo_regional}'")
+
+        reg = Regional(**reg_in.model_dump())
+        session.add(reg)
+        await session.commit()
+        await session.refresh(reg)
+        return await OrganizationService.get_regional_by_id(session, reg.id)
+
+    @staticmethod
+    async def update_regional(session: AsyncSession, regional_id: int, reg_in: RegionalUpdate) -> Regional:
+        reg = await OrganizationService.get_regional_by_id(session, regional_id)
+        for field, value in reg_in.model_dump(exclude_unset=True).items():
+            setattr(reg, field, value)
+        await session.commit()
+        await session.refresh(reg)
+        return await OrganizationService.get_regional_by_id(session, regional_id)
+
+    # Centros
+    @staticmethod
+    async def list_centros(session: AsyncSession, regional_id: int = None) -> List[CentroFormacion]:
+        stmt = select(CentroFormacion)
+        if regional_id:
+            stmt = stmt.where(CentroFormacion.regional_id == regional_id)
+        res = await session.execute(stmt)
+        return list(res.scalars().all())
+
+    @staticmethod
+    async def get_centro_by_id(session: AsyncSession, centro_id: int) -> CentroFormacion:
+        stmt = select(CentroFormacion).where(CentroFormacion.id == centro_id)
+        res = await session.execute(stmt)
+        centro = res.scalar_one_or_none()
+        if not centro:
+            raise NotFoundException("Centro de Formación", centro_id)
+        return centro
+
+    @staticmethod
+    async def create_centro(session: AsyncSession, centro_in: CentroFormacionCreate) -> CentroFormacion:
+        stmt = select(CentroFormacion).where(CentroFormacion.codigo_centro == centro_in.codigo_centro)
+        res = await session.execute(stmt)
+        if res.scalar_one_or_none():
+            raise DuplicateResourceException(f"Ya existe un centro con código '{centro_in.codigo_centro}'")
+
+        centro = CentroFormacion(**centro_in.model_dump())
+        session.add(centro)
+        await session.commit()
+        await session.refresh(centro)
+        return centro
+
+    @staticmethod
+    async def update_centro(session: AsyncSession, centro_id: int, centro_in: CentroFormacionUpdate) -> CentroFormacion:
+        centro = await OrganizationService.get_centro_by_id(session, centro_id)
+        for field, value in centro_in.model_dump(exclude_unset=True).items():
+            setattr(centro, field, value)
+        await session.commit()
+        await session.refresh(centro)
+        return centro

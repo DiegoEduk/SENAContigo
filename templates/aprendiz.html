@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Aprendiz | SENAContigo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              sena: {
+                green: '#39A900',
+                darkgreen: '#2E8800',
+                lightgreen: '#EBF8E1',
+                blue: '#00324D',
+                dark: '#0F172A'
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col">
+
+    <!-- Header Aprendiz -->
+    <header class="bg-sena-blue text-white shadow-md border-b-4 border-sena-green sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-sena-green rounded-full flex items-center justify-center font-black text-white text-lg">
+                    SENA
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-white leading-tight">SENAContigo</h1>
+                    <p class="text-xs text-slate-300">Portal del Aprendiz</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3 text-xs">
+                <div class="text-right hidden sm:block">
+                    <span id="userName" class="block font-bold text-white">Cargando...</span>
+                    <span id="userFicha" class="text-slate-300">Ficha: ADSO</span>
+                </div>
+                <button onclick="API.logout()" class="p-2 rounded bg-slate-800 hover:bg-red-600 text-white transition flex items-center gap-1">
+                    <i class="fas fa-sign-out-alt"></i> <span class="hidden sm:inline">Salir</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-4xl mx-auto px-4 py-6 flex-grow w-full space-y-6">
+
+        <!-- Banner Bienvenida -->
+        <div class="sena-card p-5 bg-gradient-to-r from-sena-blue to-slate-900 text-white relative overflow-hidden">
+            <div class="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <span class="px-2.5 py-0.5 rounded-full bg-sena-green text-xs font-semibold uppercase tracking-wider">Tu Bienestar Importa</span>
+                    <h2 class="text-xl sm:text-2xl font-black mt-1">¡Hola, <span id="greetingName">Aprendiz</span>!</h2>
+                    <p class="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
+                        Registra aquí el estado actual de tu entorno. Tus respuestas ayudan al SENA a canalizar apoyos, auxilios y ajustes de formación oportunos.
+                    </p>
+                </div>
+                <button onclick="switchTab('encuestas')" class="px-4 py-2 bg-sena-green hover:bg-sena-darkgreen text-white font-bold text-xs rounded-lg transition shadow-md flex-shrink-0 flex items-center gap-2">
+                    <i class="fas fa-clipboard-check"></i> Ver Encuestas
+                </button>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="flex border-b border-slate-200 gap-2 text-sm font-semibold">
+            <button id="tabBtnEncuestas" onclick="switchTab('encuestas')" class="py-2.5 px-4 text-sena-green border-b-2 border-sena-green flex items-center gap-2">
+                <i class="fas fa-file-signature"></i> Encuestas Activas
+            </button>
+            <button id="tabBtnHistorial" onclick="switchTab('historial')" class="py-2.5 px-4 text-slate-500 hover:text-slate-800 border-b-2 border-transparent flex items-center gap-2">
+                <i class="fas fa-clock-rotate-left"></i> Mi Evolución Histórica
+            </button>
+        </div>
+
+        <!-- Section 1: Encuestas Activas -->
+        <section id="secEncuestas" class="space-y-6">
+            <div id="surveyContainer" class="space-y-6">
+                <!-- Dynamic Render -->
+                <div class="sena-card p-8 text-center text-slate-500 space-y-3">
+                    <i class="fas fa-spinner fa-spin text-3xl text-sena-green"></i>
+                    <p class="text-sm font-medium">Cargando encuestas disponibles...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Histórico de Respuestas Longitudinales -->
+        <section id="secHistorial" class="hidden space-y-4">
+            <div class="sena-card p-6 bg-white">
+                <h3 class="text-lg font-bold text-sena-dark mb-1 flex items-center gap-2">
+                    <i class="fas fa-timeline text-sena-green"></i> Línea de Tiempo de tus Respuestas
+                </h3>
+                <p class="text-xs text-slate-500 mb-6">
+                    SENAContigo conserva cada una de tus respuestas anteriores sin sobrescribirlas para hacer seguimiento a tu recuperación.
+                </p>
+
+                <div id="timelineContainer" class="relative border-l-2 border-sena-green ml-4 space-y-6">
+                    <!-- Dynamic timeline items -->
+                    <div class="pl-6 text-xs text-slate-400">Cargando historial...</div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-sena-dark text-slate-400 py-4 text-xs text-center border-t border-slate-800">
+        <p>SENAContigo • Acompañamiento Integral al Aprendiz SENA</p>
+    </footer>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/aprendiz.js"></script>
+</body>
+</html>

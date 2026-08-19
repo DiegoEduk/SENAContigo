@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Administrativo | SENAContigo</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              sena: {
+                green: '#39A900',
+                darkgreen: '#2E8800',
+                lightgreen: '#EBF8E1',
+                blue: '#00324D',
+                dark: '#0F172A'
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col">
+
+    <!-- Top Navbar -->
+    <header class="bg-sena-blue text-white border-b-4 border-sena-green sticky top-0 z-40 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-sena-green rounded-full flex items-center justify-center font-black text-white text-lg shadow">
+                    SENA
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                        SENAContigo <span id="userRoleBadge" class="text-[10px] bg-emerald-700 px-2 py-0.5 rounded-full uppercase font-extrabold text-white">Cargando...</span>
+                    </h1>
+                    <p class="text-xs text-slate-300">Panel de Control & Inteligencia Institucional</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <div class="text-right hidden sm:block">
+                    <span id="navUserName" class="block text-xs font-bold text-white">Usuario</span>
+                    <span id="navUserMail" class="text-[10px] text-slate-300">correo@sena.edu.co</span>
+                </div>
+                <button onclick="API.logout()" class="px-3 py-1.5 rounded bg-slate-800 hover:bg-red-600 text-white text-xs font-semibold transition flex items-center gap-1.5">
+                    <i class="fas fa-sign-out-alt"></i> Salir
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace Container -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="lg:col-span-3 space-y-2">
+            <div class="sena-card p-3 bg-white space-y-1">
+                <p class="px-3 py-2 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Menú Principal</p>
+                
+                <button onclick="navSwitch('resumen')" id="nav-resumen" class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold text-sena-green bg-sena-lightgreen flex items-center gap-2.5 transition">
+                    <i class="fas fa-chart-pie w-4 text-center"></i> Resumen General
+                </button>
+
+                <button onclick="navSwitch('analytics')" id="nav-analytics" class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 flex items-center gap-2.5 transition">
+                    <i class="fas fa-chart-line w-4 text-center"></i> Evolución Longitudinal
+                </button>
+
+                <button onclick="navSwitch('variables')" id="nav-variables" class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 flex items-center gap-2.5 transition">
+                    <i class="fas fa-sliders w-4 text-center"></i> Variables Dinámicas
+                </button>
+
+                <button onclick="navSwitch('encuestas')" id="nav-encuestas" class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 flex items-center gap-2.5 transition">
+                    <i class="fas fa-list-check w-4 text-center"></i> Engine de Encuestas
+                </button>
+
+                <button onclick="navSwitch('casos')" id="nav-casos" class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 flex items-center gap-2.5 transition">
+                    <i class="fas fa-hand-holding-hand w-4 text-center"></i> Gestión de Casos & Reglas
+                </button>
+            </div>
+
+            <!-- Quick Info Box -->
+            <div class="sena-card p-4 bg-sena-blue text-white space-y-2">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-sena-green">Ámbito de Acceso SENA</span>
+                <div id="scopeDetails" class="text-xs space-y-1 text-slate-300">
+                    <p><i class="fas fa-globe text-sena-green mr-1"></i> Cobertura Nacional</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Dynamic Content Area -->
+        <main class="lg:col-span-9 space-y-6">
+            
+            <!-- SECTION 1: RESUMEN GENERAL -->
+            <section id="sec-resumen" class="space-y-6">
+                <!-- KPI Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="sena-card p-4 flex items-center space-x-4 border-l-4 border-sena-green">
+                        <div class="w-12 h-12 rounded-lg bg-emerald-100 text-sena-green flex items-center justify-center text-xl font-bold">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Aprendices Registrados</span>
+                            <h3 id="kpiAprendices" class="text-2xl font-black text-slate-900">0</h3>
+                        </div>
+                    </div>
+
+                    <div class="sena-card p-4 flex items-center space-x-4 border-l-4 border-blue-500">
+                        <div class="w-12 h-12 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-xl font-bold">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Encuestas Activas</span>
+                            <h3 id="kpiEncuestas" class="text-2xl font-black text-slate-900">0</h3>
+                        </div>
+                    </div>
+
+                    <div class="sena-card p-4 flex items-center space-x-4 border-l-4 border-amber-500">
+                        <div class="w-12 h-12 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center text-xl font-bold">
+                            <i class="fas fa-triangle-exclamation"></i>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Afectación Grave / Crítica</span>
+                            <h3 id="kpiAfectados" class="text-2xl font-black text-slate-900">0</h3>
+                        </div>
+                    </div>
+
+                    <div class="sena-card p-4 flex items-center space-x-4 border-l-4 border-red-500">
+                        <div class="w-12 h-12 rounded-lg bg-red-100 text-red-600 flex items-center justify-center text-xl font-bold">
+                            <i class="fas fa-headset"></i>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Casos Pendientes</span>
+                            <h3 id="kpiCasos" class="text-2xl font-black text-slate-900">0</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resumen por Variable Chart -->
+                <div class="sena-card p-6 bg-white space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-base font-bold text-sena-dark flex items-center gap-2">
+                            <i class="fas fa-chart-bar text-sena-green"></i> Distribución de Afectación por Variable (Último Corte)
+                        </h3>
+                    </div>
+                    <div class="relative h-64 w-full">
+                        <canvas id="chartEstadoActual"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 2: ANALÍTICA LONGITUDINAL -->
+            <section id="sec-analytics" class="hidden space-y-6">
+                <div class="sena-card p-6 bg-white space-y-4">
+                    <h3 class="text-base font-bold text-sena-dark flex items-center gap-2">
+                        <i class="fas fa-timeline text-sena-green"></i> Comparativo de Evolución Temporal entre Cortes
+                    </h3>
+                    <p class="text-xs text-slate-500">Demuestra de manera empírica la variación de aprendices en nivel Grave/Crítico a lo largo del tiempo.</p>
+                    
+                    <div class="relative h-72 w-full">
+                        <canvas id="chartEvolucion"></canvas>
+                    </div>
+                </div>
+
+                <!-- Tabla de Índice de Afectación por Aprendiz -->
+                <div class="sena-card p-6 bg-white space-y-4">
+                    <h3 class="text-base font-bold text-sena-dark flex items-center gap-2">
+                        <i class="fas fa-users-viewfinder text-sena-green"></i> Matriz del Índice de Afectación Ponderado por Aprendiz
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left text-slate-600">
+                            <thead class="bg-slate-100 text-slate-700 font-bold uppercase">
+                                <tr>
+                                    <th class="p-3">Aprendiz</th>
+                                    <th class="p-3">Ficha</th>
+                                    <th class="p-3">Índice Ponderado</th>
+                                    <th class="p-3">Clasificación de Riesgo</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tblIndiceAfectacion" class="divide-y divide-slate-100">
+                                <tr><td colspan="4" class="p-4 text-center">Cargando datos...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 3: VARIABLES DINÁMICAS -->
+            <section id="sec-variables" class="hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-bold text-sena-dark">Catálogo de Variables y Niveles de Afectación</h3>
+                        <p class="text-xs text-slate-500">Puedes crear y versionar nuevas variables dinámicas en cualquier momento.</p>
+                    </div>
+                    <button onclick="openModalVariable()" class="px-4 py-2 bg-sena-green text-white font-bold text-xs rounded-lg hover:bg-sena-darkgreen transition shadow flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Nueva Variable
+                    </button>
+                </div>
+
+                <div id="listVariables" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Dynamic rendering -->
+                </div>
+            </section>
+
+            <!-- SECTION 4: ENGINE DE ENCUESTAS -->
+            <section id="sec-encuestas" class="hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-bold text-sena-dark">Encuestas Institucionales</h3>
+                        <p class="text-xs text-slate-500">Asigna variables dinámicas y segmenta las mediciones por Regional, Centro o Ficha.</p>
+                    </div>
+                    <button onclick="openModalEncuesta()" class="px-4 py-2 bg-sena-green text-white font-bold text-xs rounded-lg hover:bg-sena-darkgreen transition shadow flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Crear Encuesta
+                    </button>
+                </div>
+
+                <div id="listEncuestas" class="space-y-4">
+                    <!-- Dynamic rendering -->
+                </div>
+            </section>
+
+            <!-- SECTION 5: GESTIÓN DE CASOS & REGLAS -->
+            <section id="sec-casos" class="hidden space-y-6">
+                <div class="sena-card p-6 bg-white space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-base font-bold text-sena-dark flex items-center gap-2">
+                            <i class="fas fa-bolt text-amber-500"></i> Casos Generados por el Motor de Reglas
+                        </h3>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left text-slate-600">
+                            <thead class="bg-slate-100 text-slate-700 font-bold uppercase">
+                                <tr>
+                                    <th class="p-3">Título / Alerta</th>
+                                    <th class="p-3">Aprendiz</th>
+                                    <th class="p-3">Prioridad</th>
+                                    <th class="p-3">Estado</th>
+                                    <th class="p-3">Fecha</th>
+                                    <th class="p-3 text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tblCasos" class="divide-y divide-slate-100">
+                                <tr><td colspan="6" class="p-4 text-center">Cargando casos...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Modal Nueva Variable -->
+    <div id="modalVariable" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="sena-card max-w-lg w-full bg-white p-6 space-y-4 relative">
+            <h3 class="text-lg font-bold text-sena-dark">Crear Nueva Variable Dinámica</h3>
+            
+            <form onsubmit="handleCreateVariable(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700">Categoría</label>
+                    <select id="varCategoriaId" required class="w-full text-xs p-2 border border-slate-300 rounded"></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700">Nombre de la Variable</label>
+                    <input type="text" id="varNombre" required placeholder="ej. Disponibilidad de Computador" class="w-full text-xs p-2 border border-slate-300 rounded">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700">Código Único (Mayúsculas)</label>
+                    <input type="text" id="varCodigo" required placeholder="ej. COMPUTADOR" class="w-full text-xs p-2 border border-slate-300 rounded">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700">Descripción</label>
+                    <textarea id="varDescripcion" rows="2" class="w-full text-xs p-2 border border-slate-300 rounded" placeholder="Detalles sobre qué mide esta variable..."></textarea>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModalVariable()" class="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-800">Cancelar</button>
+                    <button type="submit" class="px-4 py-1.5 bg-sena-green text-white font-bold text-xs rounded hover:bg-sena-darkgreen">Guardar Variable</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>
