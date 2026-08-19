@@ -32,7 +32,10 @@ from app.modules.audit.models import *
 config = context.config
 
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    try:
+        fileConfig(config.config_file_name)
+    except Exception:
+        pass
 
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
