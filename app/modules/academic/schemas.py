@@ -35,6 +35,8 @@ class FichaBase(BaseModel):
     centro_id: str
     programa_codigo: str
     programa_version: str = "1"
+    departamento: Optional[str] = None
+    ciudad: Optional[str] = None
 
 
 class FichaCreate(FichaBase):
@@ -48,6 +50,8 @@ class FichaUpdate(BaseModel):
     centro_id: Optional[str] = None
     programa_codigo: Optional[str] = None
     programa_version: Optional[str] = None
+    departamento: Optional[str] = None
+    ciudad: Optional[str] = None
 
 
 class FichaRead(FichaBase):

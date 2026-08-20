@@ -60,7 +60,7 @@ async def list_beneficios_aprendiz(
 async def assign_beneficio(
     data: AprendizBeneficioCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user_token)
+    current_user: TokenData = Depends(require_roles(["superadmin", "direccion", "coordinador", "lider_bienestar"]))
 ):
     """Asignar un beneficio institucional directamente a un aprendiz."""
     beneficio = await get_beneficio_by_id(db, data.beneficio_id)
@@ -84,7 +84,7 @@ async def update_assigned_beneficio_state(
     aprendiz_beneficio_id: int,
     data: AprendizBeneficioUpdateState,
     db: AsyncSession = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user_token)
+    current_user: TokenData = Depends(require_roles(["superadmin", "direccion", "coordinador", "lider_bienestar"]))
 ):
     """Actualizar el estado (ACTIVO, SUSPENDIDO, VENCIDO, FINALIZADO) de un beneficio asignado."""
     updated = await update_aprendiz_beneficio_state(db, aprendiz_beneficio_id, data.estado, data.observaciones)

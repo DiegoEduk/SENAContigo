@@ -7,6 +7,7 @@ from app.modules.apprentices.router import aprendices_router, matriculas_router
 from app.modules.audit.router import router as audit_router
 from app.modules.benefits.router import router as beneficios_router
 from app.modules.cases.router import router as casos_router
+from app.modules.contracts.router import router as contratos_router
 from app.modules.followups.router import router as seguimientos_router
 from app.modules.identity.router import router as auth_router, users_router
 from app.modules.needs.router import router as necesidades_router
@@ -35,6 +36,9 @@ api_router.include_router(fichas_router)
 # Aprendices y Matrículas
 api_router.include_router(aprendices_router)
 api_router.include_router(matriculas_router)
+
+# Contratación de Aprendices
+api_router.include_router(contratos_router)
 
 # Beneficios Institucionales del Aprendiz
 api_router.include_router(beneficios_router)

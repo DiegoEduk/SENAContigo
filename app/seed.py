@@ -25,7 +25,9 @@ async def seed_data():
                 ("direccion", "Dirección de Regional con acceso a todos sus centros"),
                 ("coordinador", "Coordinador de Centro de Formación"),
                 ("instructor", "Instructor encargado de fichas específicas"),
-                ("aprendiz", "Aprendiz SENA")
+                ("aprendiz", "Aprendiz SENA"),
+                ("lider_bienestar", "Líder de Bienestar con acceso completo al módulo de beneficios"),
+                ("lider_contratacion", "Líder de Contratación con acceso completo al módulo de contratos de aprendizaje")
             ]
 
             roles_dict = {}
@@ -58,7 +60,7 @@ async def seed_data():
                 session.add(centro)
                 await session.flush()
 
-            # 3. Crear Usuario SuperAdmin Inicial
+            # 3. Crear Usuarios Iniciales (SuperAdmin, Líder Bienestar, Líder Contratación)
             res_admin = await session.execute(select(Usuario).where(Usuario.correo == "admin@senacontigo.edu.co"))
             admin = res_admin.scalar_one_or_none()
             if not admin:
@@ -77,6 +79,42 @@ async def seed_data():
                     roles=[superadmin_role] if superadmin_role else []
                 )
                 session.add(admin)
+
+            res_bienestar = await session.execute(select(Usuario).where(Usuario.correo == "bienestar@senacontigo.edu.co"))
+            if not res_bienestar.scalar_one_or_none():
+                bienestar_role = roles_dict.get("lider_bienestar")
+                u_b = Usuario(
+                    tipo_documento="CC",
+                    numero_documento="1000000001",
+                    nombres="Líder",
+                    apellidos="Bienestar",
+                    correo="bienestar@senacontigo.edu.co",
+                    hashed_password=get_password_hash("Bienestar123456*"),
+                    celular="3001112233",
+                    regional_id="11",
+                    centro_id="9201",
+                    activo=True,
+                    roles=[bienestar_role] if bienestar_role else []
+                )
+                session.add(u_b)
+
+            res_contratacion = await session.execute(select(Usuario).where(Usuario.correo == "contratacion@senacontigo.edu.co"))
+            if not res_contratacion.scalar_one_or_none():
+                contratacion_role = roles_dict.get("lider_contratacion")
+                u_c = Usuario(
+                    tipo_documento="CC",
+                    numero_documento="1000000002",
+                    nombres="Líder",
+                    apellidos="Contratación",
+                    correo="contratacion@senacontigo.edu.co",
+                    hashed_password=get_password_hash("Contratacion123456*"),
+                    celular="3002223344",
+                    regional_id="11",
+                    centro_id="9201",
+                    activo=True,
+                    roles=[contratacion_role] if contratacion_role else []
+                )
+                session.add(u_c)
 
             # 4. Poblar Programas de Formación y Fichas desde DF-49_1.xml
             xml_file = "DF-49_1.xml"
@@ -177,7 +215,9 @@ async def seed_data():
                                     estado_ficha=f_item['estado'],
                                     centro_id=f_item['cod_centro'],
                                     programa_codigo=p_info[0],
-                                    programa_version=p_info[1]
+                                    programa_version=p_info[1],
+                                    departamento="BOGOTÁ D.C.",
+                                    ciudad="BOGOTÁ D.C."
                                 ))
                             else:
                                 f_obj.fecha_inicial = d_start
@@ -186,6 +226,10 @@ async def seed_data():
                                 f_obj.centro_id = f_item['cod_centro']
                                 f_obj.programa_codigo = p_info[0]
                                 f_obj.programa_version = p_info[1]
+                                if not f_obj.departamento:
+                                    f_obj.departamento = "BOGOTÁ D.C."
+                                if not f_obj.ciudad:
+                                    f_obj.ciudad = "BOGOTÁ D.C."
 
                 except Exception as ex_xml:
                     print(f"⚠️ Error leyendo {xml_file}: {ex_xml}")
@@ -252,6 +296,46 @@ async def seed_data():
                         es_automatico_matricula=ben_auto,
                         activo=True
                     ))
+
+            # 8. Crear Contratos de Aprendizaje Semilla de Ejemplo (si existen matrículas)
+            from app.modules.apprentices.models import Matricula
+            from app.modules.contracts.models import ContratoAprendizaje
+
+            res_mats = await session.execute(select(Matricula).limit(5))
+            mats = list(res_mats.scalars().all())
+            if mats:
+                # Matrícula 1: Contrato en Etapa Práctica
+                mat1 = mats[0]
+                res_c1 = await session.execute(
+                    select(ContratoAprendizaje).where(ContratoAprendizaje.matricula_id == mat1.id)
+                )
+                if not res_c1.scalar_one_or_none():
+                    session.add(ContratoAprendizaje(
+                        matricula_id=mat1.id,
+                        nombre_empresa="TECNOLOGÍA Y SISTEMAS S.A.S.",
+                        departamento="BOGOTÁ D.C.",
+                        ciudad="BOGOTÁ D.C.",
+                        fecha_inicio_contrato=date(2025, 2, 1),
+                        estado_contrato="EN ETAPA PRACTICA",
+                        observaciones="Contrato de aprendizaje activo en desarrollo de software"
+                    ))
+
+                # Matrícula 2: Contrato en Patrocinio
+                if len(mats) > 1:
+                    mat2 = mats[1]
+                    res_c2 = await session.execute(
+                        select(ContratoAprendizaje).where(ContratoAprendizaje.matricula_id == mat2.id)
+                    )
+                    if not res_c2.scalar_one_or_none():
+                        session.add(ContratoAprendizaje(
+                            matricula_id=mat2.id,
+                            nombre_empresa="SERVICIOS INFORMÁTICOS GLOBAL LTDA",
+                            departamento="CUNDINAMARCA",
+                            ciudad="SOACHA",
+                            fecha_inicio_contrato=date(2025, 6, 15),
+                            estado_contrato="EN PATROCINIO",
+                            observaciones="Aprendiz apoyado por patrocinio empresarial durante etapa lectiva"
+                        ))
 
             await session.commit()
             print("✅ Poblamiento de datos completado exitosamente.")

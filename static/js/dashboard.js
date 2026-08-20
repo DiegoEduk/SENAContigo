@@ -23,15 +23,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         scope.innerHTML = `<p><i class="fas fa-sitemap text-sena-green mr-1"></i> Cobertura: Centro de Formación</p>`;
     } else if (user.rol === 'instructor') {
         scope.innerHTML = `<p><i class="fas fa-chalkboard-user text-sena-green mr-1"></i> Cobertura: Fichas Asignadas</p>`;
+    } else if (user.rol === 'lider_bienestar') {
+        scope.innerHTML = `<p><i class="fas fa-heart text-sena-green mr-1"></i> Cobertura: Módulo de Beneficios</p>`;
+    } else if (user.rol === 'lider_contratacion') {
+        scope.innerHTML = `<p><i class="fas fa-file-contract text-sena-green mr-1"></i> Cobertura: Módulo de Contratación</p>`;
+        navSwitch('contratos');
+        return;
     }
 
     await loadResumenData();
 });
 
 function navSwitch(secName) {
-    ['resumen', 'analytics', 'variables', 'encuestas', 'casos'].forEach(s => {
+    ['resumen', 'analytics', 'variables', 'encuestas', 'casos', 'contratos'].forEach(s => {
         const sec = document.getElementById(`sec-${s}`);
         const btn = document.getElementById(`nav-${s}`);
+        if (!sec || !btn) return;
         if (s === secName) {
             sec.classList.remove('hidden');
             btn.className = "w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold text-sena-green bg-sena-lightgreen flex items-center gap-2.5 transition";
@@ -45,6 +52,7 @@ function navSwitch(secName) {
     if (secName === 'variables') loadVariablesData();
     if (secName === 'encuestas') loadEncuestasData();
     if (secName === 'casos') loadCasosData();
+    if (secName === 'contratos') loadContratosData();
 }
 
 async function loadResumenData() {
@@ -366,3 +374,135 @@ function getLevelBadgeClass(lvl) {
         default: return 'badge-level-0';
     }
 }
+
+// Contratación de Aprendices Functions
+async function loadContratosData() {
+    await loadContratos();
+}
+
+async function loadContratos() {
+    const tbody = document.getElementById('tblContratos');
+    if (!tbody) return;
+
+    const search = document.getElementById('searchContratos')?.value?.trim() || '';
+    const estado = document.getElementById('filterEstadoContrato')?.value || '';
+
+    try {
+        const params = {};
+        if (search) params.search = search;
+        if (estado) params.estado = estado;
+
+        const contratos = await API.getContratos(params);
+
+        if (!contratos || contratos.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">No se encontraron contratos de aprendizaje registrados.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = contratos.map(c => {
+            let stateBadge = 'bg-slate-100 text-slate-700';
+            if (c.estado_contrato === 'EN PATROCINIO') stateBadge = 'bg-indigo-100 text-indigo-800 font-bold';
+            if (c.estado_contrato === 'EN ETAPA PRACTICA') stateBadge = 'bg-emerald-100 text-sena-darkgreen font-bold';
+            if (c.estado_contrato === 'ACTIVO') stateBadge = 'bg-teal-100 text-teal-800 font-bold';
+            if (c.estado_contrato === 'FINALIZADO') stateBadge = 'bg-blue-100 text-blue-800 font-bold';
+            if (c.estado_contrato === 'SUSPENDIDO') stateBadge = 'bg-amber-100 text-amber-800 font-bold';
+            if (c.estado_contrato === 'CANCELADO') stateBadge = 'bg-red-100 text-red-800 font-bold';
+
+            const aprNombre = c.aprendiz_nombre_completo || 'Aprendiz N/A';
+            const fichaStr = c.ficha_id ? `Ficha ${c.ficha_id}` : 'Ficha N/A';
+            const ubicacion = `${c.ciudad || ''}, ${c.departamento || ''}`;
+
+            return `
+                <tr class="hover:bg-slate-50">
+                    <td class="p-3">
+                        <span class="font-bold text-slate-800 block">${c.nombre_empresa}</span>
+                        <span class="text-[10px] text-slate-400">${c.observaciones || ''}</span>
+                    </td>
+                    <td class="p-3 font-medium">${aprNombre}</td>
+                    <td class="p-3 text-slate-500 font-medium">${fichaStr}</td>
+                    <td class="p-3 text-slate-600 font-medium">${ubicacion}</td>
+                    <td class="p-3 text-slate-500">${c.fecha_inicio_contrato || ''}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] ${stateBadge}">${c.estado_contrato}</span></td>
+                    <td class="p-3 text-right">
+                        <button onclick="changeEstadoContrato(${c.id}, '${c.estado_contrato}')" class="px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded hover:bg-slate-700 transition">
+                            <i class="fas fa-edit mr-1"></i> Cambiar Estado
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-red-500">Error al cargar contratos: ${err.message}</td></tr>`;
+    }
+}
+
+async function openModalContrato() {
+    const modal = document.getElementById('modalContrato');
+    const select = document.getElementById('contratoMatriculaId');
+    select.innerHTML = '<option value="">Cargando matrículas...</option>';
+
+    try {
+        const aprendices = await API.getAprendices();
+        let optionsHtml = '<option value="">Seleccione una matrícula...</option>';
+        
+        aprendices.forEach(apr => {
+            (apr.matriculas || []).forEach(m => {
+                optionsHtml += `<option value="${m.id}">${apr.nombres} ${apr.apellidos} - Ficha ${m.ficha_id} (${m.estado_matricula})</option>`;
+            });
+        });
+
+        select.innerHTML = optionsHtml;
+        modal.classList.remove('hidden');
+    } catch (err) {
+        alert("Error al cargar aprendices y matrículas: " + err.message);
+    }
+}
+
+function closeModalContrato() {
+    document.getElementById('modalContrato').classList.add('hidden');
+}
+
+async function handleCreateContrato(e) {
+    e.preventDefault();
+    const matriculaId = parseInt(document.getElementById('contratoMatriculaId').value);
+    const nombreEmpresa = document.getElementById('contratoEmpresa').value.trim();
+    const departamento = document.getElementById('contratoDepartamento').value.trim();
+    const ciudad = document.getElementById('contratoCiudad').value.trim();
+    const fechaInicio = document.getElementById('contratoFechaInicio').value;
+    const fechaFin = document.getElementById('contratoFechaFin').value || null;
+    const estado = document.getElementById('contratoEstado').value;
+    const observaciones = document.getElementById('contratoObservaciones').value.trim();
+
+    try {
+        await API.createContrato({
+            matricula_id: matriculaId,
+            nombre_empresa: nombreEmpresa,
+            departamento: departamento,
+            ciudad: ciudad,
+            fecha_inicio_contrato: fechaInicio,
+            fecha_fin_contrato: fechaFin,
+            estado_contrato: estado,
+            observaciones: observaciones
+        });
+
+        alert("¡Contrato de aprendizaje registrado exitosamente!");
+        closeModalContrato();
+        loadContratos();
+    } catch (err) {
+        alert("Error al registrar contrato: " + err.message);
+    }
+}
+
+async function changeEstadoContrato(contratoId, estadoActual) {
+    const nuevoEstado = prompt("Ingrese el nuevo estado (EN PATROCINIO, EN ETAPA PRACTICA, ACTIVO, FINALIZADO, SUSPENDIDO, CANCELADO):", estadoActual);
+    if (!nuevoEstado || nuevoEstado.toUpperCase() === estadoActual) return;
+
+    try {
+        await API.updateContrato(contratoId, { estado_contrato: nuevoEstado.toUpperCase() });
+        alert("Estado del contrato actualizado correctamente.");
+        loadContratos();
+    } catch (err) {
+        alert("Error al actualizar estado del contrato: " + err.message);
+    }
+}
+

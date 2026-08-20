@@ -38,6 +38,8 @@ class Ficha(Base):
     centro_id: Mapped[str] = mapped_column(String(20), ForeignKey("centros.codigo_centro", ondelete="CASCADE"), nullable=False, index=True)
     programa_codigo: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     programa_version: Mapped[str] = mapped_column(String(20), nullable=False, default="1")
+    departamento: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    ciudad: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     centro: Mapped["CentroFormacion"] = relationship("CentroFormacion")

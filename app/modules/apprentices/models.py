@@ -1,9 +1,13 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+
+if TYPE_CHECKING:
+    from app.modules.academic.models import Ficha
+    from app.modules.contracts.models import ContratoAprendizaje
 
 
 class Aprendiz(Base):
@@ -16,6 +20,9 @@ class Aprendiz(Base):
     apellidos: Mapped[str] = mapped_column(String(100), nullable=False)
     correo: Mapped[str] = mapped_column(String(150), unique=True, index=True, nullable=False)
     celular: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    direccion_vivienda: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    ciudad: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    departamento: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     
     centro_id: Mapped[Optional[str]] = mapped_column(String(20), ForeignKey("centros.codigo_centro", ondelete="SET NULL"), nullable=True)
     regional_id: Mapped[Optional[str]] = mapped_column(String(20), ForeignKey("regionales.codigo_regional", ondelete="SET NULL"), nullable=True)
@@ -38,3 +45,5 @@ class Matricula(Base):
 
     aprendiz: Mapped["Aprendiz"] = relationship("Aprendiz", back_populates="matriculas")
     ficha: Mapped["Ficha"] = relationship("Ficha")
+    contratos: Mapped[List["ContratoAprendizaje"]] = relationship("ContratoAprendizaje", back_populates="matricula", cascade="all, delete-orphan")
+

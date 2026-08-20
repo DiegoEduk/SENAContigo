@@ -106,6 +106,27 @@ CREATE TABLE IF NOT EXISTS programas (
 
 INSERT INTO programas (codigo_programa, version, nombre, nivel_formacion, activo, created_at)
 VALUES
+  ('661202', '1', 'ALMACENAMIENTO,EMPAQUE Y EMBALAJE DE OBJETOS.', 'AUXILIAR', true, NOW());
+
+INSERT INTO programas (codigo_programa, version, nombre, nivel_formacion, activo, created_at)
+VALUES
+  ('837101', '1', 'MECANICA DE MAQUINARIA INDUSTRIAL', 'TÉCNICO', true, NOW());
+
+INSERT INTO programas (codigo_programa, version, nombre, nivel_formacion, activo, created_at)
+VALUES
+  ('836137', '1', 'MANTENIMIENTO Y REPARACION DE EDIFICACIONES.', 'TÉCNICO', true, NOW());
+
+INSERT INTO programas (codigo_programa, version, nombre, nivel_formacion, activo, created_at)
+VALUES
+  ('134101', '2', 'ASISTENCIA ADMINISTRATIVA.', 'TÉCNICO', true, NOW());
+
+INSERT INTO programas (codigo_programa, version, nombre, nivel_formacion, activo, created_at)
+VALUES
+  ('133500', '1', 'NOMINA Y PRESTACIONES SOCIALES .', 'TÉCNICO', true, NOW());
+
+
+INSERT INTO programas (codigo_programa, version, nombre, nivel_formacion, activo, created_at)
+VALUES
   ('01000060', '1', 'COMUNICACION EN PORTUGUES - I', 'CURSO ESPECIAL', true, NOW()),
   ('02000028', '1', 'FORTALECIMIENTO EN LECTURA CRITICA PARA ARTICULACION CON LA MEDIA', 'CURSO ESPECIAL', true, NOW()),
   ('02000058', '1', 'MICROSOFT WORD AVANZADO', 'CURSO ESPECIAL', true, NOW()),
@@ -6087,5 +6108,1334 @@ SET nombre = EXCLUDED.nombre;
 
 SELECT setval('beneficios_id_seq', (SELECT MAX(id) FROM beneficios));
 
-COMMIT;
+
+-- ============================================================
+-- VARIABLES SENAContigo
+-- Categorías:
+-- VIVIENDA
+-- TRANSPORTE
+-- CONECTIVIDAD
+-- FAMILIA
+-- EMPLEO
+-- ECONOMIA
+-- ALIMENTACION
+-- FORMACION
+-- ============================================================
+
+
+-- ============================================================
+-- 1. VIVIENDA
+-- ============================================================
+
+INSERT INTO variables (
+    categoria_id, codigo, nombre, descripcion,
+    tipo_respuesta, version_actual,
+    es_sensible, es_obligatoria, activa,
+    created_at, updated_at
+)
+SELECT
+    c.id,
+    v.codigo,
+    v.nombre,
+    v.descripcion,
+    v.tipo_respuesta,
+    1,
+    false,
+    v.es_obligatoria,
+    true,
+    NOW(),
+    NOW()
+FROM categorias c
+CROSS JOIN (
+    VALUES
+    (
+        'ESTADO_VIVIENDA',
+        'Estado de la Vivienda',
+        'Nivel de afectación física de la vivienda actual',
+        'opcion_unica',
+        true
+    ),
+    (
+        'TIPO_VIVIENDA',
+        'Tipo de Vivienda',
+        'Tipo de vivienda donde reside actualmente el aprendiz',
+        'opcion_unica',
+        true
+    ),
+    (
+        'OCUPACION_VIVIENDA',
+        'Situación de Ocupación de la Vivienda',
+        'Relación del aprendiz con la vivienda que ocupa',
+        'opcion_unica',
+        true
+    ),
+    (
+        'SERVICIO_AGUA',
+        'Acceso a Agua',
+        'Estado del acceso al servicio de agua',
+        'opcion_unica',
+        true
+    ),
+    (
+        'SERVICIO_ENERGIA',
+        'Acceso a Energía Eléctrica',
+        'Estado del servicio de energía eléctrica',
+        'opcion_unica',
+        true
+    ),
+    (
+        'SERVICIO_GAS',
+        'Acceso a Gas',
+        'Estado del servicio de gas utilizado en el hogar',
+        'opcion_unica',
+        false
+    ),
+    (
+        'HACINAMIENTO',
+        'Nivel de Hacinamiento',
+        'Nivel de hacinamiento existente en la vivienda',
+        'opcion_unica',
+        false
+    ),
+    (
+        'ALOJAMIENTO_ACTUAL',
+        'Alojamiento Actual',
+        'Lugar donde se encuentra alojado actualmente el aprendiz',
+        'opcion_unica',
+        true
+    ),
+    (
+        'REQUIERE_ALOJAMIENTO',
+        'Requiere Alojamiento',
+        'Determina si el aprendiz necesita alojamiento temporal',
+        'si_no',
+        true
+    )
+) AS v(codigo, nombre, descripcion, tipo_respuesta, es_obligatoria)
+WHERE c.codigo = 'VIVIENDA'
+ON CONFLICT (codigo) DO NOTHING;
+
+
+-- ============================================================
+-- 2. TRANSPORTE
+-- ============================================================
+
+INSERT INTO variables (
+    categoria_id, codigo, nombre, descripcion,
+    tipo_respuesta, version_actual,
+    es_sensible, es_obligatoria, activa,
+    created_at, updated_at
+)
+SELECT
+    c.id,
+    v.codigo,
+    v.nombre,
+    v.descripcion,
+    v.tipo_respuesta,
+    1,
+    false,
+    v.es_obligatoria,
+    true,
+    NOW(),
+    NOW()
+FROM categorias c
+CROSS JOIN (
+    VALUES
+    (
+        'MEDIO_TRANSPORTE',
+        'Medio Habitual de Transporte',
+        'Principal medio utilizado para desplazarse',
+        'opcion_unica',
+        true
+    ),
+    (
+        'ESTADO_TRANSPORTE',
+        'Estado del Transporte',
+        'Nivel de afectación del medio de transporte habitual',
+        'opcion_unica',
+        true
+    ),
+    (
+        'ACCESO_CENTRO',
+        'Acceso al Centro de Formación',
+        'Posibilidad del aprendiz de desplazarse hasta el centro',
+        'opcion_unica',
+        true
+    ),
+    (
+        'AFECTACION_VIA',
+        'Estado de las Vías',
+        'Condición de las vías utilizadas para llegar al centro',
+        'opcion_unica',
+        false
+    ),
+    (
+        'COSTO_TRANSPORTE',
+        'Afectación del Costo de Transporte',
+        'Variación en el costo del transporte del aprendiz',
+        'opcion_unica',
+        false
+    ),
+    (
+        'REQUIERE_TRANSPORTE',
+        'Requiere Apoyo de Transporte',
+        'Determina si el aprendiz requiere apoyo para transporte',
+        'si_no',
+        true
+    )
+) AS v(codigo, nombre, descripcion, tipo_respuesta, es_obligatoria)
+WHERE c.codigo = 'TRANSPORTE'
+ON CONFLICT (codigo) DO NOTHING;
+
+
+-- ============================================================
+-- 3. CONECTIVIDAD
+-- ============================================================
+
+INSERT INTO variables (
+    categoria_id, codigo, nombre, descripcion,
+    tipo_respuesta, version_actual,
+    es_sensible, es_obligatoria, activa,
+    created_at, updated_at
+)
+SELECT
+    c.id,
+    v.codigo,
+    v.nombre,
+    v.descripcion,
+    v.tipo_respuesta,
+    1,
+    false,
+    v.es_obligatoria,
+    true,
+    NOW(),
+    NOW()
+FROM categorias c
+CROSS JOIN (
+    VALUES
+    (
+        'TIENE_INTERNET',
+        'Acceso a Internet',
+        'Disponibilidad de conexión a Internet para actividades formativas',
+        'opcion_unica',
+        true
+    ),
+    (
+        'TIPO_INTERNET',
+        'Tipo de Conexión a Internet',
+        'Tecnología utilizada para acceder a Internet',
+        'opcion_unica',
+        false
+    ),
+    (
+        'TIENE_COMPUTADOR',
+        'Disponibilidad de Computador',
+        'Disponibilidad de un computador para realizar actividades formativas',
+        'opcion_unica',
+        true
+    ),
+    (
+        'ESTADO_COMPUTADOR',
+        'Estado del Computador',
+        'Condición del computador disponible',
+        'opcion_unica',
+        false
+    ),
+    (
+        'TIENE_CELULAR',
+        'Disponibilidad de Celular',
+        'Disponibilidad de teléfono celular',
+        'si_no',
+        true
+    ),
+    (
+        'ACCESO_DATOS',
+        'Acceso a Datos Móviles',
+        'Disponibilidad de datos móviles para conectividad',
+        'opcion_unica',
+        false
+    ),
+    (
+        'PUEDE_ESTUDIAR_REMOTO',
+        'Puede Estudiar de Forma Remota',
+        'Capacidad para continuar la formación mediante medios virtuales',
+        'opcion_unica',
+        true
+    ),
+    (
+        'REQUIERE_EQUIPO',
+        'Requiere Equipo de Cómputo',
+        'Determina si requiere computador para continuar su formación',
+        'si_no',
+        true
+    ),
+    (
+        'REQUIERE_INTERNET',
+        'Requiere Conectividad',
+        'Determina si requiere apoyo de conectividad',
+        'si_no',
+        true
+    )
+) AS v(codigo, nombre, descripcion, tipo_respuesta, es_obligatoria)
+WHERE c.codigo = 'CONECTIVIDAD'
+ON CONFLICT (codigo) DO NOTHING;
+
+
+-- ============================================================
+-- 4. FAMILIA
+-- ============================================================
+
+INSERT INTO variables (
+    categoria_id, codigo, nombre, descripcion,
+    tipo_respuesta, version_actual,
+    es_sensible, es_obligatoria, activa,
+    created_at, updated_at
+)
+SELECT
+    c.id,
+    v.codigo,
+    v.nombre,
+    v.descripcion,
+    v.tipo_respuesta,
+    1,
+    v.es_sensible,
+    v.es_obligatoria,
+    true,
+    NOW(),
+    NOW()
+FROM categorias c
+CROSS JOIN (
+    VALUES
+    (
+        'NUMERO_PERSONAS_HOGAR',
+        'Número de Personas en el Hogar',
+        'Cantidad de personas que viven actualmente en el hogar',
+        'numero',
+        false,
+        false
+    ),
+    (
+        'PERSONAS_CARGO',
+        'Personas a Cargo',
+        'Cantidad de personas que dependen económicamente del aprendiz',
+        'opcion_unica',
+        true,
+        false
+    ),
+    (
+        'AFECTACION_FAMILIAR',
+        'Afectación Familiar',
+        'Nivel de afectación de la familia del aprendiz',
+        'opcion_unica',
+        true,
+        false
+    ),
+    (
+        'FAMILIAR_AFECTADO',
+        'Familiar Afectado',
+        'Determina si algún integrante del núcleo familiar resultó afectado',
+        'si_no',
+        true,
+        true
+    ),
+    (
+        'FALLECIMIENTO_FAMILIAR',
+        'Fallecimiento de Familiar',
+        'Determina si ocurrió fallecimiento de un familiar como consecuencia del evento',
+        'si_no',
+        false,
+        true
+    ),
+    (
+        'DESPLAZAMIENTO_FAMILIAR',
+        'Desplazamiento Familiar',
+        'Determina si el grupo familiar tuvo que desplazarse de su lugar de residencia',
+        'si_no',
+        true,
+        true
+    ),
+    (
+        'CUIDADOR_PRINCIPAL',
+        'Cuidador Principal',
+        'Determina si el aprendiz es responsable principal del cuidado de otra persona',
+        'si_no',
+        false,
+        true
+    ),
+    (
+        'REQUIERE_APOYO_PSICOSOCIAL',
+        'Requiere Apoyo Psicosocial',
+        'Determina si requiere acompañamiento psicosocial',
+        'si_no',
+        false,
+        true
+    )
+) AS v(
+    codigo,
+    nombre,
+    descripcion,
+    tipo_respuesta,
+    es_obligatoria,
+    es_sensible
+)
+WHERE c.codigo = 'FAMILIA'
+ON CONFLICT (codigo) DO NOTHING;
+
+
+-- ============================================================
+-- 5. EMPLEO
+-- ============================================================
+
+INSERT INTO variables (
+    categoria_id, codigo, nombre, descripcion,
+    tipo_respuesta, version_actual,
+    es_sensible, es_obligatoria, activa,
+    created_at, updated_at
+)
+SELECT
+    c.id,
+    v.codigo,
+    v.nombre,
+    v.descripcion,
+    v.tipo_respuesta,
+    1,
+    v.es_sensible,
+    v.es_obligatoria,
+    true,
+    NOW(),
+    NOW()
+FROM categorias c
+CROSS JOIN (
+    VALUES
+    (
+        'SITUACION_LABORAL',
+        'Situación Laboral',
+        'Situación laboral actual del aprendiz',
+        'opcion_unica',
+        true,
+        false
+    ),
+    (
+        'PERDIO_EMPLEO',
+        'Pérdida de Empleo',
+        'Determina si el aprendiz perdió su empleo recientemente',
+        'si_no',
+        true,
+        false
+    ),
+    (
+        'AFECTACION_EMPLEO',
+        'Afectación Laboral',
+        'Nivel de afectación de la situación laboral',
+        'opcion_unica',
+        true,
+        false
+    ),
+    (
+        'INGRESO_LABORAL',
+        'Tiene Ingresos Laborales',
+        'Determina si actualmente recibe ingresos derivados de una actividad laboral',
+        'si_no',
+        true,
+        true
+    ),
+    (
+        'REDUCCION_INGRESOS',
+        'Reducción de Ingresos',
+        'Porcentaje aproximado de reducción de los ingresos',
+        'opcion_unica',
+        false,
+        true
+    ),
+    (
+        'JORNADA_LABORAL',
+        'Situación de Jornada Laboral',
+        'Estado actual de la jornada laboral',
+        'opcion_unica',
+        false,
+        false
+    ),
+    (
+        'RIESGO_DESERCION_LABORAL',
+        'El Trabajo Afecta la Formación',
+        'Determina si la situación laboral dificulta la continuidad de la formación',
+        'si_no',
+        true,
+        false
+    )
+) AS v(
+    codigo,
+    nombre,
+    descripcion,
+    tipo_respuesta,
+    es_obligatoria,
+    es_sensible
+)
+WHERE c.codigo = 'EMPLEO'
+ON CONFLICT (codigo) DO NOTHING;
+
+
+-- ============================================================
+-- 6. ECONOMIA
+-- ============================================================
+
+INSERT INTO variables (
+    categoria_id, codigo, nombre, descripcion,
+    tipo_respuesta, version_actual,
+    es_sensible, es_obligatoria, activa,
+    created_at, updated_at
+)
+SELECT
+    c.id,
+    v.codigo,
+    v.nombre,
+    v.descripcion,
+    v.tipo_respuesta,
+    1,
+    true,
+    v.es_obligatoria,
+    true,
+    NOW(),
+    NOW()
+FROM categorias c
+CROSS JOIN (
+    VALUES
+    (
+        'INGRESO_HOGAR',
+        'Rango de Ingresos del Hogar',
+        'Rango aproximado de ingresos mensuales del hogar',
+        'opcion_unica',
+        false
+    ),
+    (
+        'NUMERO_GENERADORES',
+        'Personas Generadoras de Ingresos',
+        'Número de personas del hogar que generan ingresos',
+        'numero',
+        false
+    ),
+    (
+        'AFECTACION_INGRESOS',
+        'Afectación de Ingresos',
+        'Nivel de afectación de los ingresos familiares',
+        'opcion_unica',
+        true
+    ),
+    (
+        'GASTOS_AUMENTADOS',
+        'Aumento de Gastos',
+        'Determina si aumentaron los gastos del hogar',
+        'si_no',
+        true
+    ),
+    (
+        'CAPACIDAD_ALIMENTACION',
+        'Capacidad para Cubrir Alimentación',
+        'Capacidad económica para cubrir las necesidades alimentarias',
+        'opcion_unica',
+        true
+    ),
+    (
+        'CAPACIDAD_TRANSPORTE',
+        'Capacidad para Cubrir Transporte',
+        'Capacidad económica para cubrir el transporte',
+        'opcion_unica',
+        true
+    ),
+    (
+        'CAPACIDAD_CONECTIVIDAD',
+        'Capacidad para Cubrir Conectividad',
+        'Capacidad económica para cubrir Internet y conectividad',
+        'opcion_unica',
+        false
+    ),
+    (
+        'DEUDAS_CRITICAS',
+        'Dificultades con Deudas',
+        'Determina si existen dificultades significativas para cubrir obligaciones financieras',
+        'si_no',
+        false
+    ),
+    (
+        'REQUIERE_APOYO_ECONOMICO',
+        'Requiere Apoyo Económico',
+        'Determina si el aprendiz requiere apoyo económico',
+        'si_no',
+        true
+    )
+) AS v(
+    codigo,
+    nombre,
+    descripcion,
+    tipo_respuesta,
+    es_obligatoria
+)
+WHERE c.codigo = 'ECONOMIA'
+ON CONFLICT (codigo) DO NOTHING;
+
+
+-- ============================================================
+-- 7. ALIMENTACION
+-- ============================================================
+
+INSERT INTO variables (
+    categoria_id, codigo, nombre, descripcion,
+    tipo_respuesta, version_actual,
+    es_sensible, es_obligatoria, activa,
+    created_at, updated_at
+)
+SELECT
+    c.id,
+    v.codigo,
+    v.nombre,
+    v.descripcion,
+    v.tipo_respuesta,
+    1,
+    true,
+    v.es_obligatoria,
+    true,
+    NOW(),
+    NOW()
+FROM categorias c
+CROSS JOIN (
+    VALUES
+    (
+        'COMIDAS_DIA',
+        'Número de Comidas Diarias',
+        'Número aproximado de comidas que consume diariamente',
+        'opcion_unica',
+        true
+    ),
+    (
+        'INSEGURIDAD_ALIMENTARIA',
+        'Nivel de Inseguridad Alimentaria',
+        'Nivel de dificultad para garantizar alimentación suficiente',
+        'opcion_unica',
+        true
+    ),
+    (
+        'OMITE_COMIDAS',
+        'Omisión de Comidas',
+        'Determina si ha dejado de consumir comidas por falta de recursos',
+        'si_no',
+        true
+    ),
+    (
+        'ACCESO_ALIMENTOS',
+        'Acceso a Alimentos',
+        'Nivel de acceso actual a alimentos',
+        'opcion_unica',
+        true
+    ),
+    (
+        'MENOR_ALIMENTACION',
+        'Reducción de Cantidad o Calidad',
+        'Determina si redujo cantidad o calidad de los alimentos consumidos',
+        'si_no',
+        false
+    ),
+    (
+        'APOYO_ALIMENTARIO_ACTUAL',
+        'Recibe Apoyo Alimentario',
+        'Determina si actualmente recibe algún tipo de apoyo alimentario',
+        'si_no',
+        false
+    ),
+    (
+        'REQUIERE_ALIMENTACION',
+        'Requiere Apoyo Alimentario',
+        'Determina si requiere apoyo alimentario',
+        'si_no',
+        true
+    )
+) AS v(
+    codigo,
+    nombre,
+    descripcion,
+    tipo_respuesta,
+    es_obligatoria
+)
+WHERE c.codigo = 'ALIMENTACION'
+ON CONFLICT (codigo) DO NOTHING;
+
+
+-- ============================================================
+-- 8. FORMACION
+-- ============================================================
+
+INSERT INTO variables (
+    categoria_id, codigo, nombre, descripcion,
+    tipo_respuesta, version_actual,
+    es_sensible, es_obligatoria, activa,
+    created_at, updated_at
+)
+SELECT
+    c.id,
+    v.codigo,
+    v.nombre,
+    v.descripcion,
+    v.tipo_respuesta,
+    1,
+    false,
+    v.es_obligatoria,
+    true,
+    NOW(),
+    NOW()
+FROM categorias c
+CROSS JOIN (
+    VALUES
+    (
+        'ASISTENCIA',
+        'Asistencia a Formación',
+        'Nivel de asistencia actual del aprendiz a las actividades de formación',
+        'opcion_unica',
+        true
+    ),
+    (
+        'INASISTENCIA_AFECTACION',
+        'La Situación Afecta la Asistencia',
+        'Determina si la situación personal está afectando la asistencia',
+        'si_no',
+        true
+    ),
+    (
+        'ENTREGA_ACTIVIDADES',
+        'Entrega de Actividades',
+        'Estado de cumplimiento de las actividades formativas',
+        'opcion_unica',
+        true
+    ),
+    (
+        'ACCESO_PLATAFORMA',
+        'Acceso a Plataformas de Formación',
+        'Disponibilidad de acceso a las plataformas utilizadas durante la formación',
+        'opcion_unica',
+        true
+    ),
+    (
+        'RIESGO_DESERCION',
+        'Riesgo de Deserción',
+        'Nivel estimado de riesgo de abandono de la formación',
+        'opcion_unica',
+        true
+    ),
+    (
+        'CONTINUIDAD_FORMACION',
+        'Puede Continuar la Formación',
+        'Capacidad actual para continuar el proceso formativo',
+        'opcion_unica',
+        true
+    ),
+    (
+        'REQUIERE_FLEXIBILIZACION',
+        'Requiere Flexibilización Académica',
+        'Determina si requiere medidas de flexibilización o ajustes en su proceso formativo',
+        'si_no',
+        false
+    )
+) AS v(
+    codigo,
+    nombre,
+    descripcion,
+    tipo_respuesta,
+    es_obligatoria
+)
+WHERE c.codigo = 'FORMACION'
+ON CONFLICT (codigo) DO NOTHING;
+
+
+-- ============================================================
+-- VERSIONES Y OPCIONES
+-- ============================================================
+
+
+-- ============================================================
+-- VIVIENDA
+-- ============================================================
+
+-- ESTADO_VIVIENDA
+INSERT INTO variable_versiones (
+    variable_id, numero_version, titulo_pregunta,
+    descripcion, activa, created_at
+)
+SELECT id, 1,
+       '¿En qué estado se encuentra su vivienda actual?',
+       'Evaluación del estado de habitabilidad de la vivienda',
+       true, NOW()
+FROM variables
+WHERE codigo = 'ESTADO_VIVIENDA'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO opciones_variable (
+    variable_version_id, codigo, texto,
+    valor_numerico, orden, nivel_afectacion,
+    activa, created_at
+)
+SELECT vv.id, o.codigo, o.texto,
+       o.valor, o.orden, o.nivel,
+       true, NOW()
+FROM variable_versiones vv
+CROSS JOIN (
+    VALUES
+    ('NORMAL','Sin afectación / Normal',0,1,0),
+    ('LEVE','Afectada levemente',1,2,1),
+    ('MODERADA','Afectada moderadamente',2,3,2),
+    ('INHABITABLE','Vivienda inhabitable',3,4,4),
+    ('DESTRUIDA','Vivienda destruida',4,5,5)
+) o(codigo,texto,valor,orden,nivel)
+WHERE vv.variable_id = (
+    SELECT id FROM variables WHERE codigo='ESTADO_VIVIENDA'
+)
+AND vv.numero_version = 1
+ON CONFLICT DO NOTHING;
+
+
+-- TIPO_VIVIENDA
+INSERT INTO variable_versiones (
+    variable_id, numero_version, titulo_pregunta, activa, created_at
+)
+SELECT id, 1,
+       '¿Qué tipo de vivienda ocupa actualmente?',
+       true, NOW()
+FROM variables
+WHERE codigo='TIPO_VIVIENDA'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO opciones_variable (
+    variable_version_id,codigo,texto,valor_numerico,orden,nivel_afectacion,activa,created_at
+)
+SELECT vv.id,o.codigo,o.texto,o.valor,o.orden,0,true,NOW()
+FROM variable_versiones vv
+CROSS JOIN (
+    VALUES
+    ('CASA','Casa',1,1),
+    ('APARTAMENTO','Apartamento',2,2),
+    ('HABITACION','Habitación',3,3),
+    ('FINCA','Finca',4,4),
+    ('OTRA','Otra',5,5)
+) o(codigo,texto,valor,orden)
+WHERE vv.variable_id=(SELECT id FROM variables WHERE codigo='TIPO_VIVIENDA')
+AND vv.numero_version=1
+ON CONFLICT DO NOTHING;
+
+
+-- OCUPACION_VIVIENDA
+INSERT INTO variable_versiones (
+    variable_id,numero_version,titulo_pregunta,activa,created_at
+)
+SELECT id,1,
+       '¿Cuál es su situación respecto a la vivienda?',
+       true,NOW()
+FROM variables WHERE codigo='OCUPACION_VIVIENDA'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO opciones_variable (
+    variable_version_id,codigo,texto,valor_numerico,orden,nivel_afectacion,activa,created_at
+)
+SELECT vv.id,o.codigo,o.texto,o.valor,o.orden,0,true,NOW()
+FROM variable_versiones vv
+CROSS JOIN (
+    VALUES
+    ('PROPIA','Vivienda propia',1,1),
+    ('ARRENDADA','Vivienda arrendada',2,2),
+    ('FAMILIAR','Vivienda de un familiar',3,3),
+    ('TEMPORAL','Alojamiento temporal',4,4),
+    ('OTRA','Otra situación',5,5)
+) o(codigo,texto,valor,orden)
+WHERE vv.variable_id=(SELECT id FROM variables WHERE codigo='OCUPACION_VIVIENDA')
+AND vv.numero_version=1
+ON CONFLICT DO NOTHING;
+
+
+-- SERVICIO_AGUA
+INSERT INTO variable_versiones (
+    variable_id,numero_version,titulo_pregunta,activa,created_at
+)
+SELECT id,1,'¿Cuál es actualmente el estado del servicio de agua?',
+       true,NOW()
+FROM variables WHERE codigo='SERVICIO_AGUA'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO opciones_variable (
+    variable_version_id,codigo,texto,valor_numerico,orden,nivel_afectacion,activa,created_at
+)
+SELECT vv.id,o.codigo,o.texto,o.valor,o.orden,o.nivel,true,NOW()
+FROM variable_versiones vv
+CROSS JOIN (
+    VALUES
+    ('NORMAL','Servicio normal',0,1,0),
+    ('INTERMITENTE','Servicio intermitente',1,2,2),
+    ('SIN_SERVICIO','Sin servicio de agua',2,3,4)
+) o(codigo,texto,valor,orden,nivel)
+WHERE vv.variable_id=(SELECT id FROM variables WHERE codigo='SERVICIO_AGUA')
+AND vv.numero_version=1
+ON CONFLICT DO NOTHING;
+
+
+-- SERVICIO_ENERGIA
+INSERT INTO variable_versiones (
+    variable_id,numero_version,titulo_pregunta,activa,created_at
+)
+SELECT id,1,'¿Cuál es actualmente el estado del servicio de energía eléctrica?',
+       true,NOW()
+FROM variables WHERE codigo='SERVICIO_ENERGIA'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO opciones_variable (
+    variable_version_id,codigo,texto,valor_numerico,orden,nivel_afectacion,activa,created_at
+)
+SELECT vv.id,o.codigo,o.texto,o.valor,o.orden,o.nivel,true,NOW()
+FROM variable_versiones vv
+CROSS JOIN (
+    VALUES
+    ('NORMAL','Servicio normal',0,1,0),
+    ('INTERMITENTE','Servicio intermitente',1,2,2),
+    ('SIN_SERVICIO','Sin servicio eléctrico',2,3,4)
+) o(codigo,texto,valor,orden,nivel)
+WHERE vv.variable_id=(SELECT id FROM variables WHERE codigo='SERVICIO_ENERGIA')
+AND vv.numero_version=1
+ON CONFLICT DO NOTHING;
+
+
+-- SERVICIO_GAS
+INSERT INTO variable_versiones (
+    variable_id,numero_version,titulo_pregunta,activa,created_at
+)
+SELECT id,1,'¿Cuál es actualmente el estado del servicio de gas?',
+       true,NOW()
+FROM variables WHERE codigo='SERVICIO_GAS'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO opciones_variable (
+    variable_version_id,codigo,texto,valor_numerico,orden,nivel_afectacion,activa,created_at
+)
+SELECT vv.id,o.codigo,o.texto,o.valor,o.orden,o.nivel,true,NOW()
+FROM variable_versiones vv
+CROSS JOIN (
+    VALUES
+    ('NORMAL','Servicio normal',0,1,0),
+    ('INTERMITENTE','Servicio intermitente',1,2,2),
+    ('SIN_SERVICIO','Sin servicio',2,3,4),
+    ('NO_UTILIZA','No utiliza este servicio',0,4,0)
+) o(codigo,texto,valor,orden,nivel)
+WHERE vv.variable_id=(SELECT id FROM variables WHERE codigo='SERVICIO_GAS')
+AND vv.numero_version=1
+ON CONFLICT DO NOTHING;
+
+
+-- HACINAMIENTO
+INSERT INTO variable_versiones (
+    variable_id,numero_version,titulo_pregunta,activa,created_at
+)
+SELECT id,1,'¿Cómo considera el nivel de ocupación de su vivienda?',
+       true,NOW()
+FROM variables WHERE codigo='HACINAMIENTO'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO opciones_variable (
+    variable_version_id,codigo,texto,valor_numerico,orden,nivel_afectacion,activa,created_at
+)
+SELECT vv.id,o.codigo,o.texto,o.valor,o.orden,o.nivel,true,NOW()
+FROM variable_versiones vv
+CROSS JOIN (
+    VALUES
+    ('SIN_HACINAMIENTO','Sin hacinamiento',0,1,0),
+    ('LEVE','Hacinamiento leve',1,2,1),
+    ('ALTO','Hacinamiento alto',2,3,3)
+) o(codigo,texto,valor,orden,nivel)
+WHERE vv.variable_id=(SELECT id FROM variables WHERE codigo='HACINAMIENTO')
+AND vv.numero_version=1
+ON CONFLICT DO NOTHING;
+
+
+-- ALOJAMIENTO_ACTUAL
+INSERT INTO variable_versiones (
+    variable_id,numero_version,titulo_pregunta,activa,created_at
+)
+SELECT id,1,'¿Dónde se encuentra alojado actualmente?',
+       true,NOW()
+FROM variables WHERE codigo='ALOJAMIENTO_ACTUAL'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO opciones_variable (
+    variable_version_id,codigo,texto,valor_numerico,orden,nivel_afectacion,activa,created_at
+)
+SELECT vv.id,o.codigo,o.texto,o.valor,o.orden,o.nivel,true,NOW()
+FROM variable_versiones vv
+CROSS JOIN (
+    VALUES
+    ('VIVIENDA_PROPIA','Vivienda propia',0,1,0),
+    ('FAMILIAR','Vivienda de familiar',1,2,1),
+    ('ALBERGUE','Albergue',2,3,3),
+    ('HOTEL','Hotel u hospedaje temporal',2,4,3),
+    ('CALLE','Sin alojamiento estable',4,5,5),
+    ('OTRO','Otro',1,6,1)
+) o(codigo,texto,valor,orden,nivel)
+WHERE vv.variable_id=(SELECT id FROM variables WHERE codigo='ALOJAMIENTO_ACTUAL')
+AND vv.numero_version=1
+ON CONFLICT DO NOTHING;
+
+
+-- REQUIERE_ALOJAMIENTO
+INSERT INTO variable_versiones (
+    variable_id,numero_version,titulo_pregunta,activa,created_at
+)
+SELECT id,1,'¿Requiere alojamiento temporal?',
+       true,NOW()
+FROM variables WHERE codigo='REQUIERE_ALOJAMIENTO'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO opciones_variable (
+    variable_version_id,codigo,texto,valor_numerico,orden,nivel_afectacion,activa,created_at
+)
+SELECT vv.id,o.codigo,o.texto,o.valor,o.orden,o.nivel,true,NOW()
+FROM variable_versiones vv
+CROSS JOIN (
+    VALUES
+    ('SI','Sí',1,1,5),
+    ('NO','No',0,2,0)
+) o(codigo,texto,valor,orden,nivel)
+WHERE vv.variable_id=(SELECT id FROM variables WHERE codigo='REQUIERE_ALOJAMIENTO')
+AND vv.numero_version=1
+ON CONFLICT DO NOTHING;
+
+
+-- ============================================================
+-- TRANSPORTE
+-- ============================================================
+
+INSERT INTO variable_versiones (variable_id,numero_version,titulo_pregunta,activa,created_at)
+SELECT id,1,'¿Cuál es su principal medio de transporte?',
+       true,NOW()
+FROM variables WHERE codigo='MEDIO_TRANSPORTE'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO opciones_variable (
+    variable_version_id,codigo,texto,valor_numerico,orden,nivel_afectacion,activa,created_at
+)
+SELECT vv.id,o.codigo,o.texto,o.valor,o.orden,0,true,NOW()
+FROM variable_versiones vv
+CROSS JOIN (
+    VALUES
+    ('BUS','Transporte público / Bus',1,1),
+    ('MOTO','Motocicleta',2,2),
+    ('BICICLETA','Bicicleta',3,3),
+    ('A_PIE','A pie',4,4),
+    ('VEHICULO','Vehículo particular',5,5),
+    ('OTRO','Otro',6,6)
+) o(codigo,texto,valor,orden)
+WHERE vv.variable_id=(SELECT id FROM variables WHERE codigo='MEDIO_TRANSPORTE')
+AND vv.numero_version=1
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO variable_versiones (variable_id,numero_version,titulo_pregunta,activa,created_at)
+SELECT id,1,'¿Cómo se encuentra actualmente su medio de transporte?',
+       true,NOW()
+FROM variables WHERE codigo='ESTADO_TRANSPORTE'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO opciones_variable (
+    variable_version_id,codigo,texto,valor_numerico,orden,nivel_afectacion,activa,created_at
+)
+SELECT vv.id,o.codigo,o.texto,o.valor,o.orden,o.nivel,true,NOW()
+FROM variable_versiones vv
+CROSS JOIN (
+    VALUES
+    ('NORMAL','Normal',0,1,0),
+    ('AFECTADO','Afectado',1,2,2),
+    ('SUSPENDIDO','Suspendido / No disponible',2,3,4)
+) o(codigo,texto,valor,orden,nivel)
+WHERE vv.variable_id=(SELECT id FROM variables WHERE codigo='ESTADO_TRANSPORTE')
+AND vv.numero_version=1
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO variable_versiones (variable_id,numero_version,titulo_pregunta,activa,created_at)
+SELECT id,1,'¿Puede desplazarse hasta su centro de formación?',
+       true,NOW()
+FROM variables WHERE codigo='ACCESO_CENTRO'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO opciones_variable (
+    variable_version_id,codigo,texto,valor_numerico,orden,nivel_afectacion,activa,created_at
+)
+SELECT vv.id,o.codigo,o.texto,o.valor,o.orden,o.nivel,true,NOW()
+FROM variable_versiones vv
+CROSS JOIN (
+    VALUES
+    ('SI','Sí, normalmente',0,1,0),
+    ('DIFICULTAD','Sí, pero con dificultad',1,2,2),
+    ('NO','No puede desplazarse',2,3,5)
+) o(codigo,texto,valor,orden,nivel)
+WHERE vv.variable_id=(SELECT id FROM variables WHERE codigo='ACCESO_CENTRO')
+AND vv.numero_version=1
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO variable_versiones (variable_id,numero_version,titulo_pregunta,activa,created_at)
+SELECT id,1,'¿Cómo se encuentran las vías que utiliza para llegar al centro?',
+       true,NOW()
+FROM variables WHERE codigo='AFECTACION_VIA'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO opciones_variable (
+    variable_version_id,codigo,texto,valor_numerico,orden,nivel_afectacion,activa,created_at
+)
+SELECT vv.id,o.codigo,o.texto,o.valor,o.orden,o.nivel,true,NOW()
+FROM variable_versiones vv
+CROSS JOIN (
+    VALUES
+    ('NORMAL','Normal',0,1,0),
+    ('AFECTADA','Afectada',1,2,2),
+    ('CERRADA','Cerrada / No transitable',2,3,5)
+) o(codigo,texto,valor,orden,nivel)
+WHERE vv.variable_id=(SELECT id FROM variables WHERE codigo='AFECTACION_VIA')
+AND vv.numero_version=1
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO variable_versiones (variable_id,numero_version,titulo_pregunta,activa,created_at)
+SELECT id,1,'¿Cómo ha cambiado el costo de su transporte?',
+       true,NOW()
+FROM variables WHERE codigo='COSTO_TRANSPORTE'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO opciones_variable (
+    variable_version_id,codigo,texto,valor_numerico,orden,nivel_afectacion,activa,created_at
+)
+SELECT vv.id,o.codigo,o.texto,o.valor,o.orden,o.nivel,true,NOW()
+FROM variable_versiones vv
+CROSS JOIN (
+    VALUES
+    ('NORMAL','No ha aumentado',0,1,0),
+    ('AUMENTO','Ha aumentado',1,2,2),
+    ('NO_PUEDE_PAGAR','No puede pagarlo',2,3,5)
+) o(codigo,texto,valor,orden,nivel)
+WHERE vv.variable_id=(SELECT id FROM variables WHERE codigo='COSTO_TRANSPORTE')
+AND vv.numero_version=1
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO variable_versiones (variable_id,numero_version,titulo_pregunta,activa,created_at)
+SELECT id,1,'¿Requiere apoyo para transporte?',
+       true,NOW()
+FROM variables WHERE codigo='REQUIERE_TRANSPORTE'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO opciones_variable (
+    variable_version_id,codigo,texto,valor_numerico,orden,nivel_afectacion,activa,created_at
+)
+SELECT vv.id,o.codigo,o.texto,o.valor,o.orden,o.nivel,true,NOW()
+FROM variable_versiones vv
+CROSS JOIN (
+    VALUES
+    ('SI','Sí',1,1,4),
+    ('NO','No',0,2,0)
+) o(codigo,texto,valor,orden,nivel)
+WHERE vv.variable_id=(SELECT id FROM variables WHERE codigo='REQUIERE_TRANSPORTE')
+AND vv.numero_version=1
+ON CONFLICT DO NOTHING;
+
+
+-- ============================================================
+-- CONECTIVIDAD
+-- ============================================================
+
+INSERT INTO variable_versiones (variable_id,numero_version,titulo_pregunta,activa,created_at)
+SELECT id,1,'¿Tiene acceso actualmente a Internet?',
+       true,NOW()
+FROM variables WHERE codigo='TIENE_INTERNET'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO opciones_variable (
+    variable_version_id,codigo,texto,valor_numerico,orden,nivel_afectacion,activa,created_at
+)
+SELECT vv.id,o.codigo,o.texto,o.valor,o.orden,o.nivel,true,NOW()
+FROM variable_versiones vv
+CROSS JOIN (
+    VALUES
+    ('SI','Sí, estable',0,1,0),
+    ('INTERMITENTE','Sí, pero intermitente',1,2,2),
+    ('NO','No tiene Internet',2,3,5)
+) o(codigo,texto,valor,orden,nivel)
+WHERE vv.variable_id=(SELECT id FROM variables WHERE codigo='TIENE_INTERNET')
+AND vv.numero_version=1
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO variable_versiones (variable_id,numero_version,titulo_pregunta,activa,created_at)
+SELECT id,1,'¿Qué tipo de conexión a Internet utiliza?',
+       true,NOW()
+FROM variables WHERE codigo='TIPO_INTERNET'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO opciones_variable (
+    variable_version_id,codigo,texto,valor_numerico,orden,nivel_afectacion,activa,created_at
+)
+SELECT vv.id,o.codigo,o.texto,o.valor,o.orden,0,true,NOW()
+FROM variable_versiones vv
+CROSS JOIN (
+    VALUES
+    ('FIBRA','Fibra óptica',1,1),
+    ('CABLE','Cable',2,2),
+    ('DATOS','Datos móviles',3,3),
+    ('WIFI_PUBLICO','WiFi público',4,4),
+    ('OTRO','Otro',5,5)
+) o(codigo,texto,valor,orden)
+WHERE vv.variable_id=(SELECT id FROM variables WHERE codigo='TIPO_INTERNET')
+AND vv.numero_version=1
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO variable_versiones (variable_id,numero_version,titulo_pregunta,activa,created_at)
+SELECT id,1,'¿Tiene acceso a un computador para realizar sus actividades de formación?',
+       true,NOW()
+FROM variables WHERE codigo='TIENE_COMPUTADOR'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO opciones_variable (
+    variable_version_id,codigo,texto,valor_numerico,orden,nivel_afectacion,activa,created_at
+)
+SELECT vv.id,o.codigo,o.texto,o.valor,o.orden,o.nivel,true,NOW()
+FROM variable_versiones vv
+CROSS JOIN (
+    VALUES
+    ('SI_PROPIO','Sí, computador propio',0,1,0),
+    ('SI_COMPARTIDO','Sí, pero compartido',1,2,2),
+    ('NO','No tiene computador',2,3,5)
+) o(codigo,texto,valor,orden,nivel)
+WHERE vv.variable_id=(SELECT id FROM variables WHERE codigo='TIENE_COMPUTADOR')
+AND vv.numero_version=1
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO variable_versiones (variable_id,numero_version,titulo_pregunta,activa,created_at)
+SELECT id,1,'¿En qué estado se encuentra el computador disponible?',
+       true,NOW()
+FROM variables WHERE codigo='ESTADO_COMPUTADOR'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO opciones_variable (
+    variable_version_id,codigo,texto,valor_numerico,orden,nivel_afectacion,activa,created_at
+)
+SELECT vv.id,o.codigo,o.texto,o.valor,o.orden,o.nivel,true,NOW()
+FROM variable_versiones vv
+CROSS JOIN (
+    VALUES
+    ('BUENO','Funciona correctamente',0,1,0),
+    ('AFECTADO','Presenta fallas',1,2,2),
+    ('DANADO','Está dañado y no puede utilizarse',2,3,5),
+    ('PERDIDO','Fue perdido o destruido',3,4,5)
+) o(codigo,texto,valor,orden,nivel)
+WHERE vv.variable_id=(SELECT id FROM variables WHERE codigo='ESTADO_COMPUTADOR')
+AND vv.numero_version=1
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO variable_versiones (variable_id,numero_version,titulo_pregunta,activa,created_at)
+SELECT id,1,'¿Tiene teléfono celular disponible?',
+       true,NOW()
+FROM variables WHERE codigo='TIENE_CELULAR'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO opciones_variable (
+    variable_version_id,codigo,texto,valor_numerico,orden,nivel_afectacion,activa,created_at
+)
+SELECT vv.id,o.codigo,o.texto,o.valor,o.orden,o.nivel,true,NOW()
+FROM variable_versiones vv
+CROSS JOIN (
+    VALUES
+    ('SI','Sí',0,1,0),
+    ('NO','No',1,2,4)
+) o(codigo,texto,valor,orden,nivel)
+WHERE vv.variable_id=(SELECT id FROM variables WHERE codigo='TIENE_CELULAR')
+AND vv.numero_version=1
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO variable_versiones (variable_id,numero_version,titulo_pregunta,activa,created_at)
+SELECT id,1,'¿Tiene acceso actualmente a datos móviles?',
+       true,NOW()
+FROM variables WHERE codigo='ACCESO_DATOS'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO opciones_variable (
+    variable_version_id,codigo,texto,valor_numerico,orden,nivel_afectacion,activa,created_at
+)
+SELECT vv.id,o.codigo,o.texto,o.valor,o.orden,o.nivel,true,NOW()
+FROM variable_versiones vv
+CROSS JOIN (
+    VALUES
+    ('SI','Sí, suficientes',0,1,0),
+    ('LIMITADOS','Sí, pero limitados',1,2,2),
+    ('NO','No tiene datos',2,3,4)
+) o(codigo,texto,valor,orden,nivel)
+WHERE vv.variable_id=(SELECT id FROM variables WHERE codigo='ACCESO_DATOS')
+AND vv.numero_version=1
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO variable_versiones (variable_id,numero_version,titulo_pregunta,activa,created_at)
+SELECT id,1,'¿Puede continuar su formación de manera remota?',
+       true,NOW()
+FROM variables WHERE codigo='PUEDE_ESTUDIAR_REMOTO'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO opciones_variable (
+    variable_version_id,codigo,texto,valor_numerico,orden,nivel_afectacion,activa,created_at
+)
+SELECT vv.id,o.codigo,o.texto,o.valor,o.orden,o.nivel,true,NOW()
+FROM variable_versiones vv
+CROSS JOIN (
+    VALUES
+    ('SI','Sí',0,1,0),
+    ('DIFICULTAD','Sí, con dificultad',1,2,3),
+    ('NO','No',2,3,5)
+) o(codigo,texto,valor,orden,nivel)
+WHERE vv.variable_id=(SELECT id FROM variables WHERE codigo='PUEDE_ESTUDIAR_REMOTO')
+AND vv.numero_version=1
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO variable_versiones (variable_id,numero_version,titulo_pregunta,activa,created_at)
+SELECT id,1,'¿Requiere un computador para continuar su formación?',
+       true,NOW()
+FROM variables WHERE codigo='REQUIERE_EQUIPO'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO opciones_variable (
+    variable_version_id,codigo,texto,valor_numerico,orden,nivel_afectacion,activa,created_at
+)
+SELECT vv.id,o.codigo,o.texto,o.valor,o.orden,o.nivel,true,NOW()
+FROM variable_versiones vv
+CROSS JOIN (
+    VALUES
+    ('SI','Sí',1,1,4),
+    ('NO','No',0,2,0)
+) o(codigo,texto,valor,orden,nivel)
+WHERE vv.variable_id=(SELECT id FROM variables WHERE codigo='REQUIERE_EQUIPO')
+AND vv.numero_version=1
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO variable_versiones (variable_id,numero_version,titulo_pregunta,activa,created_at)
+SELECT id,1,'¿Requiere apoyo de conectividad?',
+       true,NOW()
+FROM variables WHERE codigo='REQUIERE_INTERNET'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO opciones_variable (
+    variable_version_id,codigo,texto,valor_numerico,orden,nivel_afectacion,activa,created_at
+)
+SELECT vv.id,o.codigo,o.texto,o.valor,o.orden,o.nivel,true,NOW()
+FROM variable_versiones vv
+CROSS JOIN (
+    VALUES
+    ('SI','Sí',1,1,4),
+    ('NO','No',0,2,0)
+) o(codigo,texto,valor,orden,nivel)
+WHERE vv.variable_id=(SELECT id FROM variables WHERE codigo='REQUIERE_INTERNET')
+AND vv.numero_version=1
+ON CONFLICT DO NOTHING;
 

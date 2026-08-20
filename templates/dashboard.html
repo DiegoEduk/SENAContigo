@@ -85,6 +85,10 @@
                 <button onclick="navSwitch('casos')" id="nav-casos" class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 flex items-center gap-2.5 transition">
                     <i class="fas fa-hand-holding-hand w-4 text-center"></i> Gestión de Casos & Reglas
                 </button>
+
+                <button onclick="navSwitch('contratos')" id="nav-contratos" class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 flex items-center gap-2.5 transition">
+                    <i class="fas fa-file-contract w-4 text-center"></i> Contratación de Aprendices
+                </button>
             </div>
 
             <!-- Quick Info Box -->
@@ -254,9 +258,122 @@
                         </table>
                     </div>
                 </div>
+            <!-- SECTION 6: CONTRATACIÓN DE APRENDICES -->
+            <section id="sec-contratos" class="hidden space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h3 class="text-lg font-bold text-sena-dark flex items-center gap-2">
+                            <i class="fas fa-file-contract text-sena-green"></i> Módulo de Contratación de Aprendices
+                        </h3>
+                        <p class="text-xs text-slate-500">Histórico de contratos de aprendizaje registrados por matrícula y ubicación de etapa práctica.</p>
+                    </div>
+                    <button onclick="openModalContrato()" class="px-4 py-2 bg-sena-green text-white font-bold text-xs rounded-lg hover:bg-sena-darkgreen transition shadow flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Registrar Contrato
+                    </button>
+                </div>
+
+                <div class="sena-card p-6 bg-white space-y-4">
+                    <!-- Filters -->
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <div class="relative flex-1">
+                            <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                            <input type="text" id="searchContratos" oninput="loadContratos()" placeholder="Buscar por empresa, aprendiz o ciudad..." class="w-full text-xs pl-8 pr-3 py-2 border border-slate-300 rounded-lg">
+                        </div>
+                        <select id="filterEstadoContrato" onchange="loadContratos()" class="text-xs py-2 px-3 border border-slate-300 rounded-lg">
+                            <option value="">Todos los estados</option>
+                            <option value="EN PATROCINIO">EN PATROCINIO</option>
+                            <option value="EN ETAPA PRACTICA">EN ETAPA PRACTICA</option>
+                            <option value="ACTIVO">ACTIVO</option>
+                            <option value="FINALIZADO">FINALIZADO</option>
+                            <option value="SUSPENDIDO">SUSPENDIDO</option>
+                            <option value="CANCELADO">CANCELADO</option>
+                        </select>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left text-slate-600">
+                            <thead class="bg-slate-100 text-slate-700 font-bold uppercase">
+                                <tr>
+                                    <th class="p-3">Empresa</th>
+                                    <th class="p-3">Aprendiz</th>
+                                    <th class="p-3">Ficha</th>
+                                    <th class="p-3">Ubicación Práctica</th>
+                                    <th class="p-3">Inicio</th>
+                                    <th class="p-3">Estado</th>
+                                    <th class="p-3 text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tblContratos" class="divide-y divide-slate-100">
+                                <tr><td colspan="7" class="p-4 text-center">Cargando contratos...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </section>
 
         </main>
+    </div>
+
+    <!-- Modal Nuevo Contrato -->
+    <div id="modalContrato" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="sena-card max-w-lg w-full bg-white p-6 space-y-4 relative">
+            <h3 class="text-lg font-bold text-sena-dark flex items-center gap-2">
+                <i class="fas fa-file-signature text-sena-green"></i> Registrar Contrato de Aprendizaje
+            </h3>
+            
+            <form onsubmit="handleCreateContrato(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700">Aprendiz / Matrícula</label>
+                    <select id="contratoMatriculaId" required class="w-full text-xs p-2 border border-slate-300 rounded">
+                        <option value="">Seleccione una matrícula...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700">Nombre de la Empresa Patrocinadora</label>
+                    <input type="text" id="contratoEmpresa" required placeholder="ej. BANCO DE BOGOTÁ" class="w-full text-xs p-2 border border-slate-300 rounded">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700">Departamento Práctica</label>
+                        <input type="text" id="contratoDepartamento" required placeholder="ej. BOGOTÁ D.C." class="w-full text-xs p-2 border border-slate-300 rounded">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700">Ciudad Práctica</label>
+                        <input type="text" id="contratoCiudad" required placeholder="ej. BOGOTÁ D.C." class="w-full text-xs p-2 border border-slate-300 rounded">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700">Fecha Inicio Contrato</label>
+                        <input type="date" id="contratoFechaInicio" required class="w-full text-xs p-2 border border-slate-300 rounded">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700">Fecha Fin (Opcional)</label>
+                        <input type="date" id="contratoFechaFin" class="w-full text-xs p-2 border border-slate-300 rounded">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700">Estado del Contrato</label>
+                    <select id="contratoEstado" required class="w-full text-xs p-2 border border-slate-300 rounded">
+                        <option value="EN PATROCINIO">EN PATROCINIO</option>
+                        <option value="EN ETAPA PRACTICA">EN ETAPA PRACTICA</option>
+                        <option value="ACTIVO">ACTIVO</option>
+                        <option value="FINALIZADO">FINALIZADO</option>
+                        <option value="SUSPENDIDO">SUSPENDIDO</option>
+                        <option value="CANCELADO">CANCELADO</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700">Observaciones</label>
+                    <textarea id="contratoObservaciones" rows="2" class="w-full text-xs p-2 border border-slate-300 rounded" placeholder="Notas sobre el contrato o patrocinio..."></textarea>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModalContrato()" class="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-800">Cancelar</button>
+                    <button type="submit" class="px-4 py-1.5 bg-sena-green text-white font-bold text-xs rounded hover:bg-sena-darkgreen">Guardar Contrato</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Modal Nueva Variable -->

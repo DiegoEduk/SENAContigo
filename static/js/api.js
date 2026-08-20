@@ -153,6 +153,27 @@ const API = {
       method: 'POST',
       body: JSON.stringify({ comentario, nuevo_estado: nuevoEstado })
     });
+  },
+
+  // Contratos de Aprendizaje
+  getContratos(params = {}) {
+    const q = new URLSearchParams(params).toString();
+    return this.request(`/contratos${q ? '?' + q : ''}`);
+  },
+  getContratosAprendiz(aprendizId) {
+    return this.request(`/contratos/aprendiz/${aprendizId}`);
+  },
+  createContrato(data) {
+    return this.request('/contratos', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  },
+  updateContrato(id, data) {
+    return this.request(`/contratos/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data)
+    });
   }
 };
 

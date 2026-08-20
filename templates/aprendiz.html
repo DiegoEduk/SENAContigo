@@ -78,6 +78,9 @@
             <button id="tabBtnHistorial" onclick="switchTab('historial')" class="py-2.5 px-4 text-slate-500 hover:text-slate-800 border-b-2 border-transparent flex items-center gap-2">
                 <i class="fas fa-clock-rotate-left"></i> Mi Evolución Histórica
             </button>
+            <button id="tabBtnContrato" onclick="switchTab('contrato')" class="py-2.5 px-4 text-slate-500 hover:text-slate-800 border-b-2 border-transparent flex items-center gap-2">
+                <i class="fas fa-file-contract"></i> Mi Contrato de Aprendizaje
+            </button>
         </div>
 
         <!-- Section 1: Encuestas Activas -->
@@ -104,6 +107,22 @@
                 <div id="timelineContainer" class="relative border-l-2 border-sena-green ml-4 space-y-6">
                     <!-- Dynamic timeline items -->
                     <div class="pl-6 text-xs text-slate-400">Cargando historial...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Mi Contrato de Aprendizaje -->
+        <section id="secContrato" class="hidden space-y-4">
+            <div class="sena-card p-6 bg-white space-y-4">
+                <h3 class="text-lg font-bold text-sena-dark flex items-center gap-2">
+                    <i class="fas fa-briefcase text-sena-green"></i> Estado e Histórico de Contrato de Aprendizaje
+                </h3>
+                <p class="text-xs text-slate-500 mb-4">
+                    Registro formal de tu alternativa productiva de contrato de aprendizaje patrocinado por empresas.
+                </p>
+
+                <div id="contratoAprendizContainer" class="space-y-4">
+                    <div class="text-xs text-slate-400">Cargando información del contrato...</div>
                 </div>
             </div>
         </section>

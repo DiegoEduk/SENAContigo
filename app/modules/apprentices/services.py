@@ -34,7 +34,10 @@ class ApprenticesService:
                 (Aprendiz.nombres.ilike(search_pattern)) |
                 (Aprendiz.apellidos.ilike(search_pattern)) |
                 (Aprendiz.numero_documento.ilike(search_pattern)) |
-                (Aprendiz.correo.ilike(search_pattern))
+                (Aprendiz.correo.ilike(search_pattern)) |
+                (Aprendiz.direccion_vivienda.ilike(search_pattern)) |
+                (Aprendiz.ciudad.ilike(search_pattern)) |
+                (Aprendiz.departamento.ilike(search_pattern))
             )
 
         stmt = stmt.offset(skip).limit(limit)

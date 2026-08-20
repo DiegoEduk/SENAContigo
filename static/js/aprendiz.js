@@ -19,20 +19,30 @@ document.addEventListener('DOMContentLoaded', async () => {
 function switchTab(tab) {
     const secEnc = document.getElementById('secEncuestas');
     const secHis = document.getElementById('secHistorial');
+    const secCon = document.getElementById('secContrato');
     const btnEnc = document.getElementById('tabBtnEncuestas');
     const btnHis = document.getElementById('tabBtnHistorial');
+    const btnCon = document.getElementById('tabBtnContrato');
+
+    secEnc.classList.add('hidden');
+    secHis.classList.add('hidden');
+    if (secCon) secCon.classList.add('hidden');
+
+    btnEnc.className = "py-2.5 px-4 text-slate-500 hover:text-slate-800 border-b-2 border-transparent flex items-center gap-2";
+    btnHis.className = "py-2.5 px-4 text-slate-500 hover:text-slate-800 border-b-2 border-transparent flex items-center gap-2";
+    if (btnCon) btnCon.className = "py-2.5 px-4 text-slate-500 hover:text-slate-800 border-b-2 border-transparent flex items-center gap-2";
 
     if (tab === 'encuestas') {
         secEnc.classList.remove('hidden');
-        secHis.classList.add('hidden');
         btnEnc.className = "py-2.5 px-4 text-sena-green border-b-2 border-sena-green flex items-center gap-2 font-bold";
-        btnHis.className = "py-2.5 px-4 text-slate-500 hover:text-slate-800 border-b-2 border-transparent flex items-center gap-2";
-    } else {
-        secEnc.classList.add('hidden');
+    } else if (tab === 'historial') {
         secHis.classList.remove('hidden');
         btnHis.className = "py-2.5 px-4 text-sena-green border-b-2 border-sena-green flex items-center gap-2 font-bold";
-        btnEnc.className = "py-2.5 px-4 text-slate-500 hover:text-slate-800 border-b-2 border-transparent flex items-center gap-2";
         loadHistorial();
+    } else if (tab === 'contrato') {
+        if (secCon) secCon.classList.remove('hidden');
+        if (btnCon) btnCon.className = "py-2.5 px-4 text-sena-green border-b-2 border-sena-green flex items-center gap-2 font-bold";
+        loadMiContrato();
     }
 }
 
@@ -278,3 +288,85 @@ function getLevelLabel(lvl) {
         default: return '0 - Sin afectación';
     }
 }
+
+async function loadMiContrato() {
+    const container = document.getElementById('contratoAprendizContainer');
+    if (!container) return;
+
+    const user = API.getUser();
+    if (!user) return;
+
+    try {
+        const contratos = await API.getContratosAprendiz(user.id);
+
+        if (!contratos || contratos.length === 0) {
+            container.innerHTML = `
+                <div class="p-6 bg-amber-50 rounded-xl border border-amber-200 text-amber-900 space-y-2">
+                    <div class="flex items-center gap-2 text-amber-700 font-bold text-sm">
+                        <i class="fas fa-info-circle text-lg"></i>
+                        <span>Sin Contrato de Aprendizaje Registrado</span>
+                    </div>
+                    <p class="text-xs text-amber-800 leading-relaxed">
+                        Actualmente no tienes ningún contrato de aprendizaje registrado en el sistema. 
+                        <strong>Nota:</strong> Si no hay contratos registrados es porque aún no cuentas con este recurso o tu alternativa productiva no ha sido vinculada formalmente por tu centro de formación.
+                    </p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = contratos.map(c => {
+            let stateBadge = 'bg-slate-100 text-slate-700';
+            if (c.estado_contrato === 'EN PATROCINIO') stateBadge = 'bg-indigo-100 text-indigo-800 font-bold';
+            if (c.estado_contrato === 'EN ETAPA PRACTICA') stateBadge = 'bg-emerald-100 text-sena-darkgreen font-bold';
+            if (c.estado_contrato === 'ACTIVO') stateBadge = 'bg-teal-100 text-teal-800 font-bold';
+            if (c.estado_contrato === 'FINALIZADO') stateBadge = 'bg-blue-100 text-blue-800 font-bold';
+            if (c.estado_contrato === 'SUSPENDIDO') stateBadge = 'bg-amber-100 text-amber-800 font-bold';
+
+            return `
+                <div class="sena-card p-5 bg-white border-l-4 border-sena-green space-y-3">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Empresa Patrocinadora</span>
+                            <h4 class="text-lg font-black text-slate-900">${c.nombre_empresa}</h4>
+                        </div>
+                        <span class="px-3 py-1 rounded-full text-xs font-bold ${stateBadge}">${c.estado_contrato}</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-600 pt-2 border-t border-slate-100">
+                        <div>
+                            <span class="font-bold block text-slate-700">Ubicación Etapa Práctica:</span>
+                            <span><i class="fas fa-map-marker-alt text-sena-green mr-1"></i> ${c.ciudad}, ${c.departamento}</span>
+                        </div>
+                        <div>
+                            <span class="font-bold block text-slate-700">Fecha de Inicio:</span>
+                            <span><i class="fas fa-calendar-check text-sena-green mr-1"></i> ${c.fecha_inicio_contrato}</span>
+                        </div>
+                        ${c.fecha_fin_contrato ? `
+                        <div>
+                            <span class="font-bold block text-slate-700">Fecha de Finalización:</span>
+                            <span><i class="fas fa-calendar-xmark text-slate-400 mr-1"></i> ${c.fecha_fin_contrato}</span>
+                        </div>
+                        ` : ''}
+                        ${c.ficha_id ? `
+                        <div>
+                            <span class="font-bold block text-slate-700">Ficha Formativa Originaria:</span>
+                            <span>Ficha ${c.ficha_id}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+
+                    ${c.observaciones ? `
+                    <div class="bg-slate-50 p-2.5 rounded text-xs text-slate-600 border border-slate-100">
+                        <strong class="text-slate-700">Observaciones:</strong> ${c.observaciones}
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        }).join('');
+
+    } catch (err) {
+        container.innerHTML = `<div class="p-4 bg-red-50 text-red-600 text-xs rounded border border-red-200">Error al cargar contrato: ${err.message}</div>`;
+    }
+}
+
