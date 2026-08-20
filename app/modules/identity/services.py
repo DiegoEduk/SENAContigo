@@ -58,13 +58,23 @@ class IdentityService:
         return user
 
     @staticmethod
-    async def list_users(session: AsyncSession, skip: int = 0, limit: int = 100) -> List[Usuario]:
+    async def list_users(
+        session: AsyncSession,
+        skip: int = 0,
+        limit: int = 100,
+        centro_id: Optional[str] = None,
+        regional_id: Optional[str] = None
+    ) -> List[Usuario]:
         stmt = (
             select(Usuario)
-            .offset(skip)
-            .limit(limit)
             .options(selectinload(Usuario.roles).selectinload(Rol.permisos))
         )
+        if centro_id:
+            stmt = stmt.where(Usuario.centro_id == centro_id)
+        elif regional_id:
+            stmt = stmt.where(Usuario.regional_id == regional_id)
+
+        stmt = stmt.offset(skip).limit(limit)
         result = await session.execute(stmt)
         return list(result.scalars().all())
 

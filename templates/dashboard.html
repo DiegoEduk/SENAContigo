@@ -12,37 +12,44 @@
           extend: {
             colors: {
               sena: {
-                green: '#39A900',
-                darkgreen: '#2E8800',
-                lightgreen: '#EBF8E1',
-                blue: '#00324D',
-                dark: '#0F172A'
+                primary: '#27F531',
+                secondary: '#63F86B',
+                tint: '#8FFA94',
+                border: '#E3E1E1',
+                bg: '#F3F2F2',
+                white: '#FFFFFF',
+                dark: '#252525'
               }
             }
           }
         }
       }
     </script>
-    <link rel="stylesheet" href="/static/css/styles.css">
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js CDN for Analytics -->
+    <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      body { background-color: #F3F2F2; color: #252525; font-family: system-ui, -apple-system, sans-serif; }
+      .sidebar-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+      .badge-state { font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 9999px; text-transform: uppercase; }
+    </style>
 </head>
-<body class="bg-slate-50 min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col">
 
-    <!-- Top Navbar -->
-    <header class="bg-sena-blue text-white border-b-4 border-sena-green sticky top-0 z-40 shadow-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+    <!-- Top Header -->
+    <header class="bg-sena-dark text-white border-b-4 border-sena-primary sticky top-0 z-40 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-sena-green rounded-full flex items-center justify-center font-black text-white text-lg shadow">
-                    SENA
-                </div>
+                <button onclick="toggleSidebar()" class="lg:hidden text-white hover:text-sena-primary p-2">
+                    <i class="fas fa-bars text-lg"></i>
+                </button>
+                <img src="/static/logosena.png" alt="Logo SENA" class="h-9 w-auto bg-white p-1 rounded-md">
                 <div>
-                    <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
-                        SENAContigo <span id="userRoleBadge" class="text-[10px] bg-emerald-700 px-2 py-0.5 rounded-full uppercase font-extrabold text-white">Cargando...</span>
+                    <h1 class="text-base font-black tracking-tight text-white flex items-center gap-2">
+                        SENAContigo <span id="userRoleBadge" class="text-[10px] bg-sena-primary text-sena-dark px-2 py-0.5 rounded-full uppercase font-black">Cargando...</span>
                     </h1>
-                    <p class="text-xs text-slate-300">Panel de Control & Inteligencia Institucional</p>
+                    <p class="text-[11px] text-slate-300">Plataforma Institucional de Inteligencia y Atención</p>
                 </div>
             </div>
             
@@ -51,108 +58,131 @@
                     <span id="navUserName" class="block text-xs font-bold text-white">Usuario</span>
                     <span id="navUserMail" class="text-[10px] text-slate-300">correo@sena.edu.co</span>
                 </div>
-                <button onclick="API.logout()" class="px-3 py-1.5 rounded bg-slate-800 hover:bg-red-600 text-white text-xs font-semibold transition flex items-center gap-1.5">
-                    <i class="fas fa-sign-out-alt"></i> Salir
+                <button onclick="API.logout()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-red-600 text-white text-xs font-bold transition flex items-center gap-1.5 border border-slate-700">
+                    <i class="fas fa-sign-out-alt"></i> <span class="hidden sm:inline">Salir</span>
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- Main Workspace Container -->
+    <!-- Main Grid Workspace -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         <!-- Sidebar Navigation -->
-        <aside class="lg:col-span-3 space-y-2">
-            <div class="sena-card p-3 bg-white space-y-1">
-                <p class="px-3 py-2 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Menú Principal</p>
+        <aside id="sidebar" class="lg:col-span-3 space-y-3 sidebar-transition">
+            <div class="bg-white rounded-2xl p-4 border border-sena-border shadow-sm space-y-1">
+                <p class="px-3 py-1.5 text-[10px] font-black text-slate-400 uppercase tracking-wider">Menú Principal</p>
                 
-                <button onclick="navSwitch('resumen')" id="nav-resumen" class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold text-sena-green bg-sena-lightgreen flex items-center gap-2.5 transition">
-                    <i class="fas fa-chart-pie w-4 text-center"></i> Resumen General
+                <button onclick="navSwitch('resumen')" id="nav-resumen" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-sena-dark hover:bg-sena-bg flex items-center gap-2.5 transition">
+                    <i class="fas fa-chart-pie w-4 text-center text-sena-primary"></i> Resumen General
                 </button>
 
-                <button onclick="navSwitch('analytics')" id="nav-analytics" class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 flex items-center gap-2.5 transition">
-                    <i class="fas fa-chart-line w-4 text-center"></i> Evolución Longitudinal
+                <button onclick="navSwitch('aprendices')" id="nav-aprendices" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2.5 transition">
+                    <i class="fas fa-user-graduate w-4 text-center text-slate-500"></i> Aprendices & Matrículas
                 </button>
 
-                <button onclick="navSwitch('variables')" id="nav-variables" class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 flex items-center gap-2.5 transition">
-                    <i class="fas fa-sliders w-4 text-center"></i> Variables Dinámicas
+                <button onclick="navSwitch('fichas')" id="nav-fichas" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2.5 transition">
+                    <i class="fas fa-id-card w-4 text-center text-slate-500"></i> Fichas Formativas
                 </button>
 
-                <button onclick="navSwitch('encuestas')" id="nav-encuestas" class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 flex items-center gap-2.5 transition">
-                    <i class="fas fa-list-check w-4 text-center"></i> Engine de Encuestas
+                <button onclick="navSwitch('contratos')" id="nav-contratos" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2.5 transition">
+                    <i class="fas fa-file-contract w-4 text-center text-slate-500"></i> Contratación de Aprendices
                 </button>
 
-                <button onclick="navSwitch('casos')" id="nav-casos" class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 flex items-center gap-2.5 transition">
-                    <i class="fas fa-hand-holding-hand w-4 text-center"></i> Gestión de Casos & Reglas
+                <button onclick="navSwitch('beneficios')" id="nav-beneficios" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2.5 transition">
+                    <i class="fas fa-hand-holding-heart w-4 text-center text-slate-500"></i> Beneficios Institucionales
                 </button>
 
-                <button onclick="navSwitch('contratos')" id="nav-contratos" class="w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 flex items-center gap-2.5 transition">
-                    <i class="fas fa-file-contract w-4 text-center"></i> Contratación de Aprendices
+                <button onclick="navSwitch('casos')" id="nav-casos" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2.5 transition">
+                    <i class="fas fa-headset w-4 text-center text-slate-500"></i> Casos de Atención & Alertas
+                </button>
+
+                <button onclick="navSwitch('variables')" id="nav-variables" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2.5 transition">
+                    <i class="fas fa-sliders w-4 text-center text-slate-500"></i> Variables Dinámicas
+                </button>
+
+                <button onclick="navSwitch('encuestas')" id="nav-encuestas" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2.5 transition">
+                    <i class="fas fa-list-check w-4 text-center text-slate-500"></i> Engine de Encuestas
+                </button>
+
+                <button onclick="navSwitch('analytics')" id="nav-analytics" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2.5 transition">
+                    <i class="fas fa-chart-line w-4 text-center text-slate-500"></i> Evolución Longitudinal
+                </button>
+
+                <button onclick="navSwitch('audit')" id="nav-audit" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2.5 transition">
+                    <i class="fas fa-shield-cat w-4 text-center text-slate-500"></i> Auditoría del Sistema
                 </button>
             </div>
 
-            <!-- Quick Info Box -->
-            <div class="sena-card p-4 bg-sena-blue text-white space-y-2">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-sena-green">Ámbito de Acceso SENA</span>
+            <!-- Scope Context Box -->
+            <div class="bg-sena-dark rounded-2xl p-4 text-white space-y-2 border border-slate-800 shadow-md">
+                <span class="text-[10px] font-black uppercase tracking-wider text-sena-primary">Ámbito de Jurisdicción</span>
                 <div id="scopeDetails" class="text-xs space-y-1 text-slate-300">
-                    <p><i class="fas fa-globe text-sena-green mr-1"></i> Cobertura Nacional</p>
+                    <p><i class="fas fa-globe text-sena-primary mr-1"></i> Cobertura Nacional</p>
                 </div>
             </div>
         </aside>
 
-        <!-- Dynamic Content Area -->
+        <!-- Main Content View Container -->
         <main class="lg:col-span-9 space-y-6">
+
+            <!-- Breadcrumbs -->
+            <div class="flex items-center text-xs text-slate-500 gap-2 bg-white px-4 py-2.5 rounded-xl border border-sena-border shadow-sm">
+                <i class="fas fa-house text-sena-dark"></i>
+                <span>/</span>
+                <span id="breadcrumbCurrent" class="font-bold text-sena-dark">Resumen General</span>
+            </div>
             
             <!-- SECTION 1: RESUMEN GENERAL -->
             <section id="sec-resumen" class="space-y-6">
                 <!-- KPI Cards -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="sena-card p-4 flex items-center space-x-4 border-l-4 border-sena-green">
-                        <div class="w-12 h-12 rounded-lg bg-emerald-100 text-sena-green flex items-center justify-center text-xl font-bold">
+                    <div class="bg-white p-5 rounded-2xl border border-sena-border shadow-sm flex items-center space-x-4 border-l-4 border-sena-primary">
+                        <div class="w-12 h-12 rounded-xl bg-sena-bg text-sena-dark flex items-center justify-center text-xl font-bold">
                             <i class="fas fa-user-graduate"></i>
                         </div>
                         <div>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase">Aprendices Registrados</span>
-                            <h3 id="kpiAprendices" class="text-2xl font-black text-slate-900">0</h3>
+                            <span class="text-[10px] font-extrabold text-slate-400 uppercase">Aprendices Registrados</span>
+                            <h3 id="kpiAprendices" class="text-2xl font-black text-sena-dark">0</h3>
                         </div>
                     </div>
 
-                    <div class="sena-card p-4 flex items-center space-x-4 border-l-4 border-blue-500">
-                        <div class="w-12 h-12 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-xl font-bold">
+                    <div class="bg-white p-5 rounded-2xl border border-sena-border shadow-sm flex items-center space-x-4 border-l-4 border-blue-500">
+                        <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl font-bold">
                             <i class="fas fa-clipboard-list"></i>
                         </div>
                         <div>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase">Encuestas Activas</span>
-                            <h3 id="kpiEncuestas" class="text-2xl font-black text-slate-900">0</h3>
+                            <span class="text-[10px] font-extrabold text-slate-400 uppercase">Encuestas Activas</span>
+                            <h3 id="kpiEncuestas" class="text-2xl font-black text-sena-dark">0</h3>
                         </div>
                     </div>
 
-                    <div class="sena-card p-4 flex items-center space-x-4 border-l-4 border-amber-500">
-                        <div class="w-12 h-12 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center text-xl font-bold">
+                    <div class="bg-white p-5 rounded-2xl border border-sena-border shadow-sm flex items-center space-x-4 border-l-4 border-amber-500">
+                        <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl font-bold">
                             <i class="fas fa-triangle-exclamation"></i>
                         </div>
                         <div>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase">Afectación Grave / Crítica</span>
-                            <h3 id="kpiAfectados" class="text-2xl font-black text-slate-900">0</h3>
+                            <span class="text-[10px] font-extrabold text-slate-400 uppercase">Riesgo Grave / Crítico</span>
+                            <h3 id="kpiAfectados" class="text-2xl font-black text-sena-dark">0</h3>
                         </div>
                     </div>
 
-                    <div class="sena-card p-4 flex items-center space-x-4 border-l-4 border-red-500">
-                        <div class="w-12 h-12 rounded-lg bg-red-100 text-red-600 flex items-center justify-center text-xl font-bold">
-                            <i class="fas fa-headset"></i>
+                    <div class="bg-white p-5 rounded-2xl border border-sena-border shadow-sm flex items-center space-x-4 border-l-4 border-emerald-600">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold">
+                            <i class="fas fa-file-contract"></i>
                         </div>
                         <div>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase">Casos Pendientes</span>
-                            <h3 id="kpiCasos" class="text-2xl font-black text-slate-900">0</h3>
+                            <span class="text-[10px] font-extrabold text-slate-400 uppercase">Contratos Vigentes</span>
+                            <h3 id="kpiContratos" class="text-2xl font-black text-sena-dark">0</h3>
                         </div>
                     </div>
                 </div>
 
                 <!-- Resumen por Variable Chart -->
-                <div class="sena-card p-6 bg-white space-y-4">
+                <div class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-4">
                     <div class="flex justify-between items-center">
-                        <h3 class="text-base font-bold text-sena-dark flex items-center gap-2">
-                            <i class="fas fa-chart-bar text-sena-green"></i> Distribución de Afectación por Variable (Último Corte)
+                        <h3 class="text-sm font-black text-sena-dark flex items-center gap-2">
+                            <i class="fas fa-chart-bar text-sena-dark"></i> Distribución de Afectación por Variable
                         </h3>
                     </div>
                     <div class="relative h-64 w-full">
@@ -161,125 +191,110 @@
                 </div>
             </section>
 
-            <!-- SECTION 2: ANALÍTICA LONGITUDINAL -->
-            <section id="sec-analytics" class="hidden space-y-6">
-                <div class="sena-card p-6 bg-white space-y-4">
-                    <h3 class="text-base font-bold text-sena-dark flex items-center gap-2">
-                        <i class="fas fa-timeline text-sena-green"></i> Comparativo de Evolución Temporal entre Cortes
-                    </h3>
-                    <p class="text-xs text-slate-500">Demuestra de manera empírica la variación de aprendices en nivel Grave/Crítico a lo largo del tiempo.</p>
-                    
-                    <div class="relative h-72 w-full">
-                        <canvas id="chartEvolucion"></canvas>
+            <!-- SECTION 2: APRENDICES & MATRÍCULAS -->
+            <section id="sec-aprendices" class="hidden space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h3 class="text-lg font-black text-sena-dark">Directorio de Aprendices SENA</h3>
+                        <p class="text-xs text-slate-500">Gestión de datos personales, residencia y matrículas académicas.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="exportToCSV('aprendices_sena.csv', window.currentAprendicesList || [])" class="px-3 py-2 bg-slate-800 text-white font-bold text-xs rounded-xl hover:bg-slate-900 transition flex items-center gap-1.5">
+                            <i class="fas fa-file-csv"></i> Exportar CSV
+                        </button>
+                        <button onclick="openModalAprendiz()" class="px-4 py-2 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary transition shadow flex items-center gap-2">
+                            <i class="fas fa-plus"></i> Nuevo Aprendiz
+                        </button>
                     </div>
                 </div>
 
-                <!-- Tabla de Índice de Afectación por Aprendiz -->
-                <div class="sena-card p-6 bg-white space-y-4">
-                    <h3 class="text-base font-bold text-sena-dark flex items-center gap-2">
-                        <i class="fas fa-users-viewfinder text-sena-green"></i> Matriz del Índice de Afectación Ponderado por Aprendiz
-                    </h3>
+                <div class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-4">
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <div class="relative flex-1">
+                            <i class="fas fa-search absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+                            <input type="text" id="searchAprendices" oninput="debounceLoadAprendices()" placeholder="Buscar por nombre, documento, correo, dirección o ciudad..." class="w-full text-xs pl-9 pr-3 py-2.5 border border-sena-border rounded-xl focus:outline-none focus:ring-2 focus:ring-sena-primary">
+                        </div>
+                    </div>
+
                     <div class="overflow-x-auto">
                         <table class="w-full text-xs text-left text-slate-600">
-                            <thead class="bg-slate-100 text-slate-700 font-bold uppercase">
+                            <thead class="bg-sena-bg text-sena-dark font-extrabold uppercase text-[11px]">
                                 <tr>
-                                    <th class="p-3">Aprendiz</th>
-                                    <th class="p-3">Ficha</th>
-                                    <th class="p-3">Índice Ponderado</th>
-                                    <th class="p-3">Clasificación de Riesgo</th>
+                                    <th class="p-3.5">Aprendiz</th>
+                                    <th class="p-3.5">Documento</th>
+                                    <th class="p-3.5">Correo / Celular</th>
+                                    <th class="p-3.5">Residencia</th>
+                                    <th class="p-3.5">Matrículas</th>
+                                    <th class="p-3.5 text-right">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody id="tblIndiceAfectacion" class="divide-y divide-slate-100">
-                                <tr><td colspan="4" class="p-4 text-center">Cargando datos...</td></tr>
+                            <tbody id="tblAprendices" class="divide-y divide-slate-100">
+                                <tr><td colspan="6" class="p-4 text-center">Cargando aprendices...</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </section>
 
-            <!-- SECTION 3: VARIABLES DINÁMICAS -->
-            <section id="sec-variables" class="hidden space-y-6">
-                <div class="flex justify-between items-center">
+            <!-- SECTION 3: FICHAS FORMATIVAS -->
+            <section id="sec-fichas" class="hidden space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <h3 class="text-lg font-bold text-sena-dark">Catálogo de Variables y Niveles de Afectación</h3>
-                        <p class="text-xs text-slate-500">Puedes crear y versionar nuevas variables dinámicas en cualquier momento.</p>
+                        <h3 class="text-lg font-black text-sena-dark">Catálogo de Fichas Formativas</h3>
+                        <p class="text-xs text-slate-500">Fichas de caracterización activas con ubicación territorial.</p>
                     </div>
-                    <button onclick="openModalVariable()" class="px-4 py-2 bg-sena-green text-white font-bold text-xs rounded-lg hover:bg-sena-darkgreen transition shadow flex items-center gap-2">
-                        <i class="fas fa-plus"></i> Nueva Variable
+                    <button onclick="openModalFicha()" class="px-4 py-2 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary transition shadow flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Nueva Ficha
                     </button>
                 </div>
 
-                <div id="listVariables" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Dynamic rendering -->
-                </div>
-            </section>
-
-            <!-- SECTION 4: ENGINE DE ENCUESTAS -->
-            <section id="sec-encuestas" class="hidden space-y-6">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h3 class="text-lg font-bold text-sena-dark">Encuestas Institucionales</h3>
-                        <p class="text-xs text-slate-500">Asigna variables dinámicas y segmenta las mediciones por Regional, Centro o Ficha.</p>
-                    </div>
-                    <button onclick="openModalEncuesta()" class="px-4 py-2 bg-sena-green text-white font-bold text-xs rounded-lg hover:bg-sena-darkgreen transition shadow flex items-center gap-2">
-                        <i class="fas fa-plus"></i> Crear Encuesta
-                    </button>
-                </div>
-
-                <div id="listEncuestas" class="space-y-4">
-                    <!-- Dynamic rendering -->
-                </div>
-            </section>
-
-            <!-- SECTION 5: GESTIÓN DE CASOS & REGLAS -->
-            <section id="sec-casos" class="hidden space-y-6">
-                <div class="sena-card p-6 bg-white space-y-4">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-base font-bold text-sena-dark flex items-center gap-2">
-                            <i class="fas fa-bolt text-amber-500"></i> Casos Generados por el Motor de Reglas
-                        </h3>
-                    </div>
-                    
+                <div class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-4">
                     <div class="overflow-x-auto">
                         <table class="w-full text-xs text-left text-slate-600">
-                            <thead class="bg-slate-100 text-slate-700 font-bold uppercase">
+                            <thead class="bg-sena-bg text-sena-dark font-extrabold uppercase text-[11px]">
                                 <tr>
-                                    <th class="p-3">Título / Alerta</th>
-                                    <th class="p-3">Aprendiz</th>
-                                    <th class="p-3">Prioridad</th>
-                                    <th class="p-3">Estado</th>
-                                    <th class="p-3">Fecha</th>
-                                    <th class="p-3 text-right">Acciones</th>
+                                    <th class="p-3.5">Ficha</th>
+                                    <th class="p-3.5">Programa</th>
+                                    <th class="p-3.5">Centro</th>
+                                    <th class="p-3.5">Ubicación</th>
+                                    <th class="p-3.5">Fechas</th>
+                                    <th class="p-3.5">Estado</th>
                                 </tr>
                             </thead>
-                            <tbody id="tblCasos" class="divide-y divide-slate-100">
-                                <tr><td colspan="6" class="p-4 text-center">Cargando casos...</td></tr>
+                            <tbody id="tblFichas" class="divide-y divide-slate-100">
+                                <tr><td colspan="6" class="p-4 text-center">Cargando fichas...</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
-            <!-- SECTION 6: CONTRATACIÓN DE APRENDICES -->
+            </section>
+
+            <!-- SECTION 4: CONTRATACIÓN DE APRENDICES -->
             <section id="sec-contratos" class="hidden space-y-6">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <h3 class="text-lg font-bold text-sena-dark flex items-center gap-2">
-                            <i class="fas fa-file-contract text-sena-green"></i> Módulo de Contratación de Aprendices
+                        <h3 class="text-lg font-black text-sena-dark flex items-center gap-2">
+                            <i class="fas fa-file-contract text-sena-dark"></i> Contratación de Aprendices
                         </h3>
-                        <p class="text-xs text-slate-500">Histórico de contratos de aprendizaje registrados por matrícula y ubicación de etapa práctica.</p>
+                        <p class="text-xs text-slate-500">Histórico de contratos de aprendizaje, patrocinio y ubicación de etapa práctica.</p>
                     </div>
-                    <button onclick="openModalContrato()" class="px-4 py-2 bg-sena-green text-white font-bold text-xs rounded-lg hover:bg-sena-darkgreen transition shadow flex items-center gap-2">
-                        <i class="fas fa-plus"></i> Registrar Contrato
-                    </button>
+                    <div class="flex gap-2">
+                        <button onclick="exportToCSV('contratos_sena.csv', window.currentContratosList || [])" class="px-3 py-2 bg-slate-800 text-white font-bold text-xs rounded-xl hover:bg-slate-900 transition flex items-center gap-1.5">
+                            <i class="fas fa-file-csv"></i> Exportar CSV
+                        </button>
+                        <button onclick="openModalContrato()" class="px-4 py-2 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary transition shadow flex items-center gap-2">
+                            <i class="fas fa-plus"></i> Registrar Contrato
+                        </button>
+                    </div>
                 </div>
 
-                <div class="sena-card p-6 bg-white space-y-4">
-                    <!-- Filters -->
+                <div class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-4">
                     <div class="flex flex-col sm:flex-row gap-3">
                         <div class="relative flex-1">
-                            <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-                            <input type="text" id="searchContratos" oninput="loadContratos()" placeholder="Buscar por empresa, aprendiz o ciudad..." class="w-full text-xs pl-8 pr-3 py-2 border border-slate-300 rounded-lg">
+                            <i class="fas fa-search absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+                            <input type="text" id="searchContratos" oninput="loadContratos()" placeholder="Buscar por empresa, aprendiz o ciudad..." class="w-full text-xs pl-9 pr-3 py-2.5 border border-sena-border rounded-xl focus:outline-none focus:ring-2 focus:ring-sena-primary">
                         </div>
-                        <select id="filterEstadoContrato" onchange="loadContratos()" class="text-xs py-2 px-3 border border-slate-300 rounded-lg">
+                        <select id="filterEstadoContrato" onchange="loadContratos()" class="text-xs py-2.5 px-3 border border-sena-border rounded-xl">
                             <option value="">Todos los estados</option>
                             <option value="EN PATROCINIO">EN PATROCINIO</option>
                             <option value="EN ETAPA PRACTICA">EN ETAPA PRACTICA</option>
@@ -292,15 +307,15 @@
 
                     <div class="overflow-x-auto">
                         <table class="w-full text-xs text-left text-slate-600">
-                            <thead class="bg-slate-100 text-slate-700 font-bold uppercase">
+                            <thead class="bg-sena-bg text-sena-dark font-extrabold uppercase text-[11px]">
                                 <tr>
-                                    <th class="p-3">Empresa</th>
-                                    <th class="p-3">Aprendiz</th>
-                                    <th class="p-3">Ficha</th>
-                                    <th class="p-3">Ubicación Práctica</th>
-                                    <th class="p-3">Inicio</th>
-                                    <th class="p-3">Estado</th>
-                                    <th class="p-3 text-right">Acciones</th>
+                                    <th class="p-3.5">Empresa</th>
+                                    <th class="p-3.5">Aprendiz</th>
+                                    <th class="p-3.5">Ficha</th>
+                                    <th class="p-3.5">Ubicación Práctica</th>
+                                    <th class="p-3.5">Inicio / Fin</th>
+                                    <th class="p-3.5">Estado</th>
+                                    <th class="p-3.5 text-right">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="tblContratos" class="divide-y divide-slate-100">
@@ -311,50 +326,258 @@
                 </div>
             </section>
 
+            <!-- SECTION 5: BENEFICIOS INSTITUCIONALES -->
+            <section id="sec-beneficios" class="hidden space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h3 class="text-lg font-black text-sena-dark">Beneficios Institucionales Directos</h3>
+                        <p class="text-xs text-slate-500">Catálogo de auxilios, apoyos y asignación a aprendices.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="openModalBeneficio()" class="px-3 py-2 bg-slate-800 text-white font-bold text-xs rounded-xl hover:bg-slate-900 transition flex items-center gap-1.5">
+                            <i class="fas fa-plus"></i> Nuevo Beneficio
+                        </button>
+                        <button onclick="openModalAsignarBeneficio()" class="px-4 py-2 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary transition shadow flex items-center gap-2">
+                            <i class="fas fa-hand-holding-heart"></i> Otorgar Beneficio
+                        </button>
+                    </div>
+                </div>
+
+                <div id="listBeneficios" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Dynamic Beneficios Cards -->
+                </div>
+            </section>
+
+            <!-- SECTION 6: CASOS DE ATENCIÓN & ALERTAS -->
+            <section id="sec-casos" class="hidden space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h3 class="text-lg font-black text-sena-dark">Gestión de Casos & Reglas de Atención</h3>
+                        <p class="text-xs text-slate-500">Alertas automáticas y casos de acompañamiento al aprendiz.</p>
+                    </div>
+                    <button onclick="openModalCaso()" class="px-4 py-2 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary transition shadow flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Nuevo Caso Manual
+                    </button>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-4">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left text-slate-600">
+                            <thead class="bg-sena-bg text-sena-dark font-extrabold uppercase text-[11px]">
+                                <tr>
+                                    <th class="p-3.5">Título / Caso</th>
+                                    <th class="p-3.5">Aprendiz</th>
+                                    <th class="p-3.5">Prioridad</th>
+                                    <th class="p-3.5">Estado</th>
+                                    <th class="p-3.5">Fecha</th>
+                                    <th class="p-3.5 text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tblCasos" class="divide-y divide-slate-100">
+                                <tr><td colspan="6" class="p-4 text-center">Cargando casos...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 7: VARIABLES DINÁMICAS -->
+            <section id="sec-variables" class="hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-black text-sena-dark">Catálogo de Variables Dinámicas</h3>
+                        <p class="text-xs text-slate-500">Creación y versionamiento de variables de caracterización.</p>
+                    </div>
+                    <button onclick="openModalVariable()" class="px-4 py-2 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary transition shadow flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Nueva Variable
+                    </button>
+                </div>
+
+                <div id="listVariables" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Dynamic Variables -->
+                </div>
+            </section>
+
+            <!-- SECTION 8: ENGINE DE ENCUESTAS -->
+            <section id="sec-encuestas" class="hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-black text-sena-dark">Engine de Encuestas Institucionales</h3>
+                        <p class="text-xs text-slate-500">Configuración de instrumentos de caracterización.</p>
+                    </div>
+                    <button onclick="openModalEncuesta()" class="px-4 py-2 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary transition shadow flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Crear Encuesta
+                    </button>
+                </div>
+
+                <div id="listEncuestas" class="space-y-4">
+                    <!-- Dynamic Encuestas -->
+                </div>
+            </section>
+
+            <!-- SECTION 9: ANALÍTICA LONGITUDINAL -->
+            <section id="sec-analytics" class="hidden space-y-6">
+                <div class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-4">
+                    <h3 class="text-sm font-black text-sena-dark flex items-center gap-2">
+                        <i class="fas fa-timeline text-sena-dark"></i> Variación de Afectación Temporal entre Cortes
+                    </h3>
+                    <div class="relative h-72 w-full">
+                        <canvas id="chartEvolucion"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-4">
+                    <h3 class="text-sm font-black text-sena-dark flex items-center gap-2">
+                        <i class="fas fa-users-viewfinder text-sena-dark"></i> Matriz del Índice de Afectación Ponderado
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left text-slate-600">
+                            <thead class="bg-sena-bg text-sena-dark font-extrabold uppercase text-[11px]">
+                                <tr>
+                                    <th class="p-3.5">Aprendiz</th>
+                                    <th class="p-3.5">Ficha</th>
+                                    <th class="p-3.5">Puntaje Ponderado</th>
+                                    <th class="p-3.5">Nivel de Riesgo</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tblIndiceAfectacion" class="divide-y divide-slate-100">
+                                <tr><td colspan="4" class="p-4 text-center">Cargando datos...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 10: AUDITORÍA -->
+            <section id="sec-audit" class="hidden space-y-6">
+                <div class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-4">
+                    <h3 class="text-sm font-black text-sena-dark flex items-center gap-2">
+                        <i class="fas fa-shield-cat text-sena-dark"></i> Registros de Auditoría e Historial de Operaciones
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left text-slate-600">
+                            <thead class="bg-sena-bg text-sena-dark font-extrabold uppercase text-[11px]">
+                                <tr>
+                                    <th class="p-3.5">Usuario</th>
+                                    <th class="p-3.5">Operación</th>
+                                    <th class="p-3.5">Entidad</th>
+                                    <th class="p-3.5">Detalles</th>
+                                    <th class="p-3.5">Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tblAudit" class="divide-y divide-slate-100">
+                                <tr><td colspan="5" class="p-4 text-center">Cargando registros de auditoría...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
         </main>
     </div>
 
-    <!-- Modal Nuevo Contrato -->
-    <div id="modalContrato" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="sena-card max-w-lg w-full bg-white p-6 space-y-4 relative">
-            <h3 class="text-lg font-bold text-sena-dark flex items-center gap-2">
-                <i class="fas fa-file-signature text-sena-green"></i> Registrar Contrato de Aprendizaje
+    <!-- MODAL NUEVO APRENDIZ -->
+    <div id="modalAprendiz" class="fixed inset-0 bg-sena-dark/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white max-w-lg w-full rounded-2xl p-6 space-y-4 border border-sena-border shadow-2xl relative">
+            <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
+                <i class="fas fa-user-plus text-sena-dark"></i> Registrar Nuevo Aprendiz SENA
             </h3>
-            
+            <form onsubmit="handleCreateAprendiz(event)" class="space-y-3">
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700">Tipo Doc *</label>
+                        <select id="apTipoDoc" required class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
+                            <option value="CC">CC</option>
+                            <option value="TI">TI</option>
+                            <option value="CE">CE</option>
+                            <option value="PEP">PEP</option>
+                        </select>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold text-slate-700">Número Documento *</label>
+                        <input type="text" id="apNumDoc" required placeholder="1000123456" class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700">Nombres *</label>
+                        <input type="text" id="apNombres" required placeholder="Juan Carlos" class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700">Apellidos *</label>
+                        <input type="text" id="apApellidos" required placeholder="Pérez Gómez" class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700">Correo Electrónico *</label>
+                    <input type="email" id="apCorreo" required placeholder="aprendiz@sena.edu.co" class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700">Celular / Teléfono</label>
+                    <input type="text" id="apCelular" placeholder="3001234567" class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700">Dirección</label>
+                        <input type="text" id="apDireccion" placeholder="Calle 10 # 5-20" class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700">Ciudad</label>
+                        <input type="text" id="apCiudad" placeholder="Bogotá D.C." class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700">Departamento</label>
+                        <input type="text" id="apDepartamento" placeholder="Cundinamarca" class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModalAprendiz()" class="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-800">Cancelar</button>
+                    <button type="submit" class="px-4 py-1.5 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary">Guardar Aprendiz</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL NUEVO CONTRATO -->
+    <div id="modalContrato" class="fixed inset-0 bg-sena-dark/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white max-w-lg w-full rounded-2xl p-6 space-y-4 border border-sena-border shadow-2xl relative">
+            <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
+                <i class="fas fa-file-signature text-sena-dark"></i> Registrar Contrato de Aprendizaje
+            </h3>
             <form onsubmit="handleCreateContrato(event)" class="space-y-3">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700">Aprendiz / Matrícula</label>
-                    <select id="contratoMatriculaId" required class="w-full text-xs p-2 border border-slate-300 rounded">
-                        <option value="">Seleccione una matrícula...</option>
+                    <label class="block text-xs font-bold text-slate-700">Seleccionar Aprendiz / Matrícula *</label>
+                    <select id="contratoMatriculaId" required class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
+                        <option value="">Cargando matrículas disponibles...</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700">Nombre de la Empresa Patrocinadora</label>
-                    <input type="text" id="contratoEmpresa" required placeholder="ej. BANCO DE BOGOTÁ" class="w-full text-xs p-2 border border-slate-300 rounded">
+                    <label class="block text-xs font-bold text-slate-700">Empresa Patrocinadora *</label>
+                    <input type="text" id="contratoEmpresa" required placeholder="ej. BANCO DE BOGOTÁ S.A." class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700">Departamento Práctica</label>
-                        <input type="text" id="contratoDepartamento" required placeholder="ej. BOGOTÁ D.C." class="w-full text-xs p-2 border border-slate-300 rounded">
+                        <label class="block text-xs font-bold text-slate-700">Departamento Práctica *</label>
+                        <input type="text" id="contratoDepartamento" required placeholder="ej. ANTIOQUIA" class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700">Ciudad Práctica</label>
-                        <input type="text" id="contratoCiudad" required placeholder="ej. BOGOTÁ D.C." class="w-full text-xs p-2 border border-slate-300 rounded">
+                        <label class="block text-xs font-bold text-slate-700">Ciudad Práctica *</label>
+                        <input type="text" id="contratoCiudad" required placeholder="ej. MEDELLÍN" class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700">Fecha Inicio Contrato</label>
-                        <input type="date" id="contratoFechaInicio" required class="w-full text-xs p-2 border border-slate-300 rounded">
+                        <label class="block text-xs font-bold text-slate-700">Fecha Inicio Contrato *</label>
+                        <input type="date" id="contratoFechaInicio" required class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700">Fecha Fin (Opcional)</label>
-                        <input type="date" id="contratoFechaFin" class="w-full text-xs p-2 border border-slate-300 rounded">
+                        <label class="block text-xs font-bold text-slate-700">Fecha Fin (Opcional)</label>
+                        <input type="date" id="contratoFechaFin" class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700">Estado del Contrato</label>
-                    <select id="contratoEstado" required class="w-full text-xs p-2 border border-slate-300 rounded">
+                    <label class="block text-xs font-bold text-slate-700">Estado del Contrato *</label>
+                    <select id="contratoEstado" required class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
                         <option value="EN PATROCINIO">EN PATROCINIO</option>
                         <option value="EN ETAPA PRACTICA">EN ETAPA PRACTICA</option>
                         <option value="ACTIVO">ACTIVO</option>
@@ -364,44 +587,221 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700">Observaciones</label>
-                    <textarea id="contratoObservaciones" rows="2" class="w-full text-xs p-2 border border-slate-300 rounded" placeholder="Notas sobre el contrato o patrocinio..."></textarea>
+                    <label class="block text-xs font-bold text-slate-700">Observaciones</label>
+                    <textarea id="contratoObservaciones" rows="2" class="w-full text-xs p-2.5 border border-sena-border rounded-xl" placeholder="Notas sobre el patrocinio..."></textarea>
                 </div>
-
-                <div class="pt-2 flex justify-end gap-2">
+                <div class="flex justify-end gap-2 pt-2">
                     <button type="button" onclick="closeModalContrato()" class="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-800">Cancelar</button>
-                    <button type="submit" class="px-4 py-1.5 bg-sena-green text-white font-bold text-xs rounded hover:bg-sena-darkgreen">Guardar Contrato</button>
+                    <button type="submit" class="px-4 py-1.5 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary">Guardar Contrato</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal Nueva Variable -->
-    <div id="modalVariable" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="sena-card max-w-lg w-full bg-white p-6 space-y-4 relative">
-            <h3 class="text-lg font-bold text-sena-dark">Crear Nueva Variable Dinámica</h3>
-            
+    <!-- MODAL NUEVA FICHA -->
+    <div id="modalFicha" class="fixed inset-0 bg-sena-dark/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white max-w-lg w-full rounded-2xl p-6 space-y-4 border border-sena-border shadow-2xl relative">
+            <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
+                <i class="fas fa-id-card text-sena-dark"></i> Registrar Ficha Formativa
+            </h3>
+            <form onsubmit="handleCreateFicha(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700">Número de Ficha *</label>
+                    <input type="text" id="fichaNum" required placeholder="ej. 2823901" class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700">Programa de Formación *</label>
+                    <select id="fichaPrograma" required class="w-full text-xs p-2.5 border border-sena-border rounded-xl"></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700">Centro de Formación *</label>
+                    <select id="fichaCentro" required class="w-full text-xs p-2.5 border border-sena-border rounded-xl"></select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700">Departamento</label>
+                        <input type="text" id="fichaDepartamento" placeholder="BOGOTÁ D.C." class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700">Ciudad</label>
+                        <input type="text" id="fichaCiudad" placeholder="BOGOTÁ D.C." class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700">Fecha Inicio *</label>
+                        <input type="date" id="fichaFechaInicio" required class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700">Fecha Fin *</label>
+                        <input type="date" id="fichaFechaFin" required class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModalFicha()" class="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-800">Cancelar</button>
+                    <button type="submit" class="px-4 py-1.5 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary">Guardar Ficha</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL NUEVA VARIABLE -->
+    <div id="modalVariable" class="fixed inset-0 bg-sena-dark/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white max-w-lg w-full rounded-2xl p-6 space-y-4 border border-sena-border shadow-2xl relative">
+            <h3 class="text-base font-black text-sena-dark">Crear Variable Dinámica</h3>
             <form onsubmit="handleCreateVariable(event)" class="space-y-3">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700">Categoría</label>
-                    <select id="varCategoriaId" required class="w-full text-xs p-2 border border-slate-300 rounded"></select>
+                    <label class="block text-xs font-bold text-slate-700">Categoría *</label>
+                    <select id="varCategoriaId" required class="w-full text-xs p-2.5 border border-sena-border rounded-xl"></select>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700">Nombre de la Variable</label>
-                    <input type="text" id="varNombre" required placeholder="ej. Disponibilidad de Computador" class="w-full text-xs p-2 border border-slate-300 rounded">
+                    <label class="block text-xs font-bold text-slate-700">Nombre de la Variable *</label>
+                    <input type="text" id="varNombre" required placeholder="ej. Acceso a Computador" class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700">Código Único (Mayúsculas)</label>
-                    <input type="text" id="varCodigo" required placeholder="ej. COMPUTADOR" class="w-full text-xs p-2 border border-slate-300 rounded">
+                    <label class="block text-xs font-bold text-slate-700">Código Único (Mayúsculas) *</label>
+                    <input type="text" id="varCodigo" required placeholder="ej. COMPUTADOR" class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700">Descripción</label>
-                    <textarea id="varDescripcion" rows="2" class="w-full text-xs p-2 border border-slate-300 rounded" placeholder="Detalles sobre qué mide esta variable..."></textarea>
+                    <label class="block text-xs font-bold text-slate-700">Descripción</label>
+                    <textarea id="varDescripcion" rows="2" class="w-full text-xs p-2.5 border border-sena-border rounded-xl" placeholder="Detalles sobre qué mide esta variable..."></textarea>
                 </div>
-
-                <div class="pt-2 flex justify-end gap-2">
+                <div class="flex justify-end gap-2 pt-2">
                     <button type="button" onclick="closeModalVariable()" class="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-800">Cancelar</button>
-                    <button type="submit" class="px-4 py-1.5 bg-sena-green text-white font-bold text-xs rounded hover:bg-sena-darkgreen">Guardar Variable</button>
+                    <button type="submit" class="px-4 py-1.5 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary">Guardar Variable</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL NUEVO CASO -->
+    <div id="modalCaso" class="fixed inset-0 bg-sena-dark/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white max-w-lg w-full rounded-2xl p-6 space-y-4 border border-sena-border shadow-2xl relative">
+            <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
+                <i class="fas fa-headset text-sena-dark"></i> Abrir Caso de Atención Manual
+            </h3>
+            <form onsubmit="handleCreateCaso(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700">Aprendiz *</label>
+                    <select id="casoAprendizId" required class="w-full text-xs p-2.5 border border-sena-border rounded-xl"></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700">Título / Alerta *</label>
+                    <input type="text" id="casoTitulo" required placeholder="ej. Solicitud Apoyo de Conectividad" class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700">Prioridad *</label>
+                    <select id="casoPrioridad" required class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
+                        <option value="BAJA">BAJA</option>
+                        <option value="MEDIA">MEDIA</option>
+                        <option value="ALTA">ALTA</option>
+                        <option value="CRITICA">CRÍTICA</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700">Descripción del Caso</label>
+                    <textarea id="casoDescripcion" rows="3" class="w-full text-xs p-2.5 border border-sena-border rounded-xl" placeholder="Explicación detallada del requerimiento..."></textarea>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModalCaso()" class="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-800">Cancelar</button>
+                    <button type="submit" class="px-4 py-1.5 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary">Guardar Caso</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL REGISTRAR SEGUIMIENTO CASO -->
+    <div id="modalSeguimiento" class="fixed inset-0 bg-sena-dark/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white max-w-md w-full rounded-2xl p-6 space-y-4 border border-sena-border shadow-2xl relative">
+            <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
+                <i class="fas fa-comment-dots text-sena-dark"></i> Registrar Seguimiento al Caso
+            </h3>
+            <form onsubmit="handleSaveSeguimiento(event)" class="space-y-3">
+                <input type="hidden" id="segCasoId">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700">Comentario / Nota de Evolución *</label>
+                    <textarea id="segComentario" required rows="3" class="w-full text-xs p-2.5 border border-sena-border rounded-xl" placeholder="Escriba los detalles de la gestión realizada..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700">Cambiar Estado del Caso (Opcional)</label>
+                    <select id="segNuevoEstado" class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
+                        <option value="">Mantener estado actual</option>
+                        <option value="EN_PROCESO">EN PROCESO</option>
+                        <option value="RESUELTO">RESUELTO</option>
+                        <option value="CERRADO">CERRADO</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModalSeguimiento()" class="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-800">Cancelar</button>
+                    <button type="submit" class="px-4 py-1.5 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary">Guardar Seguimiento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL NUEVO BENEFICIO -->
+    <div id="modalBeneficio" class="fixed inset-0 bg-sena-dark/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white max-w-lg w-full rounded-2xl p-6 space-y-4 border border-sena-border shadow-2xl relative">
+            <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
+                <i class="fas fa-hand-holding-heart text-sena-dark"></i> Crear Nuevo Beneficio en Catálogo
+            </h3>
+            <form onsubmit="handleCreateBeneficio(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700">Código del Beneficio *</label>
+                    <input type="text" id="benCodigo" required placeholder="ej. BEN-SALUD-MENTAL" class="w-full text-xs p-2.5 border border-sena-border rounded-xl uppercase">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700">Nombre del Beneficio *</label>
+                    <input type="text" id="benNombre" required placeholder="ej. Apoyo de Salud Mental y Psicología" class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700">Tipo de Beneficio *</label>
+                    <select id="benTipo" required class="w-full text-xs p-2.5 border border-sena-border rounded-xl">
+                        <option value="APOYO_FINANCIERO">APOYO FINANCIERO</option>
+                        <option value="ALIMENTACION">ALIMENTACIÓN</option>
+                        <option value="SALUD_Y_PROTECCION">SALUD Y PROTECCIÓN</option>
+                        <option value="BIBLIOTECA_Y_RECURSOS">BIBLIOTECA Y RECURSOS</option>
+                        <option value="TRANSPORTE">TRANSPORTE</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700">Descripción</label>
+                    <textarea id="benDescripcion" rows="2" class="w-full text-xs p-2.5 border border-sena-border rounded-xl" placeholder="Detalles de la cobertura..."></textarea>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="benAutoMatricula" class="rounded text-sena-primary">
+                    <label for="benAutoMatricula" class="text-xs font-bold text-slate-700">Asignar automáticamente al matricular</label>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModalBeneficio()" class="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-800">Cancelar</button>
+                    <button type="submit" class="px-4 py-1.5 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary">Guardar Beneficio</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL OTORGAR BENEFICIO -->
+    <div id="modalAsignarBeneficio" class="fixed inset-0 bg-sena-dark/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white max-w-lg w-full rounded-2xl p-6 space-y-4 border border-sena-border shadow-2xl relative">
+            <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
+                <i class="fas fa-gift text-sena-dark"></i> Otorgar Beneficio a Aprendiz
+            </h3>
+            <form onsubmit="handleAsignarBeneficio(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700">Aprendiz *</label>
+                    <select id="asigAprendizId" required class="w-full text-xs p-2.5 border border-sena-border rounded-xl"></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700">Beneficio a Otorgar *</label>
+                    <select id="asigBeneficioId" required class="w-full text-xs p-2.5 border border-sena-border rounded-xl"></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700">Observaciones</label>
+                    <textarea id="asigObservaciones" rows="2" class="w-full text-xs p-2.5 border border-sena-border rounded-xl" placeholder="Motivo o resolución del apoyo..."></textarea>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModalAsignarBeneficio()" class="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-800">Cancelar</button>
+                    <button type="submit" class="px-4 py-1.5 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary">Otorgar Beneficio</button>
                 </div>
             </form>
         </div>

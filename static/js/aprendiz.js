@@ -1,372 +1,353 @@
-// Learner Portal JavaScript Logic
-let currentSurveys = [];
-let selectedAnswers = {}; // { variable_id: opcion_id }
-let observations = {}; // { variable_id: text }
+/**
+ * SENAContigo - Learner Portal Controller
+ */
+
+let currentUser = null;
+let currentTab = 'encuestas';
+let activeSurvey = null;
+let currentQuestionIndex = 0;
+let userAnswers = {};
+let isDirtySurvey = false;
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const user = API.getUser();
-    if (!user || user.rol !== 'aprendiz') {
-        window.location.href = '/';
-        return;
+  try {
+    if (!API.getToken()) {
+      window.location.href = '/';
+      return;
     }
 
-    document.getElementById('userName').textContent = `${user.nombres} ${user.apellidos}`;
-    document.getElementById('greetingName').textContent = user.nombres;
+    currentUser = await API.getMe();
+    API.setUser(currentUser);
 
-    await loadEncuestas();
+    setupLearnerHeader();
+    loadTabContent();
+
+    // Prevent accidental navigation when survey is dirty
+    window.addEventListener('beforeunload', (e) => {
+      if (isDirtySurvey) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+  } catch (err) {
+    console.error('Error inicializando portal aprendiz:', err);
+    Toast.error('Sesión no válida. Inicie sesión de nuevo.');
+    API.logout();
+  }
 });
 
-function switchTab(tab) {
-    const secEnc = document.getElementById('secEncuestas');
-    const secHis = document.getElementById('secHistorial');
-    const secCon = document.getElementById('secContrato');
-    const btnEnc = document.getElementById('tabBtnEncuestas');
-    const btnHis = document.getElementById('tabBtnHistorial');
-    const btnCon = document.getElementById('tabBtnContrato');
+function setupLearnerHeader() {
+  if (!currentUser) return;
+  const nameEl = document.getElementById('learnerName');
+  if (nameEl) nameEl.innerText = `${currentUser.nombres} ${currentUser.apellidos}`;
 
-    secEnc.classList.add('hidden');
-    secHis.classList.add('hidden');
-    if (secCon) secCon.classList.add('hidden');
-
-    btnEnc.className = "py-2.5 px-4 text-slate-500 hover:text-slate-800 border-b-2 border-transparent flex items-center gap-2";
-    btnHis.className = "py-2.5 px-4 text-slate-500 hover:text-slate-800 border-b-2 border-transparent flex items-center gap-2";
-    if (btnCon) btnCon.className = "py-2.5 px-4 text-slate-500 hover:text-slate-800 border-b-2 border-transparent flex items-center gap-2";
-
-    if (tab === 'encuestas') {
-        secEnc.classList.remove('hidden');
-        btnEnc.className = "py-2.5 px-4 text-sena-green border-b-2 border-sena-green flex items-center gap-2 font-bold";
-    } else if (tab === 'historial') {
-        secHis.classList.remove('hidden');
-        btnHis.className = "py-2.5 px-4 text-sena-green border-b-2 border-sena-green flex items-center gap-2 font-bold";
-        loadHistorial();
-    } else if (tab === 'contrato') {
-        if (secCon) secCon.classList.remove('hidden');
-        if (btnCon) btnCon.className = "py-2.5 px-4 text-sena-green border-b-2 border-sena-green flex items-center gap-2 font-bold";
-        loadMiContrato();
-    }
+  const mailEl = document.getElementById('learnerMail');
+  if (mailEl) mailEl.innerText = currentUser.correo;
 }
 
-async function loadEncuestas() {
-    const container = document.getElementById('surveyContainer');
-    try {
-        currentSurveys = await API.getEncuestasPendientes();
-        
-        if (!currentSurveys || currentSurveys.length === 0) {
-            container.innerHTML = `
-                <div class="sena-card p-8 text-center bg-white space-y-3">
-                    <div class="w-16 h-16 bg-emerald-100 text-sena-green rounded-full flex items-center justify-center mx-auto text-2xl">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <h3 class="font-bold text-lg text-slate-800">¡Al día! No tienes encuestas pendientes</h3>
-                    <p class="text-xs text-slate-500 max-w-md mx-auto">
-                        Gracias por mantener actualizada tu información. El equipo SENAContigo te notificará cuando se habilite un nuevo seguimiento.
-                    </p>
-                </div>
-            `;
-            return;
-        }
+function switchTab(tabName) {
+  if (isDirtySurvey && !confirm('Tiene respuestas sin guardar en la encuesta actual. ¿Desea salir sin guardar?')) {
+    return;
+  }
+  isDirtySurvey = false;
+  currentTab = tabName;
 
-        renderSurveys(currentSurveys);
-    } catch (err) {
-        container.innerHTML = `
-            <div class="sena-card p-6 bg-red-50 text-red-700 text-sm border border-red-200 text-center">
-                <i class="fas fa-exclamation-triangle mr-2"></i> ${err.message}
-            </div>
-        `;
-    }
+  const buttons = document.querySelectorAll('[id^="tab-"]');
+  buttons.forEach(btn => {
+    btn.classList.remove('bg-[#27F531]', 'text-[#252525]', 'font-black');
+    btn.classList.add('text-slate-600', 'hover:bg-[#F3F2F2]');
+  });
+
+  const activeBtn = document.getElementById(`tab-${tabName}`);
+  if (activeBtn) {
+    activeBtn.classList.remove('text-slate-600', 'hover:bg-[#F3F2F2]');
+    activeBtn.classList.add('bg-[#27F531]', 'text-[#252525]', 'font-black');
+  }
+
+  const sections = document.querySelectorAll('section[id^="sec-"]');
+  sections.forEach(s => s.classList.add('hidden'));
+
+  const activeSec = document.getElementById(`sec-${tabName}`);
+  if (activeSec) activeSec.classList.remove('hidden');
+
+  loadTabContent();
 }
 
-function renderSurveys(surveys) {
-    const container = document.getElementById('surveyContainer');
-    container.innerHTML = '';
-
-    surveys.forEach((survey) => {
-        const card = document.createElement('div');
-        card.className = 'sena-card p-6 bg-white space-y-6 border-t-4 border-sena-green';
-
-        let questionsHtml = '';
-        if (survey.preguntas && survey.preguntas.length > 0) {
-            survey.preguntas.forEach((p, idx) => {
-                const v = p.variable;
-                if (!v) return;
-
-                let optionsHtml = '';
-                if (v.opciones && v.opciones.length > 0) {
-                    optionsHtml = v.opciones.map((op) => {
-                        const levelClass = getLevelBadgeClass(op.nivel_afectacion);
-                        return `
-                            <div class="option-radio-card flex items-start space-x-3 cursor-pointer" 
-                                 onclick="selectOption(${v.id}, ${op.id}, this)">
-                                <input type="radio" name="var_${v.id}" value="${op.id}" class="mt-1 text-sena-green focus:ring-sena-green">
-                                <div class="flex-grow text-xs">
-                                    <div class="flex items-center justify-between">
-                                        <span class="font-bold text-slate-800 text-sm">${op.texto}</span>
-                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${levelClass}">
-                                            ${getLevelLabel(op.nivel_afectacion)}
-                                        </span>
-                                    </div>
-                                    ${op.codigo ? `<span class="text-[10px] text-slate-400">Código: ${op.codigo}</span>` : ''}
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
-                }
-
-                questionsHtml += `
-                    <div class="space-y-3 border-b border-slate-100 pb-5 last:border-0">
-                        <div class="flex items-center gap-2">
-                            <span class="w-6 h-6 rounded-full bg-sena-green text-white font-bold text-xs flex items-center justify-center flex-shrink-0">${idx + 1}</span>
-                            <h4 class="font-bold text-sm text-slate-800">${v.nombre} ${p.obligatoria ? '<span class="text-red-500">*</span>' : ''}</h4>
-                        </div>
-                        ${v.descripcion ? `<p class="text-xs text-slate-500 italic pl-8">${v.descripcion}</p>` : ''}
-                        
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-0 sm:pl-8 pt-1">
-                            ${optionsHtml}
-                        </div>
-
-                        <div class="pl-0 sm:pl-8 pt-2">
-                            <input type="text" placeholder="Observaciones opcionales sobre esta situación..." 
-                                   onchange="setObservation(${v.id}, this.value)"
-                                   class="w-full text-xs p-2 border border-slate-200 rounded focus:ring-1 focus:ring-sena-green outline-none">
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        card.innerHTML = `
-            <div class="flex justify-between items-start border-b border-slate-100 pb-3">
-                <div>
-                    <span class="px-2 py-0.5 rounded bg-emerald-100 text-sena-darkgreen text-[10px] font-bold uppercase">Encuesta Activa</span>
-                    <h3 class="text-lg font-bold text-slate-900 mt-1">${survey.nombre}</h3>
-                    <p class="text-xs text-slate-500">${survey.descripcion || 'Diligencie todas las preguntas obligatorias.'}</p>
-                </div>
-            </div>
-
-            <form onsubmit="submitForm(event, ${survey.id})" class="space-y-6">
-                ${questionsHtml}
-                
-                <div id="surveyAlert_${survey.id}" class="hidden p-3 rounded bg-red-50 text-red-700 text-xs border border-red-200"></div>
-
-                <div class="pt-4 border-t border-slate-100 flex justify-end">
-                    <button type="submit" id="btnSubmit_${survey.id}" 
-                            class="px-6 py-2.5 bg-sena-green hover:bg-sena-darkgreen text-white font-bold text-sm rounded-lg transition shadow-md flex items-center gap-2">
-                        <i class="fas fa-paper-plane"></i> Enviar Respuestas
-                    </button>
-                </div>
-            </form>
-        `;
-
-        container.appendChild(card);
-    });
+function loadTabContent() {
+  switch (currentTab) {
+    case 'encuestas':
+      loadPendingSurveys();
+      break;
+    case 'contrato':
+      loadMyContract();
+      break;
+    case 'beneficios':
+      loadMyBenefits();
+      break;
+    case 'historial':
+      loadMyHistory();
+      break;
+  }
 }
 
-function selectOption(variableId, optionId, cardElem) {
-    selectedAnswers[variableId] = optionId;
-    const parent = cardElem.parentElement;
-    parent.querySelectorAll('.option-radio-card').forEach(c => c.classList.remove('selected'));
-    cardElem.classList.add('selected');
-    const radio = cardElem.querySelector('input[type="radio"]');
-    if (radio) radio.checked = true;
-}
+// TAB 1: SURVEY WIZARD
+async function loadPendingSurveys() {
+  const container = document.getElementById('surveyWizardContainer');
+  if (!container) return;
+  container.innerHTML = `<p class="text-center text-slate-400 py-8">Cargando encuestas pendientes...</p>`;
 
-function setObservation(variableId, val) {
-    observations[variableId] = val;
-}
-
-async function submitForm(e, surveyId) {
-    e.preventDefault();
-    const alertBox = document.getElementById(`surveyAlert_${surveyId}`);
-    const btn = document.getElementById(`btnSubmit_${surveyId}`);
-    alertBox.classList.add('hidden');
-
-    const survey = currentSurveys.find(s => s.id === surveyId);
-    if (!survey) return;
-
-    // Validate required
-    const missing = [];
-    survey.preguntas.forEach(p => {
-        if (p.obligatoria && !selectedAnswers[p.variable_id]) {
-            missing.push(p.variable ? p.variable.nombre : `Variable #${p.variable_id}`);
-        }
-    });
-
-    if (missing.length > 0) {
-        alertBox.innerHTML = `<i class="fas fa-exclamation-circle mr-1"></i> Por favor responda las preguntas obligatorias: <strong>${missing.join(', ')}</strong>`;
-        alertBox.classList.remove('hidden');
-        return;
+  try {
+    const encuestas = await API.getEncuestasPendientes();
+    if (!encuestas || !encuestas.length) {
+      container.innerHTML = `
+        <div class="text-center py-10 space-y-3">
+          <div class="w-16 h-16 bg-[#8FFA94]/30 text-sena-dark rounded-full flex items-center justify-center text-2xl mx-auto">
+            <i class="fas fa-circle-check"></i>
+          </div>
+          <h3 class="text-lg font-black text-sena-dark">¡Estás al día con tus encuestas!</h3>
+          <p class="text-xs text-slate-500">No tienes encuestas de caracterización pendientes por diligenciar.</p>
+        </div>
+      `;
+      return;
     }
 
-    // Format payload
-    const respuestasPayload = Object.keys(selectedAnswers).map(varId => ({
-        variable_id: parseInt(varId),
-        opcion_id: parseInt(selectedAnswers[varId]),
-        observacion: observations[varId] || null
+    activeSurvey = encuestas[0];
+    currentQuestionIndex = 0;
+    userAnswers = {};
+    isDirtySurvey = false;
+    renderSurveyQuestion();
+  } catch (err) {
+    container.innerHTML = `<p class="text-center text-red-500 py-8">Error cargando encuestas: ${err.message}</p>`;
+  }
+}
+
+function renderSurveyQuestion() {
+  const container = document.getElementById('surveyWizardContainer');
+  if (!container || !activeSurvey || !activeSurvey.preguntas || !activeSurvey.preguntas.length) return;
+
+  const total = activeSurvey.preguntas.length;
+  const q = activeSurvey.preguntas[currentQuestionIndex];
+  const progressPct = Math.round(((currentQuestionIndex + 1) / total) * 100);
+
+  let inputFieldsHtml = '';
+  if (q.opciones && q.opciones.length) {
+    inputFieldsHtml = `
+      <div class="space-y-2.5 pt-2">
+        ${q.opciones.map(opt => {
+          const isSelected = userAnswers[q.variable_id] === opt.id;
+          return `
+            <label onclick="selectOption(${q.variable_id}, ${opt.id})" class="flex items-center p-3 rounded-xl border ${isSelected ? 'border-[#27F531] bg-[#8FFA94]/20 font-bold' : 'border-sena-border hover:bg-slate-50'} cursor-pointer transition">
+              <input type="radio" name="var_${q.variable_id}" value="${opt.id}" ${isSelected ? 'checked' : ''} class="text-[#27F531] focus:ring-[#27F531]">
+              <span class="ml-3 text-xs text-sena-dark">${opt.texto_opcion}</span>
+            </label>
+          `;
+        }).join('')}
+      </div>
+    `;
+  } else {
+    inputFieldsHtml = `
+      <div class="pt-2">
+        <textarea id="textAns_${q.variable_id}" oninput="userAnswers[${q.variable_id}] = this.value; isDirtySurvey=true;" rows="3" class="w-full text-xs p-3 border border-sena-border rounded-xl focus:ring-2 focus:ring-[#27F531]" placeholder="Escriba su respuesta aquí...">${userAnswers[q.variable_id] || ''}</textarea>
+      </div>
+    `;
+  }
+
+  container.innerHTML = `
+    <div class="space-y-4">
+      <div class="flex justify-between items-center pb-3 border-b border-sena-border">
+        <div>
+          <span class="text-[10px] font-black uppercase text-slate-400">Encuesta Institucional</span>
+          <h3 class="font-black text-sena-dark text-lg">${activeSurvey.nombre}</h3>
+        </div>
+        <span class="text-xs font-black text-sena-dark bg-[#8FFA94] px-3 py-1 rounded-full">Pregunta ${currentQuestionIndex + 1} de ${total}</span>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+        <div class="bg-[#27F531] h-full transition-all duration-300" style="width: ${progressPct}%"></div>
+      </div>
+
+      <!-- Question Text -->
+      <div class="py-2 space-y-1">
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Variable: ${q.variable_codigo || 'PREGUNTA'}</span>
+        <h4 class="text-sm font-black text-sena-dark">${q.texto_pregunta || q.nombre}</h4>
+      </div>
+
+      ${inputFieldsHtml}
+
+      <!-- Navigation buttons -->
+      <div class="flex justify-between items-center pt-6 border-t border-sena-border">
+        <button onclick="prevQuestion()" ${currentQuestionIndex === 0 ? 'disabled class="opacity-40 cursor-not-allowed text-xs text-slate-400 px-4 py-2"' : 'class="px-4 py-2 bg-slate-200 text-sena-dark font-bold text-xs rounded-xl hover:bg-slate-300 transition"'}>
+          <i class="fas fa-chevron-left mr-1"></i> Anterior
+        </button>
+
+        ${currentQuestionIndex === total - 1 ? `
+          <button onclick="submitSurvey()" class="px-6 py-2.5 bg-[#27F531] text-[#252525] font-black text-xs uppercase tracking-wider rounded-xl hover:bg-[#63F86B] transition shadow-md flex items-center gap-2">
+            <i class="fas fa-paper-plane"></i> Finalizar y Enviar
+          </button>
+        ` : `
+          <button onclick="nextQuestion()" class="px-5 py-2.5 bg-[#252525] text-white font-bold text-xs rounded-xl hover:bg-slate-800 transition flex items-center gap-1">
+            Siguiente <i class="fas fa-chevron-right ml-1"></i>
+          </button>
+        `}
+      </div>
+    </div>
+  `;
+}
+
+function selectOption(varId, optId) {
+  userAnswers[varId] = optId;
+  isDirtySurvey = true;
+  renderSurveyQuestion();
+}
+
+function nextQuestion() {
+  if (currentQuestionIndex < activeSurvey.preguntas.length - 1) {
+    currentQuestionIndex++;
+    renderSurveyQuestion();
+  }
+}
+
+function prevQuestion() {
+  if (currentQuestionIndex > 0) {
+    currentQuestionIndex--;
+    renderSurveyQuestion();
+  }
+}
+
+async function submitSurvey() {
+  try {
+    const respuestasArray = Object.keys(userAnswers).map(varId => ({
+      variable_id: parseInt(varId),
+      opcion_id: typeof userAnswers[varId] === 'number' ? userAnswers[varId] : null,
+      observacion: typeof userAnswers[varId] === 'string' ? userAnswers[varId] : null
     }));
 
-    btn.disabled = true;
-    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Guardando respuestas...`;
-
-    try {
-        await API.submitRespuestas(surveyId, respuestasPayload);
-        alertBox.className = "p-4 rounded-lg bg-emerald-50 text-emerald-800 text-xs border border-emerald-300 font-medium";
-        alertBox.innerHTML = `<i class="fas fa-check-circle text-sena-green mr-1"></i> ¡Respuestas registradas exitosamente! Gracias por tu colaboración.`;
-        alertBox.classList.remove('hidden');
-        
-        setTimeout(() => {
-            selectedAnswers = {};
-            observations = {};
-            loadEncuestas();
-            switchTab('historial');
-        }, 1500);
-    } catch (err) {
-        alertBox.className = "p-3 rounded bg-red-50 text-red-700 text-xs border border-red-200";
-        alertBox.innerHTML = `<i class="fas fa-exclamation-circle mr-1"></i> ${err.message}`;
-        alertBox.classList.remove('hidden');
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<i class="fas fa-paper-plane"></i> Enviar Respuestas`;
-    }
+    await API.submitRespuestas(activeSurvey.id, respuestasArray);
+    isDirtySurvey = false;
+    Toast.success('¡Encuesta enviada exitosamente! Gracias por tu colaboración.', 'Encuesta Registrada');
+    loadPendingSurveys();
+  } catch (err) {
+    Toast.error(err.message, 'Fallo al enviar encuesta');
+  }
 }
 
-async function loadHistorial() {
-    const container = document.getElementById('timelineContainer');
-    try {
-        const history = await API.getMiHistorial();
-        if (!history || history.length === 0) {
-            container.innerHTML = `<p class="pl-6 text-xs text-slate-400 italic">No tienes respuestas registradas aún.</p>`;
-            return;
-        }
+// TAB 2: MI CONTRATO DE APRENDIZAJE
+async function loadMyContract() {
+  const container = document.getElementById('myContractContent');
+  if (!container) return;
+  container.innerHTML = `<p class="text-center text-slate-400 py-6">Cargando datos de contrato...</p>`;
 
-        // Group by fecha / encuesta
-        container.innerHTML = history.map(item => {
-            const dateStr = item.fecha_respuesta ? new Date(item.fecha_respuesta).toLocaleString('es-CO') : 'Fecha no especificada';
-            const vName = item.variable ? item.variable.nombre : 'Variable';
-            const opText = item.opcion ? item.opcion.texto : (item.respuesta_texto || 'Respuesta registrada');
-            const lvl = item.opcion ? item.opcion.nivel_afectacion : 0;
-            const levelClass = getLevelBadgeClass(lvl);
-            const levelLabel = getLevelLabel(lvl);
+  try {
+    const aprendizId = currentUser.aprendiz_id || currentUser.id;
+    const contratos = await API.getContratosAprendiz(aprendizId);
 
-            return `
-                <div class="relative pl-6 pb-4">
-                    <span class="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-sena-green border-2 border-white"></span>
-                    <div class="sena-card p-4 text-xs space-y-1">
-                        <div class="flex items-center justify-between text-slate-400 text-[10px]">
-                            <span><i class="fas fa-calendar-alt mr-1"></i> ${dateStr}</span>
-                            <span class="px-2 py-0.5 rounded-full font-bold ${levelClass}">${levelLabel}</span>
-                        </div>
-                        <h5 class="font-bold text-slate-800 text-sm">${vName}</h5>
-                        <p class="text-slate-600 font-medium">Respuesta: <span class="text-sena-green font-bold">${opText}</span></p>
-                        ${item.observacion ? `<p class="text-slate-400 italic">"${item.observacion}"</p>` : ''}
-                    </div>
-                </div>
-            `;
-        }).join('');
-    } catch (err) {
-        container.innerHTML = `<p class="pl-6 text-xs text-red-500">Error al cargar historial: ${err.message}</p>`;
+    if (!contratos || !contratos.length) {
+      container.innerHTML = `
+        <div class="p-8 text-center bg-[#F3F2F2] rounded-2xl border border-sena-border space-y-3">
+          <div class="w-14 h-14 bg-slate-200 text-slate-500 rounded-full flex items-center justify-center text-xl mx-auto">
+            <i class="fas fa-folder-open"></i>
+          </div>
+          <h4 class="font-black text-sena-dark text-base">Aún no registras un Contrato de Aprendizaje</h4>
+          <p class="text-xs text-slate-500 max-w-md mx-auto">Si no hay contratos registrados es porque el aprendiz aún no tiene ese recurso asignado por la empresa patrocinadora o el centro.</p>
+        </div>
+      `;
+      return;
     }
+
+    const c = contratos[0];
+    let badgeStyle = 'bg-emerald-100 text-emerald-900 border border-emerald-300';
+    if (c.estado_contrato === 'EN PATROCINIO') badgeStyle = 'bg-indigo-100 text-indigo-900 border border-indigo-300';
+
+    container.innerHTML = `
+      <div class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-4">
+        <div class="flex justify-between items-start border-b border-sena-border pb-3">
+          <div>
+            <span class="text-[10px] font-black uppercase text-slate-400">Empresa Patrocinadora</span>
+            <h3 class="text-lg font-black text-sena-dark">${c.nombre_empresa}</h3>
+          </div>
+          <span class="badge-state ${badgeStyle}">${c.estado_contrato}</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div class="bg-[#F3F2F2] p-3.5 rounded-xl space-y-1">
+            <span class="text-slate-400 font-extrabold uppercase text-[10px] block">Ubicación Etapa Práctica</span>
+            <p class="font-bold text-sena-dark">${c.ciudad || 'N/A'}, ${c.departamento || ''}</p>
+          </div>
+
+          <div class="bg-[#F3F2F2] p-3.5 rounded-xl space-y-1">
+            <span class="text-slate-400 font-extrabold uppercase text-[10px] block">Vigencia del Contrato</span>
+            <p class="font-bold text-sena-dark">Inicio: ${c.fecha_inicio_contrato} ${c.fecha_fin_contrato ? '| Fin: ' + c.fecha_fin_contrato : ''}</p>
+          </div>
+        </div>
+
+        ${c.observaciones ? `
+          <div class="pt-2">
+            <span class="text-slate-400 font-extrabold uppercase text-[10px] block mb-1">Observaciones</span>
+            <p class="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200">${c.observaciones}</p>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  } catch (err) {
+    container.innerHTML = `<p class="text-center text-red-500 py-6">Error cargando contrato: ${err.message}</p>`;
+  }
 }
 
-function getLevelBadgeClass(lvl) {
-    switch (parseInt(lvl)) {
-        case 0: return 'badge-level-0';
-        case 1: return 'badge-level-1';
-        case 2: return 'badge-level-2';
-        case 3: return 'badge-level-3';
-        case 4: return 'badge-level-4';
-        default: return 'badge-level-0';
+// TAB 3: MIS BENEFICIOS
+async function loadMyBenefits() {
+  const container = document.getElementById('myBenefitsList');
+  if (!container) return;
+  container.innerHTML = `<p class="col-span-2 text-center text-slate-400 py-6">Cargando beneficios...</p>`;
+
+  try {
+    const aprendizId = currentUser.aprendiz_id || currentUser.id;
+    const beneficios = await API.getBeneficiosAprendiz(aprendizId);
+
+    if (!beneficios || !beneficios.length) {
+      container.innerHTML = `<div class="col-span-2 p-6 text-center text-slate-400 bg-[#F3F2F2] rounded-2xl border border-sena-border">No tienes beneficios asignados en este momento.</div>`;
+      return;
     }
+
+    container.innerHTML = beneficios.map(b => `
+      <div class="bg-white p-5 rounded-2xl border border-sena-border shadow-sm space-y-2">
+        <div class="flex justify-between items-center">
+          <span class="text-[10px] font-black uppercase bg-[#8FFA94] text-sena-dark px-2.5 py-0.5 rounded-full">${b.estado || 'ACTIVO'}</span>
+          <span class="text-[10px] text-slate-400 font-bold">${b.origen || 'AUTOMATICO'}</span>
+        </div>
+        <h4 class="font-black text-sena-dark text-sm">${b.beneficio_nombre || 'Beneficio SENA'}</h4>
+        <p class="text-xs text-slate-500">${b.observaciones || 'Otorgado por la institución.'}</p>
+      </div>
+    `).join('');
+  } catch (err) {
+    container.innerHTML = `<p class="col-span-2 text-center text-red-500 py-6">Error cargando beneficios: ${err.message}</p>`;
+  }
 }
 
-function getLevelLabel(lvl) {
-    switch (parseInt(lvl)) {
-        case 0: return '0 - Sin afectación';
-        case 1: return '1 - Leve';
-        case 2: return '2 - Moderada';
-        case 3: return '3 - Grave';
-        case 4: return '4 - Crítica';
-        default: return '0 - Sin afectación';
+// TAB 4: MI HISTORIAL
+async function loadMyHistory() {
+  const container = document.getElementById('myHistoryTimeline');
+  if (!container) return;
+  container.innerHTML = `<p class="text-center text-slate-400 py-6">Cargando historial...</p>`;
+
+  try {
+    const historial = await API.getMiHistorial();
+
+    if (!historial || !historial.length) {
+      container.innerHTML = `<div class="p-6 text-center text-slate-400 bg-[#F3F2F2] rounded-2xl border border-sena-border">No has diligenciado respuestas anteriormente.</div>`;
+      return;
     }
+
+    container.innerHTML = historial.map(h => `
+      <div class="p-4 bg-white rounded-2xl border border-sena-border shadow-sm flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-bold text-slate-400 block">${h.created_at ? h.created_at.split('T')[0] : 'N/A'}</span>
+          <h4 class="font-bold text-sena-dark text-xs">${h.variable_codigo || 'Variable'}</h4>
+        </div>
+        <span class="badge-state bg-[#8FFA94] text-sena-dark">Nivel Afectación: ${h.nivel_afectacion_registrado}</span>
+      </div>
+    `).join('');
+  } catch (err) {
+    container.innerHTML = `<p class="text-center text-red-500 py-6">Error cargando historial: ${err.message}</p>`;
+  }
 }
-
-async function loadMiContrato() {
-    const container = document.getElementById('contratoAprendizContainer');
-    if (!container) return;
-
-    const user = API.getUser();
-    if (!user) return;
-
-    try {
-        const contratos = await API.getContratosAprendiz(user.id);
-
-        if (!contratos || contratos.length === 0) {
-            container.innerHTML = `
-                <div class="p-6 bg-amber-50 rounded-xl border border-amber-200 text-amber-900 space-y-2">
-                    <div class="flex items-center gap-2 text-amber-700 font-bold text-sm">
-                        <i class="fas fa-info-circle text-lg"></i>
-                        <span>Sin Contrato de Aprendizaje Registrado</span>
-                    </div>
-                    <p class="text-xs text-amber-800 leading-relaxed">
-                        Actualmente no tienes ningún contrato de aprendizaje registrado en el sistema. 
-                        <strong>Nota:</strong> Si no hay contratos registrados es porque aún no cuentas con este recurso o tu alternativa productiva no ha sido vinculada formalmente por tu centro de formación.
-                    </p>
-                </div>
-            `;
-            return;
-        }
-
-        container.innerHTML = contratos.map(c => {
-            let stateBadge = 'bg-slate-100 text-slate-700';
-            if (c.estado_contrato === 'EN PATROCINIO') stateBadge = 'bg-indigo-100 text-indigo-800 font-bold';
-            if (c.estado_contrato === 'EN ETAPA PRACTICA') stateBadge = 'bg-emerald-100 text-sena-darkgreen font-bold';
-            if (c.estado_contrato === 'ACTIVO') stateBadge = 'bg-teal-100 text-teal-800 font-bold';
-            if (c.estado_contrato === 'FINALIZADO') stateBadge = 'bg-blue-100 text-blue-800 font-bold';
-            if (c.estado_contrato === 'SUSPENDIDO') stateBadge = 'bg-amber-100 text-amber-800 font-bold';
-
-            return `
-                <div class="sena-card p-5 bg-white border-l-4 border-sena-green space-y-3">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Empresa Patrocinadora</span>
-                            <h4 class="text-lg font-black text-slate-900">${c.nombre_empresa}</h4>
-                        </div>
-                        <span class="px-3 py-1 rounded-full text-xs font-bold ${stateBadge}">${c.estado_contrato}</span>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-600 pt-2 border-t border-slate-100">
-                        <div>
-                            <span class="font-bold block text-slate-700">Ubicación Etapa Práctica:</span>
-                            <span><i class="fas fa-map-marker-alt text-sena-green mr-1"></i> ${c.ciudad}, ${c.departamento}</span>
-                        </div>
-                        <div>
-                            <span class="font-bold block text-slate-700">Fecha de Inicio:</span>
-                            <span><i class="fas fa-calendar-check text-sena-green mr-1"></i> ${c.fecha_inicio_contrato}</span>
-                        </div>
-                        ${c.fecha_fin_contrato ? `
-                        <div>
-                            <span class="font-bold block text-slate-700">Fecha de Finalización:</span>
-                            <span><i class="fas fa-calendar-xmark text-slate-400 mr-1"></i> ${c.fecha_fin_contrato}</span>
-                        </div>
-                        ` : ''}
-                        ${c.ficha_id ? `
-                        <div>
-                            <span class="font-bold block text-slate-700">Ficha Formativa Originaria:</span>
-                            <span>Ficha ${c.ficha_id}</span>
-                        </div>
-                        ` : ''}
-                    </div>
-
-                    ${c.observaciones ? `
-                    <div class="bg-slate-50 p-2.5 rounded text-xs text-slate-600 border border-slate-100">
-                        <strong class="text-slate-700">Observaciones:</strong> ${c.observaciones}
-                    </div>
-                    ` : ''}
-                </div>
-            `;
-        }).join('');
-
-    } catch (err) {
-        container.innerHTML = `<div class="p-4 bg-red-50 text-red-600 text-xs rounded border border-red-200">Error al cargar contrato: ${err.message}</div>`;
-    }
-}
-

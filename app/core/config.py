@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     DEBUG: bool = True
 
     # Database
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgrespassword2026@localhost:5432/senacontigo"
+    DATABASE_URL: str = "sqlite+aiosqlite:///./senacontigo.db"
 
     # Redis
     REDIS_URL: str = "redis://localhost:6379/0"

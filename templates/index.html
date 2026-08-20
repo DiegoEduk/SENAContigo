@@ -3,21 +3,290 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SENAContigo - Plataforma de Caracterización y Atención</title>
+    <title>SENAContigo - Portal de Acceso e Inteligencia Institucional</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              sena: {
+                primary: '#27F531',
+                secondary: '#63F86B',
+                tint: '#8FFA94',
+                border: '#E3E1E1',
+                bg: '#F3F2F2',
+                white: '#FFFFFF',
+                dark: '#252525'
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 40px; text-align: center; }
-        .card { background: white; border-radius: 12px; padding: 40px; max-width: 600px; margin: 0 auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        h1 { color: #39a900; }
-        p { color: #64748b; font-size: 1.1rem; }
-        .btn { display: inline-block; background-color: #39a900; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; margin-top: 20px; }
-        .btn:hover { background-color: #2d8600; }
+      body { background-color: #F3F2F2; color: #252525; font-family: system-ui, -apple-system, sans-serif; }
+      .bg-gradient-sena { background: linear-gradient(135deg, #252525 0%, #1e1e1e 100%); }
+      .glow-sena { box-shadow: 0 0 25px rgba(39, 245, 49, 0.25); }
     </style>
 </head>
-<body>
-    <div class="card">
-        <h1>SENAContigo REST API</h1>
-        <p>Sistema de Caracterización, Gestión de Vulnerabilidades y Motor de Reglas de Atención SENA.</p>
-        <a href="/docs" class="btn">Ver Documentación Interactiva (Swagger UI)</a>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-sena-dark border-b-4 border-sena-primary text-white py-3 px-6 shadow-md">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <img src="/static/logosena.png" alt="Logo SENA" class="h-10 w-auto object-contain bg-white p-1 rounded-lg">
+                <div>
+                    <h1 class="text-lg font-black tracking-tight flex items-center gap-2">
+                        SENAContigo <span class="text-[10px] bg-sena-primary text-sena-dark px-2 py-0.5 rounded-full uppercase font-black">v1.0</span>
+                    </h1>
+                    <p class="text-xs text-slate-300">Plataforma de Caracterización, Seguimiento Longitudinal y Atención SENA</p>
+                </div>
+            </div>
+            
+            <button onclick="toggleApiConfigModal()" class="text-xs text-slate-300 hover:text-sena-primary transition flex items-center gap-1.5 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700">
+                <i class="fas fa-network-wired text-sena-primary"></i> <span id="currentApiUrlDisplay">API Base</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 py-8 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        
+        <!-- Hero Information -->
+        <div class="lg:col-span-7 space-y-6">
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#8FFA94]/20 border border-[#27F531]/40 text-sena-dark text-xs font-bold">
+                <i class="fas fa-shield-halved text-sena-dark"></i> Sistema de Inteligencia Institucional y Bienestar SENA
+            </div>
+            
+            <h2 class="text-4xl sm:text-5xl font-black text-sena-dark leading-tight">
+                Caracterización y Respuesta Integral para Aprendices SENA
+            </h2>
+            
+            <p class="text-slate-600 text-sm leading-relaxed max-w-2xl">
+                Plataforma unificada para captura de datos, diligenciamiento de encuestas socioeconómicas, seguimiento a la etapa práctica, gestión de contratos de aprendizaje y asignación directa de beneficios institucionales.
+            </p>
+
+            <!-- Feature Pills -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                <div class="p-4 bg-white rounded-xl border border-sena-border shadow-sm flex items-start gap-3">
+                    <div class="p-2.5 rounded-lg bg-sena-bg text-sena-dark font-bold">
+                        <i class="fas fa-[#27F531] fa-file-contract text-lg"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-xs text-sena-dark">Contratación de Aprendices</h4>
+                        <p class="text-[11px] text-slate-500">Histórico de patrocinio, etapa práctica y seguimiento regional.</p>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-white rounded-xl border border-sena-border shadow-sm flex items-start gap-3">
+                    <div class="p-2.5 rounded-lg bg-sena-bg text-sena-dark font-bold">
+                        <i class="fas fa-hand-holding-heart text-lg text-emerald-600"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-xs text-sena-dark">Beneficios Institucionales</h4>
+                        <p class="text-[11px] text-slate-500">Gestión de auxilios, apoyos de alimentación y salud mental.</p>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-white rounded-xl border border-sena-border shadow-sm flex items-start gap-3">
+                    <div class="p-2.5 rounded-lg bg-sena-bg text-sena-dark font-bold">
+                        <i class="fas fa-chart-line text-lg text-emerald-700"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-xs text-sena-dark">Analítica Longitudinal</h4>
+                        <p class="text-[11px] text-slate-500">Monitoreo de afectación socioeconómica entre cortes.</p>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-white rounded-xl border border-sena-border shadow-sm flex items-start gap-3">
+                    <div class="p-2.5 rounded-lg bg-sena-bg text-sena-dark font-bold">
+                        <i class="fas fa-user-graduate text-lg text-slate-800"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-xs text-sena-dark">Portal del Aprendiz</h4>
+                        <p class="text-[11px] text-slate-500">Encuestas en línea, histórico y consulta de contrato activo.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login Form Card -->
+        <div class="lg:col-span-5">
+            <div class="bg-white rounded-2xl p-6 sm:p-8 border border-sena-border shadow-xl space-y-6 relative overflow-hidden">
+                <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-sena-primary via-sena-secondary to-sena-tint"></div>
+                
+                <div class="text-center space-y-1">
+                    <img src="/static/logosena.png" alt="Logo SENA" class="h-12 mx-auto mb-2 object-contain">
+                    <h3 class="text-xl font-black text-sena-dark">Iniciar Sesión</h3>
+                    <p class="text-xs text-slate-500">Ingrese sus credenciales de acceso a SENAContigo</p>
+                </div>
+
+                <!-- Fast Role Presets (Quick Fill) -->
+                <div class="space-y-1">
+                    <label class="block text-[10px] font-extrabold uppercase text-slate-400">Acceso Rápido de Prueba (Presets)</label>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                        <button type="button" onclick="fillCredentials('admin@senacontigo.edu.co', 'Admin123456*')" class="p-1.5 rounded bg-sena-bg hover:bg-slate-200 text-[10px] font-bold text-slate-700 text-left border border-slate-300 transition">
+                            <i class="fas fa-user-shield text-emerald-600 mr-1"></i> SuperAdmin
+                        </button>
+                        <button type="button" onclick="fillCredentials('bienestar@senacontigo.edu.co', 'Bienestar123456*')" class="p-1.5 rounded bg-sena-bg hover:bg-slate-200 text-[10px] font-bold text-slate-700 text-left border border-slate-300 transition">
+                            <i class="fas fa-heart text-red-500 mr-1"></i> L. Bienestar
+                        </button>
+                        <button type="button" onclick="fillCredentials('contratacion@senacontigo.edu.co', 'Contratacion123456*')" class="p-1.5 rounded bg-sena-bg hover:bg-slate-200 text-[10px] font-bold text-slate-700 text-left border border-slate-300 transition">
+                            <i class="fas fa-file-signature text-blue-600 mr-1"></i> L. Contratación
+                        </button>
+                    </div>
+                </div>
+
+                <form onsubmit="handleLogin(event)" class="space-y-4">
+                    <div>
+                        <label for="inputCorreo" class="block text-xs font-bold text-sena-dark mb-1">Correo Electrónico <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <i class="fas fa-envelope absolute left-3 top-3 text-slate-400 text-xs"></i>
+                            <input type="email" id="inputCorreo" required placeholder="correo@senacontigo.edu.co" class="w-full text-xs pl-9 pr-3 py-2.5 border border-sena-border rounded-lg focus:outline-none focus:ring-2 focus:ring-sena-primary focus:border-transparent transition">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="inputPassword" class="block text-xs font-bold text-sena-dark mb-1">Contraseña <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <i class="fas fa-lock absolute left-3 top-3 text-slate-400 text-xs"></i>
+                            <input type="password" id="inputPassword" required placeholder="••••••••" class="w-full text-xs pl-9 pr-10 py-2.5 border border-sena-border rounded-lg focus:outline-none focus:ring-2 focus:ring-sena-primary focus:border-transparent transition">
+                            <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-3 text-slate-400 hover:text-slate-600 text-xs">
+                                <i id="eyeIcon" class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btnLoginSubmit" class="w-full py-3 bg-sena-primary hover:bg-sena-secondary text-sena-dark font-black text-xs uppercase tracking-wider rounded-lg transition shadow-md flex items-center justify-center gap-2">
+                        <i class="fas fa-right-to-bracket"></i> Ingresar a la Plataforma
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal Configuración de API Base -->
+    <div id="modalApiConfig" class="fixed inset-0 bg-sena-dark/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white max-w-md w-full rounded-2xl p-6 space-y-4 border border-sena-border shadow-2xl">
+            <h3 class="text-base font-bold text-sena-dark flex items-center gap-2">
+                <i class="fas fa-network-wired text-sena-primary"></i> Configuración de Servidor API REST
+            </h3>
+            <p class="text-xs text-slate-500 leading-relaxed">
+                Puedes especificar la URL del servidor API backend. Por defecto está configurada la dirección oficial del servidor distribuido.
+            </p>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">URL Base de la API</label>
+                <input type="url" id="customApiUrlInput" class="w-full text-xs p-2.5 border border-sena-border rounded-lg font-mono">
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" onclick="resetDefaultApiUrl()" class="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-800">Restablecer Oficial</button>
+                <button type="button" onclick="saveCustomApiUrl()" class="px-4 py-1.5 bg-sena-primary text-sena-dark font-bold text-xs rounded-lg hover:bg-sena-secondary">Guardar URL</button>
+            </div>
+        </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="bg-sena-dark text-slate-400 text-xs py-4 px-6 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p>© 2026 Servicio Nacional de Aprendizaje SENA - Dirección General</p>
+            <p class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-sena-primary animate-pulse"></span> Servidor en Línea
+            </p>
+        </div>
+    </footer>
+
+    <script src="/static/js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+          document.getElementById('currentApiUrlDisplay').innerText = API.baseUrl;
+          document.getElementById('customApiUrlInput').value = API.baseUrl;
+
+          // Check existing session
+          if (API.getToken()) {
+            const user = API.getUser();
+            if (user) {
+              if (user.rol === 'aprendiz' || user.rol === 'Aprendiz') {
+                window.location.href = '/aprendiz';
+              } else {
+                window.location.href = '/dashboard';
+              }
+            }
+          }
+        });
+
+        function fillCredentials(correo, pass) {
+          document.getElementById('inputCorreo').value = correo;
+          document.getElementById('inputPassword').value = pass;
+        }
+
+        function togglePasswordVisibility() {
+          const pass = document.getElementById('inputPassword');
+          const icon = document.getElementById('eyeIcon');
+          if (pass.type === 'password') {
+            pass.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+          } else {
+            pass.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+          }
+        }
+
+        function toggleApiConfigModal() {
+          document.getElementById('modalApiConfig').classList.toggle('hidden');
+        }
+
+        function saveCustomApiUrl() {
+          const val = document.getElementById('customApiUrlInput').value.trim();
+          if (val) {
+            localStorage.setItem('senacontigo_api_url', val);
+            API.baseUrl = val;
+            document.getElementById('currentApiUrlDisplay').innerText = val;
+            Toast.success('URL Base de la API actualizada');
+            toggleApiConfigModal();
+          }
+        }
+
+        function resetDefaultApiUrl() {
+          localStorage.removeItem('senacontigo_api_url');
+          API.baseUrl = getApiBaseUrl();
+          document.getElementById('currentApiUrlDisplay').innerText = API.baseUrl;
+          document.getElementById('customApiUrlInput').value = API.baseUrl;
+          Toast.info('Restablecida la URL oficial por defecto');
+          toggleApiConfigModal();
+        }
+
+        async function handleLogin(e) {
+          e.preventDefault();
+          const correo = document.getElementById('inputCorreo').value.trim();
+          const password = document.getElementById('inputPassword').value;
+
+          try {
+            const res = await API.login(correo, password);
+            API.setToken(res.access_token);
+            API.setUser(res.usuario);
+
+            Toast.success(`Bienvenido(a), ${res.usuario.nombres}!`, 'Inicio de Sesión Exitoso');
+            
+            setTimeout(() => {
+              const rol = res.usuario.rol ? res.usuario.rol.toLowerCase() : '';
+              if (rol === 'aprendiz') {
+                window.location.href = '/aprendiz';
+              } else {
+                window.location.href = '/dashboard';
+              }
+            }, 600);
+          } catch (err) {
+            Toast.error(err.message, 'Fallo de Autenticación');
+          }
+        }
+    </script>
 </body>
 </html>

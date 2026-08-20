@@ -1,7 +1,9 @@
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.router import api_router
 from app.core.config import settings
@@ -53,16 +55,22 @@ if settings.CORS_ORIGINS:
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 
-@app.get("/", tags=["Health Check"])
-async def root():
-    return {
-        "status": "online",
-        "system": settings.PROJECT_NAME,
-        "version": settings.VERSION,
-        "environment": settings.ENVIRONMENT,
-        "docs": "/docs"
-    }
+# Mount Static Files
+if os.path.exists("static"):
+    app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# Web Frontend Routes
+@app.get("/", include_in_schema=False)
+async def serve_index():
+    return FileResponse("templates/index.html")
+
+@app.get("/dashboard", include_in_schema=False)
+async def serve_dashboard():
+    return FileResponse("templates/dashboard.html")
+
+@app.get("/aprendiz", include_in_schema=False)
+async def serve_aprendiz():
+    return FileResponse("templates/aprendiz.html")
 
 @app.get("/api/v1/health", tags=["Health Check"])
 async def health():

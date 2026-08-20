@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Aprendiz | SENAContigo</title>
+    <title>Portal del Aprendiz | SENAContigo</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -11,127 +12,125 @@
           extend: {
             colors: {
               sena: {
-                green: '#39A900',
-                darkgreen: '#2E8800',
-                lightgreen: '#EBF8E1',
-                blue: '#00324D',
-                dark: '#0F172A'
+                primary: '#27F531',
+                secondary: '#63F86B',
+                tint: '#8FFA94',
+                border: '#E3E1E1',
+                bg: '#F3F2F2',
+                white: '#FFFFFF',
+                dark: '#252525'
               }
             }
           }
         }
       }
     </script>
-    <link rel="stylesheet" href="/static/css/styles.css">
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+      body { background-color: #F3F2F2; color: #252525; font-family: system-ui, -apple-system, sans-serif; }
+      .badge-state { font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 9999px; text-transform: uppercase; }
+    </style>
 </head>
-<body class="bg-slate-50 min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col">
 
-    <!-- Header Aprendiz -->
-    <header class="bg-sena-blue text-white shadow-md border-b-4 border-sena-green sticky top-0 z-50">
-        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+    <!-- Top Header -->
+    <header class="bg-sena-dark text-white border-b-4 border-sena-primary sticky top-0 z-40 shadow-md">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-sena-green rounded-full flex items-center justify-center font-black text-white text-lg">
-                    SENA
-                </div>
+                <img src="/static/logosena.png" alt="Logo SENA" class="h-9 w-auto bg-white p-1 rounded-md">
                 <div>
-                    <h1 class="text-lg font-bold text-white leading-tight">SENAContigo</h1>
-                    <p class="text-xs text-slate-300">Portal del Aprendiz</p>
+                    <h1 class="text-base font-black tracking-tight text-white flex items-center gap-2">
+                        Portal del Aprendiz <span class="text-[10px] bg-sena-primary text-sena-dark px-2 py-0.5 rounded-full uppercase font-black">SENAContigo</span>
+                    </h1>
+                    <p class="text-[11px] text-slate-300">Caracterización y Seguimiento Integral</p>
                 </div>
             </div>
-            <div class="flex items-center space-x-3 text-xs">
+            
+            <div class="flex items-center space-x-4">
                 <div class="text-right hidden sm:block">
-                    <span id="userName" class="block font-bold text-white">Cargando...</span>
-                    <span id="userFicha" class="text-slate-300">Ficha: ADSO</span>
+                    <span id="learnerName" class="block text-xs font-bold text-white">Aprendiz</span>
+                    <span id="learnerMail" class="text-[10px] text-slate-300">aprendiz@sena.edu.co</span>
                 </div>
-                <button onclick="API.logout()" class="p-2 rounded bg-slate-800 hover:bg-red-600 text-white transition flex items-center gap-1">
-                    <i class="fas fa-sign-out-alt"></i> <span class="hidden sm:inline">Salir</span>
+                <button onclick="API.logout()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-red-600 text-white text-xs font-bold transition flex items-center gap-1.5 border border-slate-700">
+                    <i class="fas fa-sign-out-alt"></i> Salir
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- Main Container -->
-    <main class="max-w-4xl mx-auto px-4 py-6 flex-grow w-full space-y-6">
-
-        <!-- Banner Bienvenida -->
-        <div class="sena-card p-5 bg-gradient-to-r from-sena-blue to-slate-900 text-white relative overflow-hidden">
-            <div class="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <span class="px-2.5 py-0.5 rounded-full bg-sena-green text-xs font-semibold uppercase tracking-wider">Tu Bienestar Importa</span>
-                    <h2 class="text-xl sm:text-2xl font-black mt-1">¡Hola, <span id="greetingName">Aprendiz</span>!</h2>
-                    <p class="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
-                        Registra aquí el estado actual de tu entorno. Tus respuestas ayudan al SENA a canalizar apoyos, auxilios y ajustes de formación oportunos.
-                    </p>
-                </div>
-                <button onclick="switchTab('encuestas')" class="px-4 py-2 bg-sena-green hover:bg-sena-darkgreen text-white font-bold text-xs rounded-lg transition shadow-md flex-shrink-0 flex items-center gap-2">
-                    <i class="fas fa-clipboard-check"></i> Ver Encuestas
-                </button>
-            </div>
-        </div>
-
-        <!-- Navigation Tabs -->
-        <div class="flex border-b border-slate-200 gap-2 text-sm font-semibold">
-            <button id="tabBtnEncuestas" onclick="switchTab('encuestas')" class="py-2.5 px-4 text-sena-green border-b-2 border-sena-green flex items-center gap-2">
-                <i class="fas fa-file-signature"></i> Encuestas Activas
+    <!-- Main Workspace -->
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex-grow w-full space-y-6">
+        
+        <!-- Navigation Tabs Bar -->
+        <nav class="flex flex-wrap gap-2 bg-white p-2 rounded-2xl border border-sena-border shadow-sm">
+            <button onclick="switchTab('encuestas')" id="tab-encuestas" class="px-4 py-2.5 rounded-xl text-xs font-black bg-sena-primary text-sena-dark flex items-center gap-2 transition">
+                <i class="fas fa-list-check"></i> Encuestas Pendientes
             </button>
-            <button id="tabBtnHistorial" onclick="switchTab('historial')" class="py-2.5 px-4 text-slate-500 hover:text-slate-800 border-b-2 border-transparent flex items-center gap-2">
-                <i class="fas fa-clock-rotate-left"></i> Mi Evolución Histórica
-            </button>
-            <button id="tabBtnContrato" onclick="switchTab('contrato')" class="py-2.5 px-4 text-slate-500 hover:text-slate-800 border-b-2 border-transparent flex items-center gap-2">
+            <button onclick="switchTab('contrato')" id="tab-contrato" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2 transition">
                 <i class="fas fa-file-contract"></i> Mi Contrato de Aprendizaje
             </button>
-        </div>
+            <button onclick="switchTab('beneficios')" id="tab-beneficios" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2 transition">
+                <i class="fas fa-hand-holding-heart"></i> Mis Beneficios SENA
+            </button>
+            <button onclick="switchTab('historial')" id="tab-historial" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2 transition">
+                <i class="fas fa-clock-rotate-left"></i> Mi Evolución Histórica
+            </button>
+        </nav>
 
-        <!-- Section 1: Encuestas Activas -->
-        <section id="secEncuestas" class="space-y-6">
-            <div id="surveyContainer" class="space-y-6">
-                <!-- Dynamic Render -->
-                <div class="sena-card p-8 text-center text-slate-500 space-y-3">
-                    <i class="fas fa-spinner fa-spin text-3xl text-sena-green"></i>
-                    <p class="text-sm font-medium">Cargando encuestas disponibles...</p>
-                </div>
+        <!-- TAB 1: ENCUESTAS PENDIENTES (WIZARD MULTIPASO) -->
+        <section id="sec-encuestas" class="space-y-6">
+            <div id="surveyWizardContainer" class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-6">
+                <!-- Dynamic Survey Render -->
             </div>
         </section>
 
-        <!-- Section 2: Histórico de Respuestas Longitudinales -->
-        <section id="secHistorial" class="hidden space-y-4">
-            <div class="sena-card p-6 bg-white">
-                <h3 class="text-lg font-bold text-sena-dark mb-1 flex items-center gap-2">
-                    <i class="fas fa-timeline text-sena-green"></i> Línea de Tiempo de tus Respuestas
+        <!-- TAB 2: MI CONTRATO DE APRENDIZAJE -->
+        <section id="sec-contrato" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-4">
+                <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
+                    <i class="fas fa-file-contract text-sena-dark"></i> Mi Contrato de Aprendizaje
                 </h3>
-                <p class="text-xs text-slate-500 mb-6">
-                    SENAContigo conserva cada una de tus respuestas anteriores sin sobrescribirlas para hacer seguimiento a tu recuperación.
-                </p>
+                <p class="text-xs text-slate-500">Información del patrocinio otorgado por empresa en etapa lectiva o práctica.</p>
 
-                <div id="timelineContainer" class="relative border-l-2 border-sena-green ml-4 space-y-6">
-                    <!-- Dynamic timeline items -->
-                    <div class="pl-6 text-xs text-slate-400">Cargando historial...</div>
+                <div id="myContractContent" class="pt-2">
+                    <!-- Dynamic rendering -->
                 </div>
             </div>
         </section>
 
-        <!-- Section 3: Mi Contrato de Aprendizaje -->
-        <section id="secContrato" class="hidden space-y-4">
-            <div class="sena-card p-6 bg-white space-y-4">
-                <h3 class="text-lg font-bold text-sena-dark flex items-center gap-2">
-                    <i class="fas fa-briefcase text-sena-green"></i> Estado e Histórico de Contrato de Aprendizaje
+        <!-- TAB 3: MIS BENEFICIOS SENA -->
+        <section id="sec-beneficios" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-4">
+                <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
+                    <i class="fas fa-hand-holding-heart text-sena-dark"></i> Mis Beneficios Institucionales Asignados
                 </h3>
-                <p class="text-xs text-slate-500 mb-4">
-                    Registro formal de tu alternativa productiva de contrato de aprendizaje patrocinado por empresas.
-                </p>
-
-                <div id="contratoAprendizContainer" class="space-y-4">
-                    <div class="text-xs text-slate-400">Cargando información del contrato...</div>
+                <div id="myBenefitsList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Dynamic benefits -->
                 </div>
             </div>
         </section>
 
-    </main>
+        <!-- TAB 4: MI EVOLUCIÓN HISTÓRICA -->
+        <section id="sec-historial" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-4">
+                <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
+                    <i class="fas fa-timeline text-sena-dark"></i> Línea de Tiempo de Respuestas Registradas
+                </h3>
+                <div id="myHistoryTimeline" class="space-y-3">
+                    <!-- Dynamic Timeline -->
+                </div>
+            </div>
+        </section>
+
+    </div>
 
     <!-- Footer -->
-    <footer class="bg-sena-dark text-slate-400 py-4 text-xs text-center border-t border-slate-800">
-        <p>SENAContigo • Acompañamiento Integral al Aprendiz SENA</p>
+    <footer class="bg-sena-dark text-slate-400 text-xs py-4 px-6 border-t border-slate-800 mt-auto">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p>© 2026 Servicio Nacional de Aprendizaje SENA - Dirección General</p>
+            <p>Portal del Aprendiz SENAContigo</p>
+        </div>
     </footer>
 
     <script src="/static/js/api.js"></script>

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -39,11 +39,18 @@ async def run_seed_endpoint():
 async def list_users(
     skip: int = 0,
     limit: int = 100,
+    centro_id: Optional[str] = None,
+    regional_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(require_roles(["superadmin", "direccion", "coordinador"]))
 ):
-    """Listar usuarios del sistema."""
-    return await IdentityService.list_users(db, skip=skip, limit=limit)
+    """Listar usuarios del sistema con delimitación territorial según el rol del usuario en sesión."""
+    if current_user.rol in ["coordinador", "Coordinador"] and current_user.centro_id:
+        centro_id = current_user.centro_id
+    elif current_user.rol in ["direccion", "Dirección"] and current_user.regional_id:
+        regional_id = current_user.regional_id
+
+    return await IdentityService.list_users(db, skip=skip, limit=limit, centro_id=centro_id, regional_id=regional_id)
 
 
 @users_router.post("", response_model=UsuarioRead, status_code=status.HTTP_201_CREATED)
