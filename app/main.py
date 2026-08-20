@@ -1,6 +1,6 @@
 import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -40,17 +40,53 @@ app = FastAPI(
 app.add_exception_handler(HTTPException, custom_http_exception_handler)
 app.add_exception_handler(SENAContigoException, custom_http_exception_handler)
 
-# CORS Middleware
+# CORS Middleware (Permite peticiones cross-origin desde cualquier origen sin bloqueos)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origin_regex=".*",
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Include API v1 Router
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+# Remote API Transparent Proxy (Bypasses Browser CORS restrictions when running locally)
+import httpx
+REMOTE_API_BASE = "http://uc0w0o00cgwg4wk0kkogog4g.72.62.13.66.sslip.io/api/v1"
+
+@app.api_route("/proxy-api/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"], include_in_schema=False)
+async def proxy_remote_api(request: Request, path: str):
+    url = f"{REMOTE_API_BASE}/{path}"
+    if request.url.query:
+        url += f"?{request.url.query}"
+
+    headers = {}
+    if "authorization" in request.headers:
+        headers["Authorization"] = request.headers["authorization"]
+    if "content-type" in request.headers:
+        headers["Content-Type"] = request.headers["content-type"]
+
+    body = await request.body()
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        try:
+            resp = await client.request(
+                method=request.method,
+                url=url,
+                headers=headers,
+                content=body
+            )
+            return Response(
+                content=resp.content,
+                status_code=resp.status_code,
+                headers={"Content-Type": resp.headers.get("content-type", "application/json")}
+            )
+        except httpx.HTTPError as exc:
+            return JSONResponse(
+                status_code=502,
+                content={"detail": f"Error conectando a la API remota: {str(exc)}"}
+            )
 
 
 # Mount Static Files

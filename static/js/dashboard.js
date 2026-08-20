@@ -11,7 +11,7 @@ let searchTimeout = null;
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     if (!API.getToken()) {
-      window.location.href = '/';
+      window.location.href = window.location.protocol === 'file:' ? 'index.html' : '/';
       return;
     }
 

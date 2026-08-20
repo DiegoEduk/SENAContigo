@@ -5,14 +5,10 @@
 
 const API_BASE_REMOTE = 'http://uc0w0o00cgwg4wk0kkogog4g.72.62.13.66.sslip.io/api/v1';
 
-// Determine default API BASE URL (Remote default, or relative if hosted locally)
+// Determine default API BASE URL (Direct Remote API)
 const getApiBaseUrl = () => {
   const customUrl = localStorage.getItem('senacontigo_api_url');
   if (customUrl) return customUrl.replace(/\/$/, '');
-  
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    return '/api/v1';
-  }
   return API_BASE_REMOTE;
 };
 
@@ -141,7 +137,7 @@ const API = {
     localStorage.removeItem('senacontigo_user');
     Toast.info('Sesión cerrada correctamente');
     setTimeout(() => {
-      window.location.href = '/';
+      window.location.href = window.location.protocol === 'file:' ? 'index.html' : '/';
     }, 500);
   },
 

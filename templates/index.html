@@ -39,7 +39,7 @@
     <header class="bg-sena-dark border-b-4 border-sena-primary text-white py-3 px-6 shadow-md">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <img src="/static/logosena.png" alt="Logo SENA" class="h-10 w-auto object-contain bg-white p-1 rounded-lg">
+                <img src="../static/logosena.png" alt="Logo SENA" class="h-10 w-auto object-contain bg-white p-1 rounded-lg">
                 <div>
                     <h1 class="text-lg font-black tracking-tight flex items-center gap-2">
                         SENAContigo <span class="text-[10px] bg-sena-primary text-sena-dark px-2 py-0.5 rounded-full uppercase font-black">v1.0</span>
@@ -121,7 +121,7 @@
                 <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-sena-primary via-sena-secondary to-sena-tint"></div>
                 
                 <div class="text-center space-y-1">
-                    <img src="/static/logosena.png" alt="Logo SENA" class="h-12 mx-auto mb-2 object-contain">
+                    <img src="../static/logosena.png" alt="Logo SENA" class="h-12 mx-auto mb-2 object-contain">
                     <h3 class="text-xl font-black text-sena-dark">Iniciar Sesión</h3>
                     <p class="text-xs text-slate-500">Ingrese sus credenciales de acceso a SENAContigo</p>
                 </div>
@@ -201,8 +201,14 @@
         </div>
     </footer>
 
-    <script src="/static/js/api.js"></script>
+    <script src="../static/js/api.js"></script>
     <script>
+        function getPageUrl(page) {
+          const isFile = window.location.protocol === 'file:';
+          if (page === 'index' || page === '') return isFile ? 'index.html' : '/';
+          return isFile ? `${page}.html` : `/${page}`;
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
           document.getElementById('currentApiUrlDisplay').innerText = API.baseUrl;
           document.getElementById('customApiUrlInput').value = API.baseUrl;
@@ -211,10 +217,11 @@
           if (API.getToken()) {
             const user = API.getUser();
             if (user) {
-              if (user.rol === 'aprendiz' || user.rol === 'Aprendiz') {
-                window.location.href = '/aprendiz';
+              const rol = user.rol ? user.rol.toLowerCase() : '';
+              if (rol === 'aprendiz') {
+                window.location.href = getPageUrl('aprendiz');
               } else {
-                window.location.href = '/dashboard';
+                window.location.href = getPageUrl('dashboard');
               }
             }
           }
@@ -278,9 +285,9 @@
             setTimeout(() => {
               const rol = res.usuario.rol ? res.usuario.rol.toLowerCase() : '';
               if (rol === 'aprendiz') {
-                window.location.href = '/aprendiz';
+                window.location.href = getPageUrl('aprendiz');
               } else {
-                window.location.href = '/dashboard';
+                window.location.href = getPageUrl('dashboard');
               }
             }, 600);
           } catch (err) {
