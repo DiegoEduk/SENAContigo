@@ -41,15 +41,13 @@ app.add_exception_handler(HTTPException, custom_http_exception_handler)
 app.add_exception_handler(SENAContigoException, custom_http_exception_handler)
 
 # CORS Middleware
-if settings.CORS_ORIGINS:
-    origins = settings.CORS_ORIGINS if isinstance(settings.CORS_ORIGINS, list) else [settings.CORS_ORIGINS]
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Include API v1 Router
 app.include_router(api_router, prefix=settings.API_V1_STR)
