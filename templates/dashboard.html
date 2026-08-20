@@ -38,7 +38,7 @@
 <body class="min-h-screen flex flex-col">
 
     <!-- Top Header -->
-    <header class="bg-sena-dark text-white border-b-4 border-sena-primary sticky top-0 z-40 shadow-md">
+    <header class="bg-sena-dark text-white sticky top-0 z-40 shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <button onclick="toggleSidebar()" class="lg:hidden text-white hover:text-sena-primary p-2">
@@ -53,7 +53,7 @@
                 </div>
             </div>
             
-            <div class="flex items-center space-x-4">
+            <div id="usuariosHeaderControls" class="flex items-center space-x-4 hidden">
                 <div class="text-right hidden sm:block">
                     <span id="navUserName" class="block text-xs font-bold text-white">Usuario</span>
                     <span id="navUserMail" class="text-[10px] text-slate-300">correo@sena.edu.co</span>
@@ -65,12 +65,55 @@
         </div>
     </header>
 
-    <!-- Main Grid Workspace -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- Unauthenticated Login Container for Usuarios / Staff -->
+    <div id="usuariosLoginContainer" class="max-w-md mx-auto my-auto px-4 py-12 w-full">
+        <div class="bg-sena-dark text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-800 space-y-6">
+            <div class="text-center space-y-2">
+                <img src="../static/logosena.png" alt="Logo SENA" class="h-12 mx-auto mb-2 object-contain bg-white p-1 rounded-lg">
+                <span class="text-[10px] uppercase font-black tracking-widest text-sena-primary bg-slate-800 px-3 py-1 rounded-full border border-slate-700">Acceso Administrativo / Staff</span>
+                <h3 class="text-xl font-black text-white mt-1">Portal de Usuarios SENA</h3>
+                <p class="text-xs text-slate-300">Ingrese con su correo institucional y contraseña de acceso</p>
+            </div>
+
+            <form id="formStaffLogin" onsubmit="handleStaffLogin(event)" class="space-y-4">
+                <div>
+                    <label for="inputCorreo" class="block text-xs font-bold text-slate-300 mb-1">Correo Electrónico <span class="text-red-400">*</span></label>
+                    <div class="relative">
+                        <i class="fas fa-envelope absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
+                        <input type="email" id="inputCorreo" required placeholder="correo@senacontigo.edu.co" class="w-full text-xs pl-9 pr-3 py-3 bg-slate-800 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-sena-primary transition border border-slate-700">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="inputPassword" class="block text-xs font-bold text-slate-300 mb-1">Contraseña <span class="text-red-400">*</span></label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
+                        <input type="password" id="inputPassword" required placeholder="••••••••" class="w-full text-xs pl-9 pr-10 py-3 bg-slate-800 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-sena-primary transition border border-slate-700">
+                        <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3.5 top-3.5 text-slate-400 hover:text-white text-xs">
+                            <i id="eyeIcon" class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-3.5 bg-sena-primary hover:bg-sena-secondary text-sena-dark font-black text-xs uppercase tracking-wider rounded-xl transition shadow-md hover:shadow-lg flex items-center justify-center gap-2">
+                    <i class="fas fa-shield-halved text-sm"></i> Acceso Administrativo
+                </button>
+            </form>
+
+            <div class="text-center pt-2 border-t border-slate-800">
+                <a href="/" class="text-xs text-slate-400 hover:text-white transition inline-flex items-center gap-1 font-semibold">
+                    <i class="fas fa-arrow-left text-[10px]"></i> Volver al inicio institucional
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Grid Workspace (Solo visible tras autenticación) -->
+    <div id="usuariosWorkspace" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full grid grid-cols-1 lg:grid-cols-12 gap-6 hidden">
         
         <!-- Sidebar Navigation -->
         <aside id="sidebar" class="lg:col-span-3 space-y-3 sidebar-transition">
-            <div class="bg-white rounded-2xl p-4 border border-sena-border shadow-sm space-y-1">
+            <div class="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition space-y-1">
                 <p class="px-3 py-1.5 text-[10px] font-black text-slate-400 uppercase tracking-wider">Menú Principal</p>
                 
                 <button onclick="navSwitch('resumen')" id="nav-resumen" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-sena-dark hover:bg-sena-bg flex items-center gap-2.5 transition">
@@ -115,7 +158,7 @@
             </div>
 
             <!-- Scope Context Box -->
-            <div class="bg-sena-dark rounded-2xl p-4 text-white space-y-2 border border-slate-800 shadow-md">
+            <div class="bg-sena-dark rounded-2xl p-4 text-white space-y-2 shadow-md">
                 <span class="text-[10px] font-black uppercase tracking-wider text-sena-primary">Ámbito de Jurisdicción</span>
                 <div id="scopeDetails" class="text-xs space-y-1 text-slate-300">
                     <p><i class="fas fa-globe text-sena-primary mr-1"></i> Cobertura Nacional</p>
@@ -135,51 +178,35 @@
             
             <!-- SECTION 1: RESUMEN GENERAL -->
             <section id="sec-resumen" class="space-y-6">
-                <!-- KPI Cards -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="bg-white p-5 rounded-2xl border border-sena-border shadow-sm flex items-center space-x-4 border-l-4 border-sena-primary">
-                        <div class="w-12 h-12 rounded-xl bg-sena-bg text-sena-dark flex items-center justify-center text-xl font-bold">
-                            <i class="fas fa-user-graduate"></i>
-                        </div>
-                        <div>
-                            <span class="text-[10px] font-extrabold text-slate-400 uppercase">Aprendices Registrados</span>
-                            <h3 id="kpiAprendices" class="text-2xl font-black text-sena-dark">0</h3>
-                        </div>
+                <!-- KPI Cards Redesigned (No Icons) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <!-- KPI 1: Aprendices Registrados -->
+                    <div class="bg-white p-6 rounded-3xl shadow-sm hover:shadow-md transition-all duration-300">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Aprendices Registrados</span>
+                        <h3 id="kpiAprendices" class="text-3xl font-black text-slate-800 tracking-tight">0</h3>
                     </div>
 
-                    <div class="bg-white p-5 rounded-2xl border border-sena-border shadow-sm flex items-center space-x-4 border-l-4 border-blue-500">
-                        <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl font-bold">
-                            <i class="fas fa-clipboard-list"></i>
-                        </div>
-                        <div>
-                            <span class="text-[10px] font-extrabold text-slate-400 uppercase">Encuestas Activas</span>
-                            <h3 id="kpiEncuestas" class="text-2xl font-black text-sena-dark">0</h3>
-                        </div>
+                    <!-- KPI 2: Encuestas Activas -->
+                    <div class="bg-white p-6 rounded-3xl shadow-sm hover:shadow-md transition-all duration-300">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Encuestas Activas</span>
+                        <h3 id="kpiEncuestas" class="text-3xl font-black text-slate-800 tracking-tight">0</h3>
                     </div>
 
-                    <div class="bg-white p-5 rounded-2xl border border-sena-border shadow-sm flex items-center space-x-4 border-l-4 border-amber-500">
-                        <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl font-bold">
-                            <i class="fas fa-triangle-exclamation"></i>
-                        </div>
-                        <div>
-                            <span class="text-[10px] font-extrabold text-slate-400 uppercase">Riesgo Grave / Crítico</span>
-                            <h3 id="kpiAfectados" class="text-2xl font-black text-sena-dark">0</h3>
-                        </div>
+                    <!-- KPI 3: Riesgo Grave / Crítico -->
+                    <div class="bg-white p-6 rounded-3xl shadow-sm hover:shadow-md transition-all duration-300">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Riesgo Grave / Crítico</span>
+                        <h3 id="kpiAfectados" class="text-3xl font-black text-slate-800 tracking-tight">0</h3>
                     </div>
 
-                    <div class="bg-white p-5 rounded-2xl border border-sena-border shadow-sm flex items-center space-x-4 border-l-4 border-emerald-600">
-                        <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold">
-                            <i class="fas fa-file-contract"></i>
-                        </div>
-                        <div>
-                            <span class="text-[10px] font-extrabold text-slate-400 uppercase">Contratos Vigentes</span>
-                            <h3 id="kpiContratos" class="text-2xl font-black text-sena-dark">0</h3>
-                        </div>
+                    <!-- KPI 4: Contratos Vigentes -->
+                    <div class="bg-white p-6 rounded-3xl shadow-sm hover:shadow-md transition-all duration-300">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Contratos Vigentes</span>
+                        <h3 id="kpiContratos" class="text-3xl font-black text-slate-800 tracking-tight">0</h3>
                     </div>
                 </div>
 
                 <!-- Resumen por Variable Chart -->
-                <div class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-4">
+                <div class="bg-white p-6 rounded-3xl shadow-md space-y-4">
                     <div class="flex justify-between items-center">
                         <h3 class="text-sm font-black text-sena-dark flex items-center gap-2">
                             <i class="fas fa-chart-bar text-sena-dark"></i> Distribución de Afectación por Variable
@@ -208,7 +235,7 @@
                     </div>
                 </div>
 
-                <div class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-4">
+                <div class="bg-white p-6 rounded-3xl shadow-md space-y-4">
                     <div class="flex flex-col sm:flex-row gap-3">
                         <div class="relative flex-1">
                             <i class="fas fa-search absolute left-3.5 top-3 text-slate-400 text-xs"></i>
@@ -248,7 +275,7 @@
                     </button>
                 </div>
 
-                <div class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-4">
+                <div class="bg-white p-6 rounded-3xl shadow-md space-y-4">
                     <div class="overflow-x-auto">
                         <table class="w-full text-xs text-left text-slate-600">
                             <thead class="bg-sena-bg text-sena-dark font-extrabold uppercase text-[11px]">
@@ -288,7 +315,7 @@
                     </div>
                 </div>
 
-                <div class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-4">
+                <div class="bg-white p-6 rounded-3xl shadow-md space-y-4">
                     <div class="flex flex-col sm:flex-row gap-3">
                         <div class="relative flex-1">
                             <i class="fas fa-search absolute left-3.5 top-3 text-slate-400 text-xs"></i>
@@ -360,7 +387,7 @@
                     </button>
                 </div>
 
-                <div class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-4">
+                <div class="bg-white p-6 rounded-3xl shadow-md space-y-4">
                     <div class="overflow-x-auto">
                         <table class="w-full text-xs text-left text-slate-600">
                             <thead class="bg-sena-bg text-sena-dark font-extrabold uppercase text-[11px]">
@@ -417,7 +444,7 @@
 
             <!-- SECTION 9: ANALÍTICA LONGITUDINAL -->
             <section id="sec-analytics" class="hidden space-y-6">
-                <div class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-4">
+                <div class="bg-white p-6 rounded-3xl shadow-md space-y-4">
                     <h3 class="text-sm font-black text-sena-dark flex items-center gap-2">
                         <i class="fas fa-timeline text-sena-dark"></i> Variación de Afectación Temporal entre Cortes
                     </h3>
@@ -426,7 +453,7 @@
                     </div>
                 </div>
 
-                <div class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-4">
+                <div class="bg-white p-6 rounded-3xl shadow-md space-y-4">
                     <h3 class="text-sm font-black text-sena-dark flex items-center gap-2">
                         <i class="fas fa-users-viewfinder text-sena-dark"></i> Matriz del Índice de Afectación Ponderado
                     </h3>
@@ -450,7 +477,7 @@
 
             <!-- SECTION 10: AUDITORÍA -->
             <section id="sec-audit" class="hidden space-y-6">
-                <div class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-4">
+                <div class="bg-white p-6 rounded-3xl shadow-md space-y-4">
                     <h3 class="text-sm font-black text-sena-dark flex items-center gap-2">
                         <i class="fas fa-shield-cat text-sena-dark"></i> Registros de Auditoría e Historial de Operaciones
                     </h3>

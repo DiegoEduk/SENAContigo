@@ -1,135 +1,162 @@
 # SENAContigo - Plataforma Institucional de Seguimiento Longitudinal
 
-Plataforma backend profesional, escalable y mantenible para el **SENA**, diseñada para la identificación, registro, seguimiento longitudinal y gestión de casos de aprendices afectados por emergencias u otras eventualidades socioeconómicas y ambientales.
+Plataforma profesional, escalable y mantenible para el **SENA**, diseñada para la identificación, registro, caracterización socioeconómica, seguimiento longitudinal y gestión de casos de aprendices.
 
 Desarrollada rigurosamente a partir de las especificaciones funcionales y no funcionales de **SenaContigo02.pdf**.
 
 ---
 
-## 🚀 Visión Arquitectónica
+## 🚀 Visión Arquitectónica y Portales Web
 
-SENAContigo implementa un patrón **Modular Monolith** desacoplado, exponiendo una **API REST OpenAPI** consumible por aplicaciones web (React/Vite) y móviles (Android/iOS) sin alterar la lógica de negocio.
+SENAContigo implementa una arquitectura **Modular Monolith** desacoplada con FastAPI en el backend y una interfaz web profesional (Tailwind CSS, HTML5 y Vanilla JS) servida mediante plantillas optimizadas:
 
 ```text
-                 ┌─────────────────────────────────┐
-                 │          FastAPI REST           │
-                 │         API Backend v1          │
-                 └────────────────┬────────────────┘
-                                  │
-             ┌────────────────────┼────────────────────┐
-             │                    │                    │
-             ▼                    ▼                    ▼
-     Web Client (React)    Android Native App    iOS Native App
+                               ┌─────────────────────────────────┐
+                               │          FastAPI REST           │
+                               │         API Backend v1          │
+                               └────────────────┬────────────────┘
+                                                │
+           ┌────────────────────────────────────┼────────────────────────────────────┐
+           │                                    │                                    │
+           ▼                                    ▼                                    ▼
+┌──────────────────────┐             ┌──────────────────────┐             ┌──────────────────────┐
+│  Página de Inicio    │             │  Portal del Aprendiz │             │  Portal de Usuarios  │
+│        ( / )         │             │     ( /aprendiz )    │             │     ( /usuarios )    │
+│ Acceso Staff / Admin │             │ Documento + Ficha    │             │ Dashboard Staff/Admin│
+└──────────────────────┘             └──────────────────────┘             └──────────────────────┘
 ```
 
-### Principios Fundamentales
-1. **Historial Inmutable (Longitudinal)**: Las mediciones de los aprendices nunca se sobrescriben. Cada consulta genera un nuevo registro preservando la evolución temporal real.
-2. **Configuración sobre Código (Motor de Variables)**: Nuevas preguntas, categorías y opciones con escalas de afectación configurables (0 a 4) se administran dinámicamente sin redesplegar código.
-3. **Versionamiento de Variables**: Preserva la interpretación histórica de las preguntas aunque cambien en el tiempo.
-4. **Motor de Reglas y Case Management**: Motor autónomo `IF condición THEN acción` para auto-generación de Necesidades, Alertas y Casos con prioridades.
-5. **Beneficios Institucionales Directos**: Catálogo de derechos y beneficios SENA otorgados automáticamente por el hecho de la matrícula activa (Póliza de seguro estudiantil, biblioteca digital, salud preventiva, deportes), desacoplados de los casos y necesidades de atención de riesgo.
-6. **Seguridad Scoped (RBAC)**: Permisos filtrados por nivel organizacional SENA (`SuperAdmin` Nacional, `Dirección` Regional, `Coordinador` de Centro, `Instructor` de Ficha, `Aprendiz`).
+---
+
+## 🖥️ Portales de Acceso Frontend
+
+La aplicación cuenta con portales web independientes adaptados a las necesidades de cada perfil:
+
+1. **Página de Inicio Institucional (`/` - `index.html`)**:
+   - Presentación de la plataforma SENAContigo v1.0.
+   - Tarjeta de ingreso exclusivo para usuarios administrativos, instructores y staff con correo y contraseña.
+   - Enlace directo al **Portal del Aprendiz** en la parte superior derecha del encabezado.
+
+2. **Portal del Aprendiz (`/aprendiz` - `aprendiz.html`)**:
+   - **Acceso Público Directo**: Autenticación sin contraseña mediante **Número de Documento** y **Número de Ficha de Formación**.
+   - **Mi Perfil Personal**: Consulta y actualización de datos de contacto y residencia en tiempo real (protegiendo la inmutabilidad de documento).
+   - **Encuestas Pendientes**: Diligenciamiento interactivo de encuestas socioeconómicas y medición de afectaciones.
+   - **Mi Contrato de Aprendizaje**: Registro y consulta del historial de patrocinio y etapa práctica en empresas.
+   - **Mis Beneficios SENA**: Solicitud y seguimiento a beneficios y auxilios institucionales (alimentación, salud mental, transporte).
+   - **Evolución Histórica**: Trazabilidad longitudinal de las mediciones del aprendiz.
+
+3. **Portal de Usuarios y Staff (`/usuarios` o `/dashboard` - `dashboard.html`)**:
+   - **Dashboard Administrativo**: Tableros analíticos y métricas clave de atención.
+   - **Gestión de Aprendices**: Búsqueda, caracterización y detalle de expedientes.
+   - **Seguimiento a Casos y Novedades**: Gestión de afectaciones y registro de notas de evolución.
+   - **Fichas y Programas**: Control académico por centro de formación y regional.
+   - **Catálogo de Beneficios**: Administración y asignación directa de auxilios institucionales.
+   - **Gestión de Usuarios y Roles**: Administración de accesos basados en roles SENA (`SuperAdmin`, `Dirección`, `Coordinador`, `Instructor`, `Líder Bienestar`, `Líder Contratación`).
+
+---
+
+## 🔑 Endpoints Clave de la API REST Backend (`/api/v1`)
+
+### 1. Autenticación e Identidad (`/api/v1/auth`)
+- `POST /api/v1/auth/login`: Autenticar usuario administrativo / instructor (Correo + Contraseña).
+- `POST /api/v1/auth/aprendiz-login`: Autenticación pública del aprendiz (Documento + Ficha).
+- `GET /api/v1/auth/me`: Obtener perfil e información de la sesión activa.
+
+### 2. Portal Público del Aprendiz (`/api/v1/portal`)
+- `GET /api/v1/portal/perfil`: Consultar información personal del aprendiz autenticado.
+- `PUT /api/v1/portal/perfil`: Actualizar datos de contacto y residencia del aprendiz.
+- `GET /api/v1/portal/contratos`: Listar contratos de aprendizaje del aprendiz.
+- `POST /api/v1/portal/contratos`: Registrar un nuevo contrato de aprendizaje.
+- `GET /api/v1/portal/beneficios`: Consultar beneficios otorgados o disponibles.
+- `POST /api/v1/portal/beneficios`: Solicitar o registrar un beneficio SENA.
+- `GET /api/v1/portal/encuestas-pendientes`: Obtener encuestas socioeconómicas activas.
+- `POST /api/v1/portal/respuestas-encuesta`: Enviar respuestas de medición socioeconómica.
+
+### 3. Módulos Institucionales y Caso Management
+- `/api/v1/aprendices`: Gestión integral de aprendices y matrículas.
+- `/api/v1/fichas`: Gestión de fichas de formación y programas.
+- `/api/v1/beneficios`: Catálogo global y asignaciones directas.
+- `/api/v1/encuestas`: Definición de encuestas, cortes y motor de variables.
+- `/api/v1/casos`: Gestión de casos de atención, seguimiento y novedades.
+- `/api/v1/reportes`: Indicadores analíticos y cálculo de nivel de afectación.
+- `/api/v1/health`: Verificación del estado del servidor API backend.
+
+---
+
+## ⚙️ Principios Arquitectónicos
+
+1. **Historial Inmutable (Longitudinal)**: Las mediciones de los aprendices se registran como snapshots históricos inmutables.
+2. **Configuración sobre Código**: Motor de variables socioeconómicas y opciones con escalas de afectación configurables.
+3. **Motor de Reglas y Case Management**: Reglas dinámicas `IF condición THEN acción` para apertura de casos y alertas.
+4. **Beneficios Institucionales Directos**: Asignación automática de derechos por matrícula (Póliza estudiantil, biblioteca, salud, deportes).
+5. **Seguridad Scoped (RBAC)**: Filtrado por rol y nivel organizacional SENA.
 
 ---
 
 ## 🛠️ Stack Tecnológico
 
-- **Lenguaje**: Python 3.11+
+- **Lenguaje**: Python 3.10+
 - **Framework Web**: FastAPI
-- **ORM / Persistencia**: SQLAlchemy 2.x (usando `DeclarativeBase`, `Mapped`, `mapped_column`)
-- **Driver Async DB**: `asyncpg` con `AsyncSession`
-- **Base de Datos**: PostgreSQL 16
-- **Caché y Tareas**: Redis 7
-- **Migraciones**: Alembic (asíncrono)
-- **Validación de Datos**: Pydantic 2.x & Pydantic Settings
-- **Seguridad y JWT**: OAuth2 Password Bearer, Bcrypt, PyJWT (`python-jose`)
-- **Contenedores**: Docker & Docker Compose
-- **Testing**: Pytest, pytest-asyncio, HTTPX
+- **Frontend**: HTML5, Vanilla JavaScript (ES6+), Tailwind CSS CDN, FontAwesome 6
+- **ORM / Persistencia**: SQLAlchemy 2.0 Async engine & AsyncSession
+- **Base de Datos**: SQLite (desarrollo local `senacontigo.db`) / PostgreSQL 16 (producción)
+- **Validación de Datos**: Pydantic 2.x
+- **Seguridad**: JWT Bearer Tokens, Hashing Bcrypt
+- **Testing**: Pytest, pytest-asyncio, HTTPX AsyncClient
 
 ---
 
 ## 📦 Estructura Modular del Proyecto
 
 ```text
-app/
-├── core/
-│   ├── config.py           # Configuración Pydantic BaseSettings
-│   ├── database.py         # SQLAlchemy 2.0 AsyncEngine & AsyncSession
-│   ├── security.py         # JWT tokens & Hashing Bcrypt
-│   ├── exceptions.py       # Exception Handlers centralizados
-│   └── dependencies.py     # Inyección de dependencias & Scoped RBAC
-├── modules/
-│   ├── identity/           # Usuarios, Roles, Permisos
-│   ├── organization/       # Regionales, Centros de Formación
-│   ├── academic/           # Programas de Formación, Fichas
-│   ├── apprentices/        # Aprendices, Matrículas
-│   ├── benefits/           # Beneficios Institucionales Directos del Aprendiz
-│   ├── variables/          # Categorías, Variables, Versiones, Opciones
-│   ├── surveys/            # Encuestas, Cortes de Medición
-│   ├── responses/          # Respuestas Longitudinales Inmutables
-│   ├── segments/           # Segmentación Dinámica de Aprendices
-│   ├── rules/              # Motor de Reglas (IF condition THEN action)
-│   ├── needs/              # Catálogo de Necesidades
-│   ├── cases/              # Gestión de Casos
-│   ├── actions/            # Acciones por Caso
-│   ├── followups/          # Seguimiento Longitudinal de Casos
-│   ├── analytics/          # Indicadores y Calculador de Afectación
-│   ├── notifications/      # Sistema de Alertas y Notificaciones
-│   └── audit/              # Trazabilidad y Audit Trail
-├── api/
-│   └── router.py           # Agregador central /api/v1
-├── seed.py                 # Poblador de datos iniciales
-└── main.py                 # Entrada principal FastAPI
+SENAContigo/
+├── app/
+│   ├── api/                # Router central /api/v1
+│   ├── core/               # Configuración, BD Async, Seguridad, Excepciones
+│   ├── modules/            # Módulos de dominio (identity, academic, apprentices, benefits, surveys, cases, etc.)
+│   ├── main.py             # Aplicación FastAPI y rutas web
+│   └── seed.py             # Poblador de datos de prueba
+├── templates/
+│   ├── index.html          # Página de Inicio & Ingreso Usuarios
+│   ├── aprendiz.html       # Portal del Aprendiz SENAContigo v1.0
+│   └── dashboard.html      # Portal de Usuarios y Staff
+├── static/
+│   ├── css/                # Estilos personalizados
+│   └── js/
+│       ├── api.js          # Cliente API centralizado y notificaciones Toast
+│       ├── aprendiz.js     # Controlador del Portal del Aprendiz
+│       └── dashboard.js    # Controlador del Portal de Usuarios
+├── tests/                  # Suite de pruebas automatizadas con Pytest
+├── requirements.txt        # Dependencias Python
+└── README.md               # Documentación del proyecto
 ```
 
 ---
 
-## ⚙️ Configuración y Ejecución Local
+## ⚡ Ejecución Local
 
-### 1. Clonar el repositorio
+### 1. Preparar entorno e instalar dependencias
 ```bash
-git clone https://github.com/DiegoEduk/SENAContigo.git
-cd SENAContigo
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-### 2. Configurar variables de entorno
+### 2. Iniciar la aplicación
 ```bash
-cp .env.example .env
+uvicorn app.main:app --reload --port 8000
 ```
+- **Página de Inicio / Usuarios**: `http://localhost:8000/`
+- **Portal del Aprendiz**: `http://localhost:8000/aprendiz`
+- **Portal de Usuarios**: `http://localhost:8000/usuarios`
+- **Documentación API Swagger UI**: `http://localhost:8000/docs`
 
-### 3. Ejecutar con Docker Compose
+### 3. Ejecutar Pruebas Automatizadas
 ```bash
-docker-compose up -d --build
+PYTHONPATH=. .venv/bin/python -m pytest tests/ -v
 ```
-El backend estará disponible en `http://localhost:8000`.
-La documentación Swagger UI interactiva en `http://localhost:8000/docs`.
-
-### 4. Ejecutar suite de pruebas
-```bash
-PYTHONPATH=. pytest tests/ -v
-```
-
----
-
-## 🌐 Despliegue en VPS con Coolify
-
-El proyecto está listo para ser desplegado en el servidor VPS mediante **Coolify**:
-
-### Pasos para Configurar en Coolify:
-1. Acceder al panel de Coolify en `http://72.62.13.66:8000/login`.
-2. Crear un nuevo servicio **PostgreSQL 16** con volumen de persistencia.
-3. Crear una instancia de **Redis 7**.
-4. Crear una nueva aplicación desde el repositorio de GitHub `https://github.com/DiegoEduk/SENAContigo`.
-5. Configurar las variables de entorno en Coolify:
-   - `DATABASE_URL=postgresql+asyncpg://postgres:<PASSWORD>@<DB_HOST>:5432/senacontigo`
-   - `REDIS_URL=redis://<REDIS_HOST>:6379/0`
-   - `SECRET_KEY=<CLAVE_SECRETA_PRODUCCION>`
-   - `ENVIRONMENT=production`
-   - `CORS_ORIGINS=*`
-6. Definir el Health Check Endpoint: `/api/v1/health`.
-7. Desplegar. El contenedor ejecutará automáticamente `alembic upgrade head`, el poblador inicial `seed.py` y levantará el servidor con Uvicorn.
 
 ---
 
 ## 📄 Licencia y Créditos
-Desarrollado para el **Servicio Nacional de Aprendizaje (SENA)**. Todos los derechos reservados.
+Desarrollado para el **Servicio Nacional de Aprendizaje (SENA)** - Legarda. Todos los derechos reservados.

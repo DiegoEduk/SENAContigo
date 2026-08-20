@@ -77,8 +77,22 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class AprendizLoginRequest(BaseModel):
+    numero_documento: str = Field(..., description="Número de documento de identidad del aprendiz")
+    ficha_caracterizacion: str = Field(..., description="Número de la ficha de formación matriculada")
+
+
 class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
     usuario: UsuarioRead
+
+
+class AprendizTokenResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    aprendiz: dict
+    ficha_id: str
+

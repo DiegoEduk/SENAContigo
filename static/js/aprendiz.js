@@ -3,24 +3,24 @@
  */
 
 let currentUser = null;
-let currentTab = 'encuestas';
+let currentTab = 'perfil';
 let activeSurvey = null;
 let currentQuestionIndex = 0;
 let userAnswers = {};
 let isDirtySurvey = false;
+let myContractsCache = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     if (!API.getToken()) {
-      window.location.href = window.location.protocol === 'file:' ? 'index.html' : '/';
+      showLoginView();
       return;
     }
 
     currentUser = await API.getMe();
     API.setUser(currentUser);
 
-    setupLearnerHeader();
-    loadTabContent();
+    showWorkspaceView();
 
     // Prevent accidental navigation when survey is dirty
     window.addEventListener('beforeunload', (e) => {
@@ -31,18 +31,68 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   } catch (err) {
     console.error('Error inicializando portal aprendiz:', err);
-    Toast.error('Sesión no válida. Inicie sesión de nuevo.');
-    API.logout();
+    showLoginView();
   }
 });
+
+function showLoginView() {
+  const loginEl = document.getElementById('aprendizLoginContainer');
+  const workEl = document.getElementById('aprendizWorkspace');
+  const headEl = document.getElementById('aprendizHeaderControls');
+  if (loginEl) loginEl.classList.remove('hidden');
+  if (workEl) workEl.classList.add('hidden');
+  if (headEl) headEl.classList.add('hidden');
+}
+
+function showWorkspaceView() {
+  const loginEl = document.getElementById('aprendizLoginContainer');
+  const workEl = document.getElementById('aprendizWorkspace');
+  const headEl = document.getElementById('aprendizHeaderControls');
+  if (loginEl) loginEl.classList.add('hidden');
+  if (workEl) workEl.classList.remove('hidden');
+  if (headEl) headEl.classList.remove('hidden');
+  setupLearnerHeader();
+  loadTabContent();
+}
+
+async function handleAprendizLogin(e) {
+  e.preventDefault();
+  const doc = document.getElementById('inputDocAprendiz').value.trim();
+  const ficha = document.getElementById('inputFichaAprendiz').value.trim();
+
+  if (!doc || !ficha) {
+    Toast.warning('Por favor ingrese su número de documento y ficha.');
+    return;
+  }
+
+  try {
+    Loading.show('Validando información del aprendiz...');
+    const res = await API.loginAprendiz(doc, ficha);
+    Loading.hide();
+
+    API.setToken(res.access_token);
+    API.setUser({
+      ...res.aprendiz,
+      rol: 'aprendiz',
+      ficha_id: res.ficha_id
+    });
+
+    Toast.success(`¡Bienvenido(a), ${res.aprendiz.nombres}!`, 'Validación Exitosa');
+    currentUser = await API.getMe();
+    showWorkspaceView();
+  } catch (err) {
+    Loading.hide();
+    Toast.error(err.message || 'No se pudo validar la información del aprendiz.', 'Validación Fallida');
+  }
+}
 
 function setupLearnerHeader() {
   if (!currentUser) return;
   const nameEl = document.getElementById('learnerName');
-  if (nameEl) nameEl.innerText = `${currentUser.nombres} ${currentUser.apellidos}`;
+  if (nameEl) nameEl.innerText = `${currentUser.nombres || 'Aprendiz'} ${currentUser.apellidos || ''}`;
 
   const mailEl = document.getElementById('learnerMail');
-  if (mailEl) mailEl.innerText = currentUser.correo;
+  if (mailEl) mailEl.innerText = currentUser.correo || '';
 }
 
 function switchTab(tabName) {
@@ -75,6 +125,9 @@ function switchTab(tabName) {
 
 function loadTabContent() {
   switch (currentTab) {
+    case 'perfil':
+      loadProfile();
+      break;
     case 'encuestas':
       loadPendingSurveys();
       break;
@@ -90,7 +143,60 @@ function loadTabContent() {
   }
 }
 
-// TAB 1: SURVEY WIZARD
+// TAB 1: PERFIL DEL APRENDIZ
+async function loadProfile() {
+  try {
+    Loading.show('Cargando perfil...');
+    const perfil = await API.getPerfilAprendiz();
+    Loading.hide();
+
+    // Actualizar campos bloqueados (inmutables)
+    document.getElementById('profTipoDoc').value = perfil.tipo_documento || 'CC';
+    document.getElementById('profNumDoc').value = perfil.numero_documento || '';
+
+    // Campos editables
+    document.getElementById('profNombres').value = perfil.nombres || '';
+    document.getElementById('profApellidos').value = perfil.apellidos || '';
+    document.getElementById('profCorreo').value = perfil.correo || '';
+    document.getElementById('profCelular').value = perfil.celular || '';
+    document.getElementById('profDepartamento').value = perfil.departamento || '';
+    document.getElementById('profCiudad').value = perfil.ciudad || '';
+    document.getElementById('profDireccion').value = perfil.direccion_vivienda || '';
+  } catch (err) {
+    Loading.hide();
+    Toast.error('Error al cargar datos del perfil: ' + err.message);
+  }
+}
+
+async function handleUpdateProfile(e) {
+  e.preventDefault();
+  try {
+    Loading.show('Guardando perfil...');
+    const data = {
+      nombres: document.getElementById('profNombres').value.trim(),
+      apellidos: document.getElementById('profApellidos').value.trim(),
+      correo: document.getElementById('profCorreo').value.trim(),
+      celular: document.getElementById('profCelular').value.trim(),
+      departamento: document.getElementById('profDepartamento').value.trim(),
+      ciudad: document.getElementById('profCiudad').value.trim(),
+      direccion_vivienda: document.getElementById('profDireccion').value.trim()
+    };
+
+    const updated = await API.updatePerfilAprendiz(data);
+    Loading.hide();
+
+    currentUser = { ...currentUser, ...updated };
+    API.setUser(currentUser);
+    setupLearnerHeader();
+
+    Toast.success('Perfil actualizado correctamente.', 'Datos Guardados');
+  } catch (err) {
+    Loading.hide();
+    Toast.error(err.message, 'Fallo al actualizar perfil');
+  }
+}
+
+// TAB 2: SURVEY WIZARD
 async function loadPendingSurveys() {
   const container = document.getElementById('surveyWizardContainer');
   if (!container) return;
@@ -157,7 +263,7 @@ function renderSurveyQuestion() {
       <div class="flex justify-between items-center pb-3 border-b border-sena-border">
         <div>
           <span class="text-[10px] font-black uppercase text-slate-400">Encuesta Institucional</span>
-          <h3 class="font-black text-sena-dark text-lg">${activeSurvey.nombre}</h3>
+          <h3 class="font-black text-sena-dark text-lg">${activeSurvey.nombre || activeSurvey.titulo}</h3>
         </div>
         <span class="text-xs font-black text-sena-dark bg-[#8FFA94] px-3 py-1 rounded-full">Pregunta ${currentQuestionIndex + 1} de ${total}</span>
       </div>
@@ -220,7 +326,7 @@ async function submitSurvey() {
     const respuestasArray = Object.keys(userAnswers).map(varId => ({
       variable_id: parseInt(varId),
       opcion_id: typeof userAnswers[varId] === 'number' ? userAnswers[varId] : null,
-      observacion: typeof userAnswers[varId] === 'string' ? userAnswers[varId] : null
+      valor_texto: typeof userAnswers[varId] === 'string' ? userAnswers[varId] : null
     }));
 
     await API.submitRespuestas(activeSurvey.id, respuestasArray);
@@ -232,15 +338,15 @@ async function submitSurvey() {
   }
 }
 
-// TAB 2: MI CONTRATO DE APRENDIZAJE
+// TAB 3: MI CONTRATO DE APRENDIZAJE
 async function loadMyContract() {
   const container = document.getElementById('myContractContent');
   if (!container) return;
   container.innerHTML = `<p class="text-center text-slate-400 py-6">Cargando datos de contrato...</p>`;
 
   try {
-    const aprendizId = currentUser.aprendiz_id || currentUser.id;
-    const contratos = await API.getContratosAprendiz(aprendizId);
+    const contratos = await API.getMisContratos();
+    myContractsCache = contratos || [];
 
     if (!contratos || !contratos.length) {
       container.innerHTML = `
@@ -248,64 +354,131 @@ async function loadMyContract() {
           <div class="w-14 h-14 bg-slate-200 text-slate-500 rounded-full flex items-center justify-center text-xl mx-auto">
             <i class="fas fa-folder-open"></i>
           </div>
-          <h4 class="font-black text-sena-dark text-base">Aún no registras un Contrato de Aprendizaje</h4>
-          <p class="text-xs text-slate-500 max-w-md mx-auto">Si no hay contratos registrados es porque el aprendiz aún no tiene ese recurso asignado por la empresa patrocinadora o el centro.</p>
+          <h4 class="font-black text-sena-dark text-base">No registras un Contrato de Aprendizaje aún</h4>
+          <p class="text-xs text-slate-500 max-w-md mx-auto">Haz clic en el botón <strong>"+ Registrar / Editar Contrato"</strong> para diligenciar tus datos de patrocinio de etapa lectiva o práctica.</p>
         </div>
       `;
       return;
     }
 
-    const c = contratos[0];
-    let badgeStyle = 'bg-emerald-100 text-emerald-900 border border-emerald-300';
-    if (c.estado_contrato === 'EN PATROCINIO') badgeStyle = 'bg-indigo-100 text-indigo-900 border border-indigo-300';
+    container.innerHTML = contratos.map(c => {
+      let badgeStyle = 'bg-emerald-100 text-emerald-900 border border-emerald-300';
+      if (c.estado_contrato === 'EN PATROCINIO') badgeStyle = 'bg-indigo-100 text-indigo-900 border border-indigo-300';
 
-    container.innerHTML = `
-      <div class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-4">
-        <div class="flex justify-between items-start border-b border-sena-border pb-3">
-          <div>
-            <span class="text-[10px] font-black uppercase text-slate-400">Empresa Patrocinadora</span>
-            <h3 class="text-lg font-black text-sena-dark">${c.nombre_empresa}</h3>
+      return `
+        <div class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-4">
+          <div class="flex justify-between items-start border-b border-sena-border pb-3">
+            <div>
+              <span class="text-[10px] font-black uppercase text-slate-400">Empresa Patrocinadora</span>
+              <h3 class="text-lg font-black text-sena-dark">${c.nombre_empresa}</h3>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="badge-state ${badgeStyle}">${c.estado_contrato}</span>
+              <button onclick="editContract(${c.id})" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition">
+                <i class="fas fa-pen-to-square"></i> Editar
+              </button>
+            </div>
           </div>
-          <span class="badge-state ${badgeStyle}">${c.estado_contrato}</span>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            <div class="bg-[#F3F2F2] p-3.5 rounded-xl space-y-1">
+              <span class="text-slate-400 font-extrabold uppercase text-[10px] block">Ubicación Etapa Práctica</span>
+              <p class="font-bold text-sena-dark">${c.ciudad || 'N/A'}, ${c.departamento || ''}</p>
+            </div>
+
+            <div class="bg-[#F3F2F2] p-3.5 rounded-xl space-y-1">
+              <span class="text-slate-400 font-extrabold uppercase text-[10px] block">Vigencia del Contrato</span>
+              <p class="font-bold text-sena-dark">Inicio: ${c.fecha_inicio_contrato} ${c.fecha_fin_contrato ? '| Fin: ' + c.fecha_fin_contrato : ''}</p>
+            </div>
+          </div>
+
+          ${c.observaciones ? `
+            <div class="pt-2">
+              <span class="text-slate-400 font-extrabold uppercase text-[10px] block mb-1">Observaciones</span>
+              <p class="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200">${c.observaciones}</p>
+            </div>
+          ` : ''}
         </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-          <div class="bg-[#F3F2F2] p-3.5 rounded-xl space-y-1">
-            <span class="text-slate-400 font-extrabold uppercase text-[10px] block">Ubicación Etapa Práctica</span>
-            <p class="font-bold text-sena-dark">${c.ciudad || 'N/A'}, ${c.departamento || ''}</p>
-          </div>
-
-          <div class="bg-[#F3F2F2] p-3.5 rounded-xl space-y-1">
-            <span class="text-slate-400 font-extrabold uppercase text-[10px] block">Vigencia del Contrato</span>
-            <p class="font-bold text-sena-dark">Inicio: ${c.fecha_inicio_contrato} ${c.fecha_fin_contrato ? '| Fin: ' + c.fecha_fin_contrato : ''}</p>
-          </div>
-        </div>
-
-        ${c.observaciones ? `
-          <div class="pt-2">
-            <span class="text-slate-400 font-extrabold uppercase text-[10px] block mb-1">Observaciones</span>
-            <p class="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200">${c.observaciones}</p>
-          </div>
-        ` : ''}
-      </div>
-    `;
+      `;
+    }).join('');
   } catch (err) {
     container.innerHTML = `<p class="text-center text-red-500 py-6">Error cargando contrato: ${err.message}</p>`;
   }
 }
 
-// TAB 3: MIS BENEFICIOS
+function openModalContrato() {
+  document.getElementById('contractEditId').value = '';
+  document.getElementById('contEmpresa').value = '';
+  document.getElementById('contDepto').value = '';
+  document.getElementById('contCiudad').value = '';
+  document.getElementById('contFechaInicio').value = '';
+  document.getElementById('contFechaFin').value = '';
+  document.getElementById('contEstado').value = 'EN PATROCINIO';
+  document.getElementById('contObs').value = '';
+  document.getElementById('modalContrato').classList.remove('hidden');
+}
+
+function closeModalContrato() {
+  document.getElementById('modalContrato').classList.add('hidden');
+}
+
+function editContract(id) {
+  const c = myContractsCache.find(x => x.id === id);
+  if (!c) return;
+
+  document.getElementById('contractEditId').value = c.id;
+  document.getElementById('contEmpresa').value = c.nombre_empresa || '';
+  document.getElementById('contDepto').value = c.departamento || '';
+  document.getElementById('contCiudad').value = c.ciudad || '';
+  document.getElementById('contFechaInicio').value = c.fecha_inicio_contrato || '';
+  document.getElementById('contFechaFin').value = c.fecha_fin_contrato || '';
+  document.getElementById('contEstado').value = c.estado_contrato || 'EN PATROCINIO';
+  document.getElementById('contObs').value = c.observaciones || '';
+  document.getElementById('modalContrato').classList.remove('hidden');
+}
+
+async function handleSaveContract(e) {
+  e.preventDefault();
+  const id = document.getElementById('contractEditId').value;
+  const data = {
+    nombre_empresa: document.getElementById('contEmpresa').value.trim(),
+    departamento: document.getElementById('contDepto').value.trim(),
+    ciudad: document.getElementById('contCiudad').value.trim(),
+    fecha_inicio_contrato: document.getElementById('contFechaInicio').value,
+    fecha_fin_contrato: document.getElementById('contFechaFin').value || null,
+    estado_contrato: document.getElementById('contEstado').value,
+    observaciones: document.getElementById('contObs').value.trim() || null
+  };
+
+  try {
+    Loading.show('Guardando datos de contrato...');
+    if (id) {
+      await API.updateContratoAprendiz(id, data);
+      Toast.success('Contrato actualizado exitosamente.');
+    } else {
+      await API.registrarContratoAprendiz(data);
+      Toast.success('Contrato registrado exitosamente.');
+    }
+    Loading.hide();
+    closeModalContrato();
+    loadMyContract();
+  } catch (err) {
+    Loading.hide();
+    Toast.error(err.message, 'Fallo al guardar contrato');
+  }
+}
+
+// TAB 4: MIS BENEFICIOS
 async function loadMyBenefits() {
   const container = document.getElementById('myBenefitsList');
   if (!container) return;
   container.innerHTML = `<p class="col-span-2 text-center text-slate-400 py-6">Cargando beneficios...</p>`;
 
   try {
-    const aprendizId = currentUser.aprendiz_id || currentUser.id;
-    const beneficios = await API.getBeneficiosAprendiz(aprendizId);
+    const beneficios = await API.getMisBeneficios();
 
     if (!beneficios || !beneficios.length) {
-      container.innerHTML = `<div class="col-span-2 p-6 text-center text-slate-400 bg-[#F3F2F2] rounded-2xl border border-sena-border">No tienes beneficios asignados en este momento.</div>`;
+      container.innerHTML = `<div class="col-span-2 p-6 text-center text-slate-400 bg-[#F3F2F2] rounded-2xl border border-sena-border">No tienes beneficios registrados aún. Utiliza el botón "+ Registrar Beneficio" si recibes o deseas solicitar algún auxilio.</div>`;
       return;
     }
 
@@ -324,7 +497,52 @@ async function loadMyBenefits() {
   }
 }
 
-// TAB 4: MI HISTORIAL
+async function openModalBeneficio() {
+  const select = document.getElementById('benSelectId');
+  select.innerHTML = `<option value="">Cargando catálogo...</option>`;
+  document.getElementById('modalBeneficio').classList.remove('hidden');
+
+  try {
+    const catalogo = await API.request('/beneficios');
+    if (!catalogo || !catalogo.length) {
+      select.innerHTML = `<option value="">No hay beneficios disponibles en catálogo</option>`;
+      return;
+    }
+    select.innerHTML = catalogo.map(b => `<option value="${b.id}">${b.nombre} (${b.codigo})</option>`).join('');
+  } catch (err) {
+    select.innerHTML = `<option value="">Error cargando beneficios</option>`;
+  }
+}
+
+function closeModalBeneficio() {
+  document.getElementById('modalBeneficio').classList.add('hidden');
+}
+
+async function handleSaveBenefit(e) {
+  e.preventDefault();
+  const beneficio_id = parseInt(document.getElementById('benSelectId').value);
+  const observaciones = document.getElementById('benObs').value.trim();
+
+  if (!beneficio_id) {
+    Toast.warning('Seleccione un beneficio válido.');
+    return;
+  }
+
+  try {
+    Loading.show('Registrando beneficio...');
+    await API.registrarBeneficioAprendiz({ beneficio_id, observaciones });
+    Loading.hide();
+
+    Toast.success('Beneficio registrado exitosamente.');
+    closeModalBeneficio();
+    loadMyBenefits();
+  } catch (err) {
+    Loading.hide();
+    Toast.error(err.message, 'Error al registrar beneficio');
+  }
+}
+
+// TAB 5: MI HISTORIAL
 async function loadMyHistory() {
   const container = document.getElementById('myHistoryTimeline');
   if (!container) return;
@@ -341,10 +559,11 @@ async function loadMyHistory() {
     container.innerHTML = historial.map(h => `
       <div class="p-4 bg-white rounded-2xl border border-sena-border shadow-sm flex items-center justify-between">
         <div>
-          <span class="text-[10px] font-bold text-slate-400 block">${h.created_at ? h.created_at.split('T')[0] : 'N/A'}</span>
-          <h4 class="font-bold text-sena-dark text-xs">${h.variable_codigo || 'Variable'}</h4>
+          <span class="text-[10px] font-bold text-slate-400 block">${h.fecha_respuesta ? h.fecha_respuesta.split('T')[0] : 'N/A'}</span>
+          <h4 class="font-bold text-sena-dark text-xs">${h.variable ? h.variable.nombre : 'Variable'}</h4>
+          ${h.valor_texto ? `<p class="text-xs text-slate-600 mt-1">${h.valor_texto}</p>` : ''}
         </div>
-        <span class="badge-state bg-[#8FFA94] text-sena-dark">Nivel Afectación: ${h.nivel_afectacion_registrado}</span>
+        <span class="badge-state bg-[#8FFA94] text-sena-dark">${h.opcion ? h.opcion.texto : 'Respuesta Registrada'}</span>
       </div>
     `).join('');
   } catch (err) {

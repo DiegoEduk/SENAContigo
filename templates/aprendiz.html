@@ -35,19 +35,19 @@
 <body class="min-h-screen flex flex-col">
 
     <!-- Top Header -->
-    <header class="bg-sena-dark text-white border-b-4 border-sena-primary sticky top-0 z-40 shadow-md">
+    <header class="bg-sena-dark text-white sticky top-0 z-40 shadow-md">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <img src="../static/logosena.png" alt="Logo SENA" class="h-9 w-auto bg-white p-1 rounded-md">
                 <div>
                     <h1 class="text-base font-black tracking-tight text-white flex items-center gap-2">
-                        Portal del Aprendiz <span class="text-[10px] bg-sena-primary text-sena-dark px-2 py-0.5 rounded-full uppercase font-black">SENAContigo</span>
+                        SENAContigo <span class="text-[10px] bg-sena-primary text-sena-dark px-2 py-0.5 rounded-full uppercase font-black">v1.0</span>
                     </h1>
                     <p class="text-[11px] text-slate-300">Caracterización y Seguimiento Integral</p>
                 </div>
             </div>
             
-            <div class="flex items-center space-x-4">
+            <div id="aprendizHeaderControls" class="flex items-center space-x-4 hidden">
                 <div class="text-right hidden sm:block">
                     <span id="learnerName" class="block text-xs font-bold text-white">Aprendiz</span>
                     <span id="learnerMail" class="text-[10px] text-slate-300">aprendiz@sena.edu.co</span>
@@ -59,12 +59,55 @@
         </div>
     </header>
 
-    <!-- Main Workspace -->
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex-grow w-full space-y-6">
+    <!-- Unauthenticated Login Container for Aprendiz -->
+    <div id="aprendizLoginContainer" class="max-w-md mx-auto my-auto px-4 py-12 w-full">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-100 space-y-6">
+            <div class="text-center space-y-2">
+                <img src="../static/logosena.png" alt="Logo SENA" class="h-12 mx-auto mb-2 object-contain">
+                <span class="text-[10px] uppercase font-black tracking-widest text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">Acceso Exclusivo</span>
+                <h3 class="text-xl font-black text-sena-dark mt-1">Portal del Aprendiz SENA</h3>
+                <p class="text-xs text-slate-500">Ingrese con su documento y ficha de formación matriculada</p>
+            </div>
+
+            <form id="formAprendizLogin" onsubmit="handleAprendizLogin(event)" class="space-y-4">
+                <div>
+                    <label for="inputDocAprendiz" class="block text-xs font-bold text-sena-dark mb-1">Número de Documento <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <i class="fas fa-id-card absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
+                        <input type="text" id="inputDocAprendiz" required placeholder="Ej: 1001234567" class="w-full text-xs pl-9 pr-3 py-3 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-sena-primary focus:bg-white transition border border-slate-200">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="inputFichaAprendiz" class="block text-xs font-bold text-sena-dark mb-1">Número de Ficha de Formación <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <i class="fas fa-graduation-cap absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
+                        <input type="text" id="inputFichaAprendiz" required placeholder="Ej: 2823190" class="w-full text-xs pl-9 pr-3 py-3 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-sena-primary focus:bg-white transition border border-slate-200">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-3.5 bg-sena-primary hover:bg-sena-secondary text-sena-dark font-black text-xs uppercase tracking-wider rounded-xl transition shadow-md hover:shadow-lg flex items-center justify-center gap-2">
+                    <i class="fas fa-right-to-bracket text-sm"></i> Ingresar al Portal
+                </button>
+            </form>
+
+            <div class="text-center pt-2 border-t border-slate-100">
+                <a href="/" class="text-xs text-slate-500 hover:text-sena-dark transition inline-flex items-center gap-1 font-semibold">
+                    <i class="fas fa-arrow-left text-[10px]"></i> Volver al inicio institucional
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Workspace (Solo visible tras autenticación) -->
+    <div id="aprendizWorkspace" class="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex-grow w-full space-y-6 hidden">
         
         <!-- Navigation Tabs Bar -->
-        <nav class="flex flex-wrap gap-2 bg-white p-2 rounded-2xl border border-sena-border shadow-sm">
-            <button onclick="switchTab('encuestas')" id="tab-encuestas" class="px-4 py-2.5 rounded-xl text-xs font-black bg-sena-primary text-sena-dark flex items-center gap-2 transition">
+        <nav class="flex flex-wrap gap-2 bg-white p-2.5 rounded-2xl shadow-sm">
+            <button onclick="switchTab('perfil')" id="tab-perfil" class="px-4 py-2.5 rounded-xl text-xs font-black bg-sena-primary text-sena-dark flex items-center gap-2 transition">
+                <i class="fas fa-user-gear"></i> Mi Perfil Personal
+            </button>
+            <button onclick="switchTab('encuestas')" id="tab-encuestas" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2 transition">
                 <i class="fas fa-list-check"></i> Encuestas Pendientes
             </button>
             <button onclick="switchTab('contrato')" id="tab-contrato" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2 transition">
@@ -78,20 +121,103 @@
             </button>
         </nav>
 
-        <!-- TAB 1: ENCUESTAS PENDIENTES (WIZARD MULTIPASO) -->
-        <section id="sec-encuestas" class="space-y-6">
-            <div id="surveyWizardContainer" class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-6">
+        <!-- TAB 1: MI PERFIL PERSONAL (DATOS DE CONTACTO Y VIVIENDI) -->
+        <section id="sec-perfil" class="space-y-6">
+            <div class="bg-white p-6 rounded-3xl shadow-md space-y-6">
+                <div class="flex justify-between items-center pb-3 border-b border-sena-border">
+                    <div>
+                        <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
+                            <i class="fas fa-id-card text-sena-dark"></i> Mi Información Personal
+                        </h3>
+                        <p class="text-xs text-slate-500">Consulta y actualiza tus datos de contacto y residencia. Tipo y número de documento están protegidos.</p>
+                    </div>
+                </div>
+
+                <form onsubmit="handleUpdateProfile(event)" class="space-y-4">
+                    <!-- Datos de solo lectura -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <div>
+                            <label class="block text-[10px] font-extrabold uppercase text-slate-400 mb-1 flex items-center gap-1">
+                                <i class="fas fa-lock text-amber-500"></i> Tipo de Documento
+                            </label>
+                            <input type="text" id="profTipoDoc" readonly disabled class="w-full text-xs p-3 bg-slate-200/70 border border-slate-300 rounded-xl font-bold text-slate-600 cursor-not-allowed">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-extrabold uppercase text-slate-400 mb-1 flex items-center gap-1">
+                                <i class="fas fa-lock text-amber-500"></i> Número de Documento
+                            </label>
+                            <input type="text" id="profNumDoc" readonly disabled class="w-full text-xs p-3 bg-slate-200/70 border border-slate-300 rounded-xl font-bold text-slate-600 cursor-not-allowed">
+                        </div>
+                    </div>
+
+                    <!-- Datos editables -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="profNombres" class="block text-xs font-bold text-sena-dark mb-1">Nombres <span class="text-red-500">*</span></label>
+                            <input type="text" id="profNombres" required class="w-full text-xs p-3 border border-sena-border rounded-xl focus:ring-2 focus:ring-sena-primary">
+                        </div>
+
+                        <div>
+                            <label for="profApellidos" class="block text-xs font-bold text-sena-dark mb-1">Apellidos <span class="text-red-500">*</span></label>
+                            <input type="text" id="profApellidos" required class="w-full text-xs p-3 border border-sena-border rounded-xl focus:ring-2 focus:ring-sena-primary">
+                        </div>
+
+                        <div>
+                            <label for="profCorreo" class="block text-xs font-bold text-sena-dark mb-1">Correo Electrónico <span class="text-red-500">*</span></label>
+                            <input type="email" id="profCorreo" required class="w-full text-xs p-3 border border-sena-border rounded-xl focus:ring-2 focus:ring-sena-primary">
+                        </div>
+
+                        <div>
+                            <label for="profCelular" class="block text-xs font-bold text-sena-dark mb-1">Número de Celular</label>
+                            <input type="tel" id="profCelular" placeholder="Ej: 3001234567" class="w-full text-xs p-3 border border-sena-border rounded-xl focus:ring-2 focus:ring-sena-primary">
+                        </div>
+
+                        <div>
+                            <label for="profDepartamento" class="block text-xs font-bold text-sena-dark mb-1">Departamento de Residencia</label>
+                            <input type="text" id="profDepartamento" placeholder="Ej: Cundinamarca" class="w-full text-xs p-3 border border-sena-border rounded-xl focus:ring-2 focus:ring-sena-primary">
+                        </div>
+
+                        <div>
+                            <label for="profCiudad" class="block text-xs font-bold text-sena-dark mb-1">Ciudad / Municipio</label>
+                            <input type="text" id="profCiudad" placeholder="Ej: Bogotá" class="w-full text-xs p-3 border border-sena-border rounded-xl focus:ring-2 focus:ring-sena-primary">
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label for="profDireccion" class="block text-xs font-bold text-sena-dark mb-1">Dirección de Vivienda</label>
+                            <input type="text" id="profDireccion" placeholder="Ej: Calle 100 #15-20, Apto 301" class="w-full text-xs p-3 border border-sena-border rounded-xl focus:ring-2 focus:ring-sena-primary">
+                        </div>
+                    </div>
+
+                    <div class="pt-2 flex justify-end">
+                        <button type="submit" class="px-6 py-2.5 bg-sena-primary text-sena-dark font-black text-xs uppercase tracking-wider rounded-xl hover:bg-sena-secondary transition shadow-md flex items-center gap-2">
+                            <i class="fas fa-floppy-disk"></i> Guardar Cambios del Perfil
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- TAB 2: ENCUESTAS PENDIENTES (WIZARD MULTIPASO) -->
+        <section id="sec-encuestas" class="hidden space-y-6">
+            <div id="surveyWizardContainer" class="bg-white p-6 rounded-3xl shadow-md space-y-6">
                 <!-- Dynamic Survey Render -->
             </div>
         </section>
 
-        <!-- TAB 2: MI CONTRATO DE APRENDIZAJE -->
+        <!-- TAB 3: MI CONTRATO DE APRENDIZAJE -->
         <section id="sec-contrato" class="hidden space-y-6">
-            <div class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-4">
-                <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
-                    <i class="fas fa-file-contract text-sena-dark"></i> Mi Contrato de Aprendizaje
-                </h3>
-                <p class="text-xs text-slate-500">Información del patrocinio otorgado por empresa en etapa lectiva o práctica.</p>
+            <div class="bg-white p-6 rounded-3xl shadow-md space-y-4">
+                <div class="flex justify-between items-center border-b border-sena-border pb-3">
+                    <div>
+                        <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
+                            <i class="fas fa-file-contract text-sena-dark"></i> Mi Contrato de Aprendizaje
+                        </h3>
+                        <p class="text-xs text-slate-500">Información de patrocinio en etapa lectiva o práctica. Puedes registrar o actualizar tus datos.</p>
+                    </div>
+                    <button onclick="openModalContrato()" class="px-4 py-2 bg-sena-dark text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition flex items-center gap-1.5 shadow-sm">
+                        <i class="fas fa-plus"></i> Registrar / Editar Contrato
+                    </button>
+                </div>
 
                 <div id="myContractContent" class="pt-2">
                     <!-- Dynamic rendering -->
@@ -99,21 +225,29 @@
             </div>
         </section>
 
-        <!-- TAB 3: MIS BENEFICIOS SENA -->
+        <!-- TAB 4: MIS BENEFICIOS SENA -->
         <section id="sec-beneficios" class="hidden space-y-6">
-            <div class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-4">
-                <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
-                    <i class="fas fa-hand-holding-heart text-sena-dark"></i> Mis Beneficios Institucionales Asignados
-                </h3>
+            <div class="bg-white p-6 rounded-3xl shadow-md space-y-4">
+                <div class="flex justify-between items-center border-b border-sena-border pb-3">
+                    <div>
+                        <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
+                            <i class="fas fa-hand-holding-heart text-sena-dark"></i> Mis Beneficios Institucionales
+                        </h3>
+                        <p class="text-xs text-slate-500">Beneficios y auxilios institucionales otorgados o reportados.</p>
+                    </div>
+                    <button onclick="openModalBeneficio()" class="px-4 py-2 bg-sena-primary text-sena-dark rounded-xl text-xs font-black hover:bg-sena-secondary transition flex items-center gap-1.5 shadow-sm">
+                        <i class="fas fa-plus"></i> Registrar Beneficio
+                    </button>
+                </div>
                 <div id="myBenefitsList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- Dynamic benefits -->
                 </div>
             </div>
         </section>
 
-        <!-- TAB 4: MI EVOLUCIÓN HISTÓRICA -->
+        <!-- TAB 5: MI EVOLUCIÓN HISTÓRICA -->
         <section id="sec-historial" class="hidden space-y-6">
-            <div class="bg-white p-6 rounded-2xl border border-sena-border shadow-sm space-y-4">
+            <div class="bg-white p-6 rounded-3xl shadow-md space-y-4">
                 <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
                     <i class="fas fa-timeline text-sena-dark"></i> Línea de Tiempo de Respuestas Registradas
                 </h3>
@@ -125,10 +259,107 @@
 
     </div>
 
+    <!-- MODAL REGISTRO/EDICION CONTRATO APRENDIZAJE -->
+    <div id="modalContrato" class="fixed inset-0 bg-sena-dark/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white max-w-lg w-full rounded-3xl p-6 space-y-4 border border-sena-border shadow-2xl">
+            <div class="flex justify-between items-center border-b border-sena-border pb-3">
+                <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
+                    <i class="fas fa-file-contract text-sena-primary"></i> Registrar / Actualizar Contrato
+                </h3>
+                <button onclick="closeModalContrato()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-xmark text-lg"></i></button>
+            </div>
+
+            <form onsubmit="handleSaveContract(event)" class="space-y-3">
+                <input type="hidden" id="contractEditId" value="">
+                <div>
+                    <label class="block text-xs font-bold text-sena-dark mb-1">Nombre de la Empresa Patrocinadora <span class="text-red-500">*</span></label>
+                    <input type="text" id="contEmpresa" required placeholder="Ej: BANCO COLOMBIA S.A." class="w-full text-xs p-3 border border-sena-border rounded-xl">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-sena-dark mb-1">Departamento <span class="text-red-500">*</span></label>
+                        <input type="text" id="contDepto" required placeholder="Ej: Cundinamarca" class="w-full text-xs p-3 border border-sena-border rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-sena-dark mb-1">Ciudad <span class="text-red-500">*</span></label>
+                        <input type="text" id="contCiudad" required placeholder="Ej: Bogotá" class="w-full text-xs p-3 border border-sena-border rounded-xl">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-sena-dark mb-1">Fecha Inicio <span class="text-red-500">*</span></label>
+                        <input type="date" id="contFechaInicio" required class="w-full text-xs p-3 border border-sena-border rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-sena-dark mb-1">Fecha Fin (Opcional)</label>
+                        <input type="date" id="contFechaFin" class="w-full text-xs p-3 border border-sena-border rounded-xl">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-sena-dark mb-1">Estado del Contrato</label>
+                    <select id="contEstado" class="w-full text-xs p-3 border border-sena-border rounded-xl font-bold bg-white">
+                        <option value="EN PATROCINIO">EN PATROCINIO</option>
+                        <option value="EN ETAPA PRACTICA">EN ETAPA PRACTICA</option>
+                        <option value="ACTIVO">ACTIVO</option>
+                        <option value="FINALIZADO">FINALIZADO</option>
+                        <option value="SUSPENDIDO">SUSPENDIDO</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-sena-dark mb-1">Observaciones / Detalles</label>
+                    <textarea id="contObs" rows="2" placeholder="Observaciones adicionales sobre el patrocinio..." class="w-full text-xs p-3 border border-sena-border rounded-xl"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModalContrato()" class="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary transition">Guardar Contrato</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL REGISTRO BENEFICIO -->
+    <div id="modalBeneficio" class="fixed inset-0 bg-sena-dark/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white max-w-md w-full rounded-3xl p-6 space-y-4 border border-sena-border shadow-2xl">
+            <div class="flex justify-between items-center border-b border-sena-border pb-3">
+                <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
+                    <i class="fas fa-hand-holding-heart text-sena-primary"></i> Registrar Beneficio SENA
+                </h3>
+                <button onclick="closeModalBeneficio()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-xmark text-lg"></i></button>
+            </div>
+
+            <form onsubmit="handleSaveBenefit(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-sena-dark mb-1">Seleccione Beneficio / Auxilio <span class="text-red-500">*</span></label>
+                    <select id="benSelectId" required class="w-full text-xs p-3 border border-sena-border rounded-xl font-bold bg-white">
+                        <option value="">Cargando catálogo...</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-sena-dark mb-1">Observaciones</label>
+                    <textarea id="benObs" rows="3" placeholder="Detalle cómo fue otorgado o solicitado el beneficio..." class="w-full text-xs p-3 border border-sena-border rounded-xl"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModalBeneficio()" class="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary transition">Guardar Beneficio</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    </div>
+
     <!-- Footer -->
     <footer class="bg-sena-dark text-slate-400 text-xs py-4 px-6 border-t border-slate-800 mt-auto">
         <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-            <p>© 2026 Servicio Nacional de Aprendizaje SENA - Dirección General</p>
+            <p>© 2026 Servicio Nacional de Aprendizaje SENA - Legarda</p>
             <p>Portal del Aprendiz SENAContigo</p>
         </div>
     </footer>

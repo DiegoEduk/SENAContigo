@@ -99,10 +99,12 @@ async def serve_index():
     return FileResponse("templates/index.html")
 
 @app.get("/dashboard", include_in_schema=False)
+@app.get("/usuarios", include_in_schema=False)
 async def serve_dashboard():
     return FileResponse("templates/dashboard.html")
 
 @app.get("/aprendiz", include_in_schema=False)
+@app.get("/portal-aprendiz", include_in_schema=False)
 async def serve_aprendiz():
     return FileResponse("templates/aprendiz.html")
 

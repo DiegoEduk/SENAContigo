@@ -13,6 +13,7 @@ from app.modules.identity.router import router as auth_router, users_router
 from app.modules.needs.router import router as necesidades_router
 from app.modules.notifications.router import router as notificaciones_router
 from app.modules.organization.router import centros_router, regionales_router
+from app.modules.portal.router import router as portal_router
 from app.modules.responses.router import router as respuestas_router
 from app.modules.rules.router import router as reglas_router
 from app.modules.segments.router import router as segmentos_router
@@ -21,9 +22,11 @@ from app.modules.variables.router import router as variables_router
 
 api_router = APIRouter()
 
-# Identidad y Autenticación
+# Identidad, Autenticación y Portal del Aprendiz
 api_router.include_router(auth_router)
 api_router.include_router(users_router)
+api_router.include_router(portal_router)
+
 
 # Estructura SENA
 api_router.include_router(regionales_router)

@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.dependencies import get_current_user_token, require_roles
 from app.core.security import TokenData
-from app.modules.identity.schemas import LoginRequest, RolRead, TokenResponse, UsuarioCreate, UsuarioRead, UsuarioUpdate
+from app.modules.identity.schemas import AprendizLoginRequest, AprendizTokenResponse, LoginRequest, RolRead, TokenResponse, UsuarioCreate, UsuarioRead, UsuarioUpdate
 from app.modules.identity.services import IdentityService
 
 router = APIRouter(prefix="/auth", tags=["Autenticación e Identidad"])
@@ -14,8 +14,19 @@ users_router = APIRouter(prefix="/usuarios", tags=["Gestión de Usuarios"])
 
 @router.post("/login", response_model=TokenResponse)
 async def login(login_data: LoginRequest, db: AsyncSession = Depends(get_db)):
-    """Autenticar usuario y generar access token y refresh token."""
+    """Autenticar usuario administrativo/instructor y generar token de acceso."""
     return await IdentityService.authenticate_user(db, login_data)
+
+
+@router.post("/aprendiz-login", response_model=AprendizTokenResponse)
+async def aprendiz_login(login_data: AprendizLoginRequest, db: AsyncSession = Depends(get_db)):
+    """Autenticar aprendiz público mediante su Número de Documento y Ficha de Formación matriculada."""
+    return await IdentityService.authenticate_aprendiz(
+        db,
+        numero_documento=login_data.numero_documento,
+        ficha_caracterizacion=login_data.ficha_caracterizacion
+    )
+
 
 
 @router.get("/me", response_model=UsuarioRead)

@@ -11,30 +11,114 @@ let searchTimeout = null;
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     if (!API.getToken()) {
-      window.location.href = window.location.protocol === 'file:' ? 'index.html' : '/';
+      showLoginView();
       return;
     }
 
     currentUser = await API.getMe();
     API.setUser(currentUser);
 
-    setupUserInterface();
-    loadCurrentTab();
+    // Strictly check if user is ONLY an Aprendiz (Learner)
+    const roles = (currentUser.roles || []).map(r => (typeof r === 'string' ? r : r.nombre).toLowerCase());
+    if (currentUser.rol) roles.push(currentUser.rol.toLowerCase());
+    
+    const hasAdminRole = roles.some(r => ['superadmin', 'direccion', 'coordinador', 'instructor', 'lider_bienestar', 'lider_contratacion'].includes(r));
+    
+    if (roles.includes('aprendiz') && !hasAdminRole) {
+      window.location.href = window.location.protocol === 'file:' ? 'aprendiz.html' : '/aprendiz';
+      return;
+    }
+
+    showWorkspaceView();
   } catch (err) {
     console.error('Error inicializando dashboard:', err);
-    Toast.error('Fallo al validar sesión. Inicie sesión de nuevo.');
-    API.logout();
+    showLoginView();
   }
 });
+
+function showLoginView() {
+  const loginEl = document.getElementById('usuariosLoginContainer');
+  const workEl = document.getElementById('usuariosWorkspace');
+  const headEl = document.getElementById('usuariosHeaderControls');
+  if (loginEl) loginEl.classList.remove('hidden');
+  if (workEl) workEl.classList.add('hidden');
+  if (headEl) headEl.classList.add('hidden');
+}
+
+function showWorkspaceView() {
+  const loginEl = document.getElementById('usuariosLoginContainer');
+  const workEl = document.getElementById('usuariosWorkspace');
+  const headEl = document.getElementById('usuariosHeaderControls');
+  if (loginEl) loginEl.classList.add('hidden');
+  if (workEl) workEl.classList.remove('hidden');
+  if (headEl) headEl.classList.remove('hidden');
+  setupUserInterface();
+  loadCurrentTab();
+}
+
+function togglePasswordVisibility() {
+  const pass = document.getElementById('inputPassword');
+  const icon = document.getElementById('eyeIcon');
+  if (!pass || !icon) return;
+  if (pass.type === 'password') {
+    pass.type = 'text';
+    icon.classList.remove('fa-eye');
+    icon.classList.add('fa-eye-slash');
+  } else {
+    pass.type = 'password';
+    icon.classList.remove('fa-eye-slash');
+    icon.classList.add('fa-eye');
+  }
+}
+
+async function handleStaffLogin(e) {
+  e.preventDefault();
+  const correo = document.getElementById('inputCorreo').value.trim();
+  const password = document.getElementById('inputPassword').value;
+
+  if (!correo || !password) {
+    Toast.warning('Por favor ingrese su correo y contraseña.');
+    return;
+  }
+
+  try {
+    Loading.show('Autenticando usuario...');
+    const res = await API.login(correo, password);
+    Loading.hide();
+
+    API.setToken(res.access_token);
+    API.setUser(res.usuario);
+
+    Toast.success(`¡Bienvenido(a), ${res.usuario.nombres}!`, 'Inicio de Sesión Exitoso');
+    
+    currentUser = await API.getMe();
+    const roles = (currentUser.roles || []).map(r => (typeof r === 'string' ? r : r.nombre).toLowerCase());
+    if (currentUser.rol) roles.push(currentUser.rol.toLowerCase());
+    const hasAdminRole = roles.some(r => ['superadmin', 'direccion', 'coordinador', 'instructor', 'lider_bienestar', 'lider_contratacion'].includes(r));
+    
+    if (roles.includes('aprendiz') && !hasAdminRole) {
+      window.location.href = window.location.protocol === 'file:' ? 'aprendiz.html' : '/aprendiz';
+      return;
+    }
+
+    showWorkspaceView();
+  } catch (err) {
+    Loading.hide();
+    Toast.error(err.message || 'Error al autenticar usuario.', 'Autenticación Fallida');
+  }
+}
 
 function setupUserInterface() {
   if (!currentUser) return;
 
-  const role = (currentUser.rol || '').toLowerCase();
+  const roles = (currentUser.roles || []).map(r => (typeof r === 'string' ? r : r.nombre).toLowerCase());
+  if (currentUser.rol) roles.push(currentUser.rol.toLowerCase());
+
+  const primaryRole = roles[0] || 'usuario';
   
   // Set role badge & name
   const badgeEl = document.getElementById('userRoleBadge');
-  if (badgeEl) badgeEl.innerText = currentUser.rol || 'USUARIO';
+  if (badgeEl) badgeEl.innerText = primaryRole.toUpperCase();
 
   const nameEl = document.getElementById('navUserName');
   if (nameEl) nameEl.innerText = `${currentUser.nombres} ${currentUser.apellidos}`;
@@ -45,24 +129,55 @@ function setupUserInterface() {
   // Set Scope details
   const scopeEl = document.getElementById('scopeDetails');
   if (scopeEl) {
-    if (role === 'superadmin') {
+    if (roles.includes('superadmin')) {
       scopeEl.innerHTML = `<p><i class="fas fa-globe text-sena-primary mr-1"></i> Cobertura Nacional SENA</p>`;
-    } else if (role.includes('direccion') && currentUser.regional_id) {
+    } else if (roles.includes('direccion') && currentUser.regional_id) {
       scopeEl.innerHTML = `<p><i class="fas fa-map text-sena-primary mr-1"></i> Regional ID: ${currentUser.regional_id}</p>`;
-    } else if (role.includes('coordinador') && currentUser.centro_id) {
+    } else if (roles.includes('coordinador') && currentUser.centro_id) {
       scopeEl.innerHTML = `<p><i class="fas fa-building text-sena-primary mr-1"></i> Centro ID: ${currentUser.centro_id}</p>`;
-    } else if (role === 'lider_contratacion') {
+    } else if (roles.includes('lider_contratacion')) {
       scopeEl.innerHTML = `<p><i class="fas fa-file-contract text-sena-primary mr-1"></i> Módulo de Contratación</p>`;
-    } else if (role === 'lider_bienestar') {
+    } else if (roles.includes('lider_bienestar')) {
       scopeEl.innerHTML = `<p><i class="fas fa-heart text-sena-primary mr-1"></i> Módulo de Bienestar</p>`;
     }
   }
 
-  // Adjust initial tab based on role
-  if (role === 'lider_contratacion') {
-    navSwitch('contratos');
-  } else if (role === 'lider_bienestar') {
-    navSwitch('beneficios');
+  // Filter sidebar items according to user role permissions
+  const menuPermissions = {
+    superadmin: ['resumen', 'aprendices', 'fichas', 'contratos', 'beneficios', 'casos', 'variables', 'encuestas', 'analytics', 'audit'],
+    direccion: ['resumen', 'aprendices', 'fichas', 'contratos', 'beneficios', 'casos', 'variables', 'encuestas', 'analytics'],
+    coordinador: ['resumen', 'aprendices', 'fichas', 'contratos', 'beneficios', 'casos', 'variables', 'encuestas'],
+    instructor: ['resumen', 'aprendices', 'fichas', 'casos'],
+    lider_contratacion: ['resumen', 'contratos', 'aprendices'],
+    lider_bienestar: ['resumen', 'beneficios', 'casos', 'aprendices']
+  };
+
+  let allowedTabs = ['resumen', 'aprendices', 'fichas', 'contratos', 'beneficios', 'casos', 'variables', 'encuestas', 'analytics', 'audit'];
+  
+  if (!roles.includes('superadmin')) {
+    allowedTabs = [];
+    roles.forEach(r => {
+      if (menuPermissions[r]) {
+        allowedTabs = [...new Set([...allowedTabs, ...menuPermissions[r]])];
+      }
+    });
+    if (allowedTabs.length === 0) allowedTabs = ['resumen'];
+  }
+
+  // Hide non-permitted nav buttons
+  const navBtns = document.querySelectorAll('[id^="nav-"]');
+  navBtns.forEach(btn => {
+    const tabName = btn.id.replace('nav-', '');
+    if (!allowedTabs.includes(tabName)) {
+      btn.classList.add('hidden');
+    } else {
+      btn.classList.remove('hidden');
+    }
+  });
+
+  // Adjust initial tab based on role if default tab is forbidden
+  if (!allowedTabs.includes(currentTab)) {
+    navSwitch(allowedTabs[0]);
   }
 }
 

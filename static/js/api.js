@@ -132,12 +132,19 @@ const API = {
     localStorage.setItem('senacontigo_user', JSON.stringify(user));
   },
 
-  logout() {
+  logout(targetUrl) {
     localStorage.removeItem('senacontigo_token');
     localStorage.removeItem('senacontigo_user');
     Toast.info('Sesión cerrada correctamente');
     setTimeout(() => {
-      window.location.href = window.location.protocol === 'file:' ? 'index.html' : '/';
+      if (targetUrl) {
+        window.location.href = targetUrl;
+      } else if (window.location.protocol === 'file:') {
+        const file = window.location.pathname.split('/').pop() || 'index.html';
+        window.location.href = file;
+      } else {
+        window.location.href = window.location.pathname;
+      }
     }, 500);
   },
 
@@ -194,9 +201,17 @@ const API = {
     });
   },
 
+  loginAprendiz(numero_documento, ficha_caracterizacion) {
+    return this.request('/auth/aprendiz-login', {
+      method: 'POST',
+      body: JSON.stringify({ numero_documento, ficha_caracterizacion })
+    });
+  },
+
   getMe() {
     return this.request('/auth/me');
   },
+
 
   getUsuarios(params = {}) {
     const q = new URLSearchParams(params).toString();
@@ -342,6 +357,46 @@ const API = {
   },
 
   // Learner Portal
+  getPerfilAprendiz() {
+    return this.request('/portal/perfil');
+  },
+
+  updatePerfilAprendiz(data) {
+    return this.request('/portal/perfil', {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  },
+
+  getMisBeneficios() {
+    return this.request('/portal/beneficios');
+  },
+
+  registrarBeneficioAprendiz(data) {
+    return this.request('/portal/beneficios', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  },
+
+  getMisContratos() {
+    return this.request('/portal/contratos');
+  },
+
+  registrarContratoAprendiz(data) {
+    return this.request('/portal/contratos', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  },
+
+  updateContratoAprendiz(id, data) {
+    return this.request(`/portal/contratos/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  },
+
   getEncuestasPendientes() {
     return this.request('/portal/encuestas-pendientes');
   },
@@ -356,6 +411,7 @@ const API = {
   getMiHistorial() {
     return this.request('/portal/mi-historial');
   },
+
 
   // Cases & Rules
   getCasos(params = {}) {

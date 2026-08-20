@@ -45,7 +45,69 @@ class IdentityService:
         )
 
     @staticmethod
-    async def get_user_by_id(session: AsyncSession, user_id: int) -> Usuario:
+    async def authenticate_aprendiz(
+        session: AsyncSession,
+        numero_documento: str,
+        ficha_caracterizacion: str
+    ) -> dict:
+        from app.modules.apprentices.models import Aprendiz
+        
+        # 1. Buscar aprendiz activo por documento
+        stmt = (
+            select(Aprendiz)
+            .where(Aprendiz.numero_documento == numero_documento, Aprendiz.activo == True)
+            .options(selectinload(Aprendiz.matriculas))
+        )
+        res = await session.execute(stmt)
+        aprendiz = res.scalar_one_or_none()
+
+        if not aprendiz:
+            raise UnauthorizedException("No se encontró un aprendiz activo con el número de documento proporcionado.")
+
+        # 2. Verificar que el aprendiz tenga matrícula en la ficha indicada
+        matricula_valida = next((m for m in aprendiz.matriculas if m.ficha_id == ficha_caracterizacion), None)
+        if not matricula_valida:
+            raise UnauthorizedException(f"El aprendiz no se encuentra matriculado en la ficha de formación {ficha_caracterizacion}.")
+
+        # 3. Generar Tokens
+        token_payload = {
+            "correo": aprendiz.correo,
+            "rol": "aprendiz",
+            "regional_id": aprendiz.regional_id,
+            "centro_id": aprendiz.centro_id,
+            "aprendiz_id": aprendiz.id,
+            "ficha_id": ficha_caracterizacion
+        }
+
+        access_token = create_access_token(subject=aprendiz.id, payload=token_payload)
+        refresh_token = create_refresh_token(subject=aprendiz.id)
+
+        aprendiz_dict = {
+            "id": aprendiz.id,
+            "tipo_documento": aprendiz.tipo_documento,
+            "numero_documento": aprendiz.numero_documento,
+            "nombres": aprendiz.nombres,
+            "apellidos": aprendiz.apellidos,
+            "correo": aprendiz.correo,
+            "celular": aprendiz.celular,
+            "direccion_vivienda": aprendiz.direccion_vivienda,
+            "ciudad": aprendiz.ciudad,
+            "departamento": aprendiz.departamento,
+            "centro_id": aprendiz.centro_id,
+            "regional_id": aprendiz.regional_id,
+            "activo": aprendiz.activo
+        }
+
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "aprendiz": aprendiz_dict,
+            "ficha_id": ficha_caracterizacion
+        }
+
+    @staticmethod
+    async def get_user_by_id(session: AsyncSession, user_id: int):
         stmt = (
             select(Usuario)
             .where(Usuario.id == user_id)
@@ -53,9 +115,34 @@ class IdentityService:
         )
         result = await session.execute(stmt)
         user = result.scalar_one_or_none()
-        if not user:
-            raise NotFoundException("Usuario", user_id)
-        return user
+        if user:
+            return user
+        
+        # Consultar si es un Aprendiz ingresado por enlace público
+        from app.modules.apprentices.models import Aprendiz
+        ap_stmt = select(Aprendiz).where(Aprendiz.id == user_id)
+        ap_res = await session.execute(ap_stmt)
+        aprendiz = ap_res.scalar_one_or_none()
+        if aprendiz:
+            return {
+                "id": aprendiz.id,
+                "tipo_documento": aprendiz.tipo_documento,
+                "numero_documento": aprendiz.numero_documento,
+                "nombres": aprendiz.nombres,
+                "apellidos": aprendiz.apellidos,
+                "correo": aprendiz.correo,
+                "celular": aprendiz.celular,
+                "regional_id": aprendiz.regional_id,
+                "centro_id": aprendiz.centro_id,
+                "aprendiz_id": aprendiz.id,
+                "activo": aprendiz.activo,
+                "created_at": aprendiz.created_at,
+                "updated_at": aprendiz.updated_at,
+                "roles": [{"id": 0, "nombre": "aprendiz", "descripcion": "Aprendiz SENA", "activo": True, "created_at": aprendiz.created_at, "permisos": []}]
+            }
+
+        raise NotFoundException("Usuario", user_id)
+
 
     @staticmethod
     async def list_users(
