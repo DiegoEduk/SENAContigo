@@ -1,4 +1,6 @@
+import asyncio
 import os
+import traceback
 import xml.etree.ElementTree as ET
 from sqlalchemy import select
 from app.core.database import AsyncSessionLocal

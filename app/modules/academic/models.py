@@ -1,5 +1,6 @@
 from datetime import date, datetime
 from typing import List, Optional
+from app.modules.organization.models import CentroFormacion
 from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
