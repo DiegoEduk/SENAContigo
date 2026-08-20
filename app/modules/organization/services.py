@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -17,12 +17,12 @@ class OrganizationService:
         return list(res.scalars().all())
 
     @staticmethod
-    async def get_regional_by_id(session: AsyncSession, regional_id: int) -> Regional:
-        stmt = select(Regional).where(Regional.id == regional_id).options(selectinload(Regional.centros))
+    async def get_regional_by_id(session: AsyncSession, codigo_regional: str) -> Regional:
+        stmt = select(Regional).where(Regional.codigo_regional == codigo_regional).options(selectinload(Regional.centros))
         res = await session.execute(stmt)
         reg = res.scalar_one_or_none()
         if not reg:
-            raise NotFoundException("Regional", regional_id)
+            raise NotFoundException("Regional", codigo_regional)
         return reg
 
     @staticmethod
@@ -36,20 +36,20 @@ class OrganizationService:
         session.add(reg)
         await session.commit()
         await session.refresh(reg)
-        return await OrganizationService.get_regional_by_id(session, reg.id)
+        return await OrganizationService.get_regional_by_id(session, reg.codigo_regional)
 
     @staticmethod
-    async def update_regional(session: AsyncSession, regional_id: int, reg_in: RegionalUpdate) -> Regional:
-        reg = await OrganizationService.get_regional_by_id(session, regional_id)
+    async def update_regional(session: AsyncSession, codigo_regional: str, reg_in: RegionalUpdate) -> Regional:
+        reg = await OrganizationService.get_regional_by_id(session, codigo_regional)
         for field, value in reg_in.model_dump(exclude_unset=True).items():
             setattr(reg, field, value)
         await session.commit()
         await session.refresh(reg)
-        return await OrganizationService.get_regional_by_id(session, regional_id)
+        return await OrganizationService.get_regional_by_id(session, codigo_regional)
 
     # Centros
     @staticmethod
-    async def list_centros(session: AsyncSession, regional_id: int = None) -> List[CentroFormacion]:
+    async def list_centros(session: AsyncSession, regional_id: Optional[str] = None) -> List[CentroFormacion]:
         stmt = select(CentroFormacion)
         if regional_id:
             stmt = stmt.where(CentroFormacion.regional_id == regional_id)

@@ -14,7 +14,7 @@ class AnalyticsService:
     @staticmethod
     async def get_dashboard_summary(
         session: AsyncSession,
-        regional_id: Optional[int] = None,
+        regional_id: Optional[str] = None,
         centro_id: Optional[int] = None,
         ficha_id: Optional[int] = None
     ) -> DashboardSummary:

@@ -22,7 +22,7 @@ async def list_aprendices(
     limit: int = 100,
     ficha_id: Optional[int] = None,
     centro_id: Optional[int] = None,
-    regional_id: Optional[int] = None,
+    regional_id: Optional[str] = None,
     search: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user_token)

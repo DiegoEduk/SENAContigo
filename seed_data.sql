@@ -42,25 +42,23 @@ ON CONFLICT (codigo) DO NOTHING;
 -- -----------------------------------------------------------------------------
 -- 3. ESTRUCTURA ORGANIZACIONAL SENA (REGIONALES Y CENTROS)
 -- -----------------------------------------------------------------------------
-INSERT INTO regionales (id, codigo_regional, nombre, activo, created_at)
+INSERT INTO regionales (codigo_regional, nombre, activo, created_at)
 VALUES 
-  (1, '11', 'REGIONAL DISTRITO CAPITAL', true, NOW()),
-  (2, '05', 'REGIONAL ANTIOQUIA', true, NOW()),
-  (3, '66', 'REGIONAL RISARALDA', true, NOW()),
-  (4, '76', 'REGIONAL VALLE', true, NOW())
+  ('11', 'REGIONAL DISTRITO CAPITAL', true, NOW()),
+  ('05', 'REGIONAL ANTIOQUIA', true, NOW()),
+  ('66', 'REGIONAL RISARALDA', true, NOW()),
+  ('76', 'REGIONAL VALLE', true, NOW())
 ON CONFLICT (codigo_regional) DO UPDATE 
 SET nombre = EXCLUDED.nombre;
 
-SELECT setval('regionales_id_seq', (SELECT MAX(id) FROM regionales));
-
 INSERT INTO centros (id, codigo_centro, nombre, regional_id, activo, created_at)
 VALUES 
-  (1, '9201', 'CENTRO DE DISEÑO Y METROLOGÍA', 1, true, NOW()),
-  (2, '9202', 'CENTRO DE ELECTRICIDAD, ELECTRÓNICA Y TELECOMUNICACIONES', 1, true, NOW()),
-  (3, '9101', 'CENTRO DE TECNOLOGÍA DE LA MANUFACTURA AVANZADA', 2, true, NOW()),
-  (4, '9121', 'CENTRO ATENCION SECTOR AGROPECUARIO', 3, true, NOW()),
-  (5, '9308', 'CENTRO DE COMERCIO Y SERVICIOS', 3, true, NOW()),
-  (6, '9223', 'CENTRO DE DISEÑO E INNOVACIÓN TECNOLÓGICA INDUSTRIAL', 3, true, NOW())
+  (1, '9201', 'CENTRO DE DISEÑO Y METROLOGÍA', '11', true, NOW()),
+  (2, '9202', 'CENTRO DE ELECTRICIDAD, ELECTRÓNICA Y TELECOMUNICACIONES', '11', true, NOW()),
+  (3, '9101', 'CENTRO DE TECNOLOGÍA DE LA MANUFACTURA AVANZADA', '05', true, NOW()),
+  (4, '9121', 'CENTRO ATENCION SECTOR AGROPECUARIO', '66', true, NOW()),
+  (5, '9308', 'CENTRO DE COMERCIO Y SERVICIOS', '66', true, NOW()),
+  (6, '9223', 'CENTRO DE DISEÑO E INNOVACIÓN TECNOLÓGICA INDUSTRIAL', '66', true, NOW())
 ON CONFLICT (codigo_centro) DO UPDATE 
 SET nombre = EXCLUDED.nombre, regional_id = EXCLUDED.regional_id;
 

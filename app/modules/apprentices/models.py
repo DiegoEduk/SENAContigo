@@ -18,7 +18,7 @@ class Aprendiz(Base):
     celular: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     
     centro_id: Mapped[Optional[int]] = mapped_column(ForeignKey("centros.id", ondelete="SET NULL"), nullable=True)
-    regional_id: Mapped[Optional[int]] = mapped_column(ForeignKey("regionales.id", ondelete="SET NULL"), nullable=True)
+    regional_id: Mapped[Optional[str]] = mapped_column(String(20), ForeignKey("regionales.codigo_regional", ondelete="SET NULL"), nullable=True)
 
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

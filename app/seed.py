@@ -52,7 +52,7 @@ async def seed_data():
                 centro = CentroFormacion(
                     codigo_centro="9201",
                     nombre="CENTRO DE DISEÑO Y METROLOGÍA",
-                    regional_id=reg.id,
+                    regional_id=reg.codigo_regional,
                     activo=True
                 )
                 session.add(centro)
@@ -71,7 +71,7 @@ async def seed_data():
                     correo="admin@senacontigo.edu.co",
                     hashed_password=get_password_hash("Admin123456*"),
                     celular="3000000000",
-                    regional_id=reg.id,
+                    regional_id=reg.codigo_regional,
                     centro_id=centro.id,
                     activo=True,
                     roles=[superadmin_role] if superadmin_role else []

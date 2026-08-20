@@ -14,7 +14,7 @@ class Segmento(Base):
     descripcion: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Filtros dinámicos
-    regional_id: Mapped[Optional[int]] = mapped_column(ForeignKey("regionales.id", ondelete="SET NULL"), nullable=True)
+    regional_id: Mapped[Optional[str]] = mapped_column(String(20), ForeignKey("regionales.codigo_regional", ondelete="SET NULL"), nullable=True)
     centro_id: Mapped[Optional[int]] = mapped_column(ForeignKey("centros.id", ondelete="SET NULL"), nullable=True)
     programa_id: Mapped[Optional[int]] = mapped_column(ForeignKey("programas.id", ondelete="SET NULL"), nullable=True)
     ficha_id: Mapped[Optional[int]] = mapped_column(ForeignKey("fichas.id", ondelete="SET NULL"), nullable=True)

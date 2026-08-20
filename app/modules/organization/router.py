@@ -25,14 +25,14 @@ async def list_regionales(
     return await OrganizationService.list_regionales(db)
 
 
-@regionales_router.get("/{regional_id}", response_model=RegionalRead)
+@regionales_router.get("/{codigo_regional}", response_model=RegionalRead)
 async def get_regional(
-    regional_id: int,
+    codigo_regional: str,
     db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user_token)
 ):
-    """Obtener regional por ID."""
-    return await OrganizationService.get_regional_by_id(db, regional_id)
+    """Obtener regional por su código regional (PK)."""
+    return await OrganizationService.get_regional_by_id(db, codigo_regional)
 
 
 @regionales_router.post("", response_model=RegionalRead, status_code=status.HTTP_201_CREATED)
@@ -45,25 +45,25 @@ async def create_regional(
     return await OrganizationService.create_regional(db, reg_in)
 
 
-@regionales_router.put("/{regional_id}", response_model=RegionalRead)
+@regionales_router.put("/{codigo_regional}", response_model=RegionalRead)
 async def update_regional(
-    regional_id: int,
+    codigo_regional: str,
     reg_in: RegionalUpdate,
     db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(require_roles(["superadmin"]))
 ):
     """Actualizar regional SENA."""
-    return await OrganizationService.update_regional(db, regional_id, reg_in)
+    return await OrganizationService.update_regional(db, codigo_regional, reg_in)
 
 
 # Centros
 @centros_router.get("", response_model=List[CentroFormacionRead])
 async def list_centros(
-    regional_id: Optional[int] = None,
+    regional_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user_token)
 ):
-    """Listar centros de formación (opcionalmente filtrados por regional)."""
+    """Listar centros de formación (opcionalmente filtrados por código regional)."""
     return await OrganizationService.list_centros(db, regional_id=regional_id)
 
 

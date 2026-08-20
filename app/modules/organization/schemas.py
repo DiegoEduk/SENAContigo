@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict
 class CentroFormacionBase(BaseModel):
     codigo_centro: str
     nombre: str
-    regional_id: int
+    regional_id: str
     activo: bool = True
 
 
@@ -41,7 +41,6 @@ class RegionalUpdate(BaseModel):
 
 
 class RegionalRead(RegionalBase):
-    id: int
     created_at: datetime
     centros: List[CentroFormacionRead] = []
     model_config = ConfigDict(from_attributes=True)

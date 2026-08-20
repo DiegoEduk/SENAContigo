@@ -245,8 +245,7 @@ erDiagram
     }
 
     REGIONALES {
-        int id PK
-        string codigo_regional UK
+        string codigo_regional PK
         string nombre
         boolean activo
     }
@@ -255,7 +254,7 @@ erDiagram
         int id PK
         string codigo_centro UK
         string nombre
-        int regional_id FK
+        string regional_id FK
     }
 
     APRENDICES {
@@ -266,7 +265,7 @@ erDiagram
         string apellidos
         string correo UK
         int centro_id FK
-        int regional_id FK
+        string regional_id FK
     }
 
     CASOS {

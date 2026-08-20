@@ -12,7 +12,7 @@ class TokenData(BaseModel):
     user_id: int
     correo: str
     rol: str
-    regional_id: Optional[int] = None
+    regional_id: Optional[str] = None
     centro_id: Optional[int] = None
     aprendiz_id: Optional[int] = None
 

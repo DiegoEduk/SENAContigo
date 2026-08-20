@@ -17,7 +17,7 @@ class ApprenticesService:
         limit: int = 100,
         ficha_id: Optional[int] = None,
         centro_id: Optional[int] = None,
-        regional_id: Optional[int] = None,
+        regional_id: Optional[str] = None,
         search: Optional[str] = None
     ) -> List[Aprendiz]:
         stmt = select(Aprendiz).options(selectinload(Aprendiz.matriculas))

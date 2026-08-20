@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict
 class SegmentoBase(BaseModel):
     nombre: str
     descripcion: Optional[str] = None
-    regional_id: Optional[int] = None
+    regional_id: Optional[str] = None
     centro_id: Optional[int] = None
     programa_id: Optional[int] = None
     ficha_id: Optional[int] = None

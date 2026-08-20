@@ -57,7 +57,7 @@ class Usuario(Base):
     celular: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     
     # Scoping organizacional
-    regional_id: Mapped[Optional[int]] = mapped_column(ForeignKey("regionales.id", ondelete="SET NULL"), nullable=True)
+    regional_id: Mapped[Optional[str]] = mapped_column(String(20), ForeignKey("regionales.codigo_regional", ondelete="SET NULL"), nullable=True)
     centro_id: Mapped[Optional[int]] = mapped_column(ForeignKey("centros.id", ondelete="SET NULL"), nullable=True)
     aprendiz_id: Mapped[Optional[int]] = mapped_column(ForeignKey("aprendices.id", ondelete="SET NULL"), nullable=True)
 

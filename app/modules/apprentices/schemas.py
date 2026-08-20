@@ -31,7 +31,7 @@ class AprendizBase(BaseModel):
     correo: EmailStr
     celular: Optional[str] = None
     centro_id: Optional[int] = None
-    regional_id: Optional[int] = None
+    regional_id: Optional[str] = None
     activo: bool = True
 
 
@@ -45,7 +45,7 @@ class AprendizUpdate(BaseModel):
     correo: Optional[EmailStr] = None
     celular: Optional[str] = None
     centro_id: Optional[int] = None
-    regional_id: Optional[int] = None
+    regional_id: Optional[str] = None
     activo: Optional[bool] = None
 
 
