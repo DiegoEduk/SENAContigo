@@ -20,8 +20,7 @@ class Regional(Base):
 class CentroFormacion(Base):
     __tablename__ = "centros"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    codigo_centro: Mapped[str] = mapped_column(String(20), unique=True, index=True, nullable=False)
+    codigo_centro: Mapped[str] = mapped_column(String(20), primary_key=True, index=True, nullable=False)
     nombre: Mapped[str] = mapped_column(String(150), nullable=False)
     regional_id: Mapped[str] = mapped_column(ForeignKey("regionales.codigo_regional", ondelete="CASCADE"), nullable=False, index=True)
     activo: Mapped[bool] = mapped_column(Boolean, default=True)

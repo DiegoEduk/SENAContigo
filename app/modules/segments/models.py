@@ -15,9 +15,10 @@ class Segmento(Base):
 
     # Filtros dinámicos
     regional_id: Mapped[Optional[str]] = mapped_column(String(20), ForeignKey("regionales.codigo_regional", ondelete="SET NULL"), nullable=True)
-    centro_id: Mapped[Optional[int]] = mapped_column(ForeignKey("centros.id", ondelete="SET NULL"), nullable=True)
-    programa_id: Mapped[Optional[int]] = mapped_column(ForeignKey("programas.id", ondelete="SET NULL"), nullable=True)
-    ficha_id: Mapped[Optional[int]] = mapped_column(ForeignKey("fichas.id", ondelete="SET NULL"), nullable=True)
+    centro_id: Mapped[Optional[str]] = mapped_column(String(20), ForeignKey("centros.codigo_centro", ondelete="SET NULL"), nullable=True)
+    programa_codigo: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    programa_version: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    ficha_id: Mapped[Optional[str]] = mapped_column(String(50), ForeignKey("fichas.ficha_caracterizacion", ondelete="SET NULL"), nullable=True)
     solo_afectados: Mapped[bool] = mapped_column(Boolean, default=False)
     nivel_afectacion_minimo: Mapped[int] = mapped_column(Integer, default=0)
 

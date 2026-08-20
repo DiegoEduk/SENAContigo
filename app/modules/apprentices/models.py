@@ -17,7 +17,7 @@ class Aprendiz(Base):
     correo: Mapped[str] = mapped_column(String(150), unique=True, index=True, nullable=False)
     celular: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     
-    centro_id: Mapped[Optional[int]] = mapped_column(ForeignKey("centros.id", ondelete="SET NULL"), nullable=True)
+    centro_id: Mapped[Optional[str]] = mapped_column(String(20), ForeignKey("centros.codigo_centro", ondelete="SET NULL"), nullable=True)
     regional_id: Mapped[Optional[str]] = mapped_column(String(20), ForeignKey("regionales.codigo_regional", ondelete="SET NULL"), nullable=True)
 
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -32,7 +32,7 @@ class Matricula(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     aprendiz_id: Mapped[int] = mapped_column(ForeignKey("aprendices.id", ondelete="CASCADE"), nullable=False)
-    ficha_id: Mapped[int] = mapped_column(ForeignKey("fichas.id", ondelete="CASCADE"), nullable=False)
+    ficha_id: Mapped[str] = mapped_column(String(50), ForeignKey("fichas.ficha_caracterizacion", ondelete="CASCADE"), nullable=False)
     estado_matricula: Mapped[str] = mapped_column(String(50), nullable=False, default="En formación")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

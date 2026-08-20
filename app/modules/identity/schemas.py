@@ -41,7 +41,7 @@ class UsuarioBase(BaseModel):
     correo: EmailStr
     celular: Optional[str] = None
     regional_id: Optional[str] = None
-    centro_id: Optional[int] = None
+    centro_id: Optional[str] = None
     aprendiz_id: Optional[int] = None
     activo: bool = True
 
@@ -57,7 +57,7 @@ class UsuarioUpdate(BaseModel):
     correo: Optional[EmailStr] = None
     celular: Optional[str] = None
     regional_id: Optional[str] = None
-    centro_id: Optional[int] = None
+    centro_id: Optional[str] = None
     aprendiz_id: Optional[int] = None
     activo: Optional[bool] = None
     password: Optional[str] = None

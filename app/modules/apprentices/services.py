@@ -15,8 +15,8 @@ class ApprenticesService:
         session: AsyncSession,
         skip: int = 0,
         limit: int = 100,
-        ficha_id: Optional[int] = None,
-        centro_id: Optional[int] = None,
+        ficha_id: Optional[str] = None,
+        centro_id: Optional[str] = None,
         regional_id: Optional[str] = None,
         search: Optional[str] = None
     ) -> List[Aprendiz]:

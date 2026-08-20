@@ -72,7 +72,7 @@ async def seed_data():
                     hashed_password=get_password_hash("Admin123456*"),
                     celular="3000000000",
                     regional_id=reg.codigo_regional,
-                    centro_id=centro.id,
+                    centro_id=centro.codigo_centro,
                     activo=True,
                     roles=[superadmin_role] if superadmin_role else []
                 )
@@ -90,10 +90,6 @@ async def seed_data():
                     header_idx = None
                     programs = {}
                     fichas_raw = []
-
-                    # Cache centros map: codigo_centro -> centro_id
-                    centros_res = await session.execute(select(CentroFormacion))
-                    centros_map = {c.codigo_centro: c.id for c in centros_res.scalars().all()}
 
                     for row_idx, row in enumerate(rows):
                         cells_data = {}
@@ -135,13 +131,19 @@ async def seed_data():
                                     'f_fin': f_fin,
                                     'estado': est_ficha,
                                     'cod_centro': cod_centro,
-                                    'cod_prog': cod
+                                    'cod_prog': cod,
+                                    'ver_prog': ver
                                 })
 
                     # Seed Programs
                     progs_db_map = {}
                     for cod, item in programs.items():
-                        res_p = await session.execute(select(ProgramaFormacion).where(ProgramaFormacion.codigo_programa == cod))
+                        res_p = await session.execute(
+                            select(ProgramaFormacion).where(
+                                (ProgramaFormacion.codigo_programa == cod) &
+                                (ProgramaFormacion.version == item['ver'])
+                            )
+                        )
                         p_obj = res_p.scalar_one_or_none()
                         if not p_obj:
                             p_obj = ProgramaFormacion(
@@ -154,16 +156,14 @@ async def seed_data():
                             session.add(p_obj)
                             await session.flush()
                         else:
-                            p_obj.version = item['ver']
                             p_obj.nombre = item['prog']
                             p_obj.nivel_formacion = item['nivel']
-                        progs_db_map[cod] = p_obj.id
+                        progs_db_map[cod] = (item['cod'], item['ver'])
 
                     # Seed Fichas
                     for f_item in fichas_raw:
-                        c_id = centros_map.get(f_item['cod_centro'])
-                        p_id = progs_db_map.get(f_item['cod_prog'])
-                        if c_id and p_id:
+                        p_info = progs_db_map.get(f_item['cod_prog'])
+                        if f_item['cod_centro'] and p_info:
                             res_f = await session.execute(select(Ficha).where(Ficha.ficha_caracterizacion == f_item['ficha']))
                             f_obj = res_f.scalar_one_or_none()
                             d_start = datetime.strptime(f_item['f_init'], "%Y-%m-%d").date() if f_item['f_init'] else date.today()
@@ -175,15 +175,17 @@ async def seed_data():
                                     fecha_inicial=d_start,
                                     fecha_final=d_end,
                                     estado_ficha=f_item['estado'],
-                                    centro_id=c_id,
-                                    programa_id=p_id
+                                    centro_id=f_item['cod_centro'],
+                                    programa_codigo=p_info[0],
+                                    programa_version=p_info[1]
                                 ))
                             else:
                                 f_obj.fecha_inicial = d_start
                                 f_obj.fecha_final = d_end
                                 f_obj.estado_ficha = f_item['estado']
-                                f_obj.centro_id = c_id
-                                f_obj.programa_id = p_id
+                                f_obj.centro_id = f_item['cod_centro']
+                                f_obj.programa_codigo = p_info[0]
+                                f_obj.programa_version = p_info[1]
 
                 except Exception as ex_xml:
                     print(f"⚠️ Error leyendo {xml_file}: {ex_xml}")

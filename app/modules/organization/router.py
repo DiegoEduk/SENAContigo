@@ -67,14 +67,14 @@ async def list_centros(
     return await OrganizationService.list_centros(db, regional_id=regional_id)
 
 
-@centros_router.get("/{centro_id}", response_model=CentroFormacionRead)
+@centros_router.get("/{codigo_centro}", response_model=CentroFormacionRead)
 async def get_centro(
-    centro_id: int,
+    codigo_centro: str,
     db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user_token)
 ):
-    """Obtener centro de formación por ID."""
-    return await OrganizationService.get_centro_by_id(db, centro_id)
+    """Obtener centro de formación por su código de centro (PK)."""
+    return await OrganizationService.get_centro_by_id(db, codigo_centro)
 
 
 @centros_router.post("", response_model=CentroFormacionRead, status_code=status.HTTP_201_CREATED)
@@ -87,12 +87,12 @@ async def create_centro(
     return await OrganizationService.create_centro(db, centro_in)
 
 
-@centros_router.put("/{centro_id}", response_model=CentroFormacionRead)
+@centros_router.put("/{codigo_centro}", response_model=CentroFormacionRead)
 async def update_centro(
-    centro_id: int,
+    codigo_centro: str,
     centro_in: CentroFormacionUpdate,
     db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(require_roles(["superadmin", "direccion"]))
 ):
     """Actualizar centro de formación SENA."""
-    return await OrganizationService.update_centro(db, centro_id, centro_in)
+    return await OrganizationService.update_centro(db, codigo_centro, centro_in)

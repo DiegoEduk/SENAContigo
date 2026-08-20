@@ -57,12 +57,12 @@ class OrganizationService:
         return list(res.scalars().all())
 
     @staticmethod
-    async def get_centro_by_id(session: AsyncSession, centro_id: int) -> CentroFormacion:
-        stmt = select(CentroFormacion).where(CentroFormacion.id == centro_id)
+    async def get_centro_by_id(session: AsyncSession, codigo_centro: str) -> CentroFormacion:
+        stmt = select(CentroFormacion).where(CentroFormacion.codigo_centro == codigo_centro)
         res = await session.execute(stmt)
         centro = res.scalar_one_or_none()
         if not centro:
-            raise NotFoundException("Centro de Formación", centro_id)
+            raise NotFoundException("Centro de Formación", codigo_centro)
         return centro
 
     @staticmethod
@@ -79,8 +79,8 @@ class OrganizationService:
         return centro
 
     @staticmethod
-    async def update_centro(session: AsyncSession, centro_id: int, centro_in: CentroFormacionUpdate) -> CentroFormacion:
-        centro = await OrganizationService.get_centro_by_id(session, centro_id)
+    async def update_centro(session: AsyncSession, codigo_centro: str, centro_in: CentroFormacionUpdate) -> CentroFormacion:
+        centro = await OrganizationService.get_centro_by_id(session, codigo_centro)
         for field, value in centro_in.model_dump(exclude_unset=True).items():
             setattr(centro, field, value)
         await session.commit()

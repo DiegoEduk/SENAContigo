@@ -14,8 +14,8 @@ router = APIRouter(prefix="/analytics", tags=["Dashboard y Analítica"])
 @router.get("/dashboard", response_model=DashboardSummary)
 async def get_dashboard_summary(
     regional_id: Optional[str] = None,
-    centro_id: Optional[int] = None,
-    ficha_id: Optional[int] = None,
+    centro_id: Optional[str] = None,
+    ficha_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user_token)
 ):

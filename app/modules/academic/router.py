@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -25,14 +25,15 @@ async def list_programas(
     return await AcademicService.list_programas(db)
 
 
-@programas_router.get("/{programa_id}", response_model=ProgramaFormacionRead)
+@programas_router.get("/{codigo_programa}", response_model=ProgramaFormacionRead)
 async def get_programa(
-    programa_id: int,
+    codigo_programa: str,
+    version: str = Query("1", description="Versión del programa de formación"),
     db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user_token)
 ):
-    """Obtener programa de formación por ID."""
-    return await AcademicService.get_programa_by_id(db, programa_id)
+    """Obtener programa de formación por su código y versión (PK compuesta)."""
+    return await AcademicService.get_programa_by_id(db, codigo_programa, version=version)
 
 
 @programas_router.post("", response_model=ProgramaFormacionRead, status_code=status.HTTP_201_CREATED)
@@ -45,37 +46,38 @@ async def create_programa(
     return await AcademicService.create_programa(db, prog_in)
 
 
-@programas_router.put("/{programa_id}", response_model=ProgramaFormacionRead)
+@programas_router.put("/{codigo_programa}", response_model=ProgramaFormacionRead)
 async def update_programa(
-    programa_id: int,
+    codigo_programa: str,
     prog_in: ProgramaFormacionUpdate,
+    version: str = Query("1", description="Versión del programa de formación"),
     db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(require_roles(["superadmin", "direccion", "coordinador"]))
 ):
     """Actualizar programa de formación."""
-    return await AcademicService.update_programa(db, programa_id, prog_in)
+    return await AcademicService.update_programa(db, codigo_programa, version=version, prog_in=prog_in)
 
 
 # Fichas
 @fichas_router.get("", response_model=List[FichaRead])
 async def list_fichas(
-    centro_id: Optional[int] = None,
-    programa_id: Optional[int] = None,
+    centro_id: Optional[str] = None,
+    programa_codigo: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user_token)
 ):
     """Listar fichas de caracterización."""
-    return await AcademicService.list_fichas(db, centro_id=centro_id, programa_id=programa_id)
+    return await AcademicService.list_fichas(db, centro_id=centro_id, programa_codigo=programa_codigo)
 
 
-@fichas_router.get("/{ficha_id}", response_model=FichaRead)
+@fichas_router.get("/{ficha_caracterizacion}", response_model=FichaRead)
 async def get_ficha(
-    ficha_id: int,
+    ficha_caracterizacion: str,
     db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user_token)
 ):
-    """Obtener ficha por ID."""
-    return await AcademicService.get_ficha_by_id(db, ficha_id)
+    """Obtener ficha por su ficha de caracterización (PK)."""
+    return await AcademicService.get_ficha_by_id(db, ficha_caracterizacion)
 
 
 @fichas_router.post("", response_model=FichaRead, status_code=status.HTTP_201_CREATED)
@@ -88,12 +90,12 @@ async def create_ficha(
     return await AcademicService.create_ficha(db, ficha_in)
 
 
-@fichas_router.put("/{ficha_id}", response_model=FichaRead)
+@fichas_router.put("/{ficha_caracterizacion}", response_model=FichaRead)
 async def update_ficha(
-    ficha_id: int,
+    ficha_caracterizacion: str,
     ficha_in: FichaUpdate,
     db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(require_roles(["superadmin", "direccion", "coordinador"]))
 ):
     """Actualizar ficha de caracterización."""
-    return await AcademicService.update_ficha(db, ficha_id, ficha_in)
+    return await AcademicService.update_ficha(db, ficha_caracterizacion, ficha_in)

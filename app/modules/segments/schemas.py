@@ -7,9 +7,10 @@ class SegmentoBase(BaseModel):
     nombre: str
     descripcion: Optional[str] = None
     regional_id: Optional[str] = None
-    centro_id: Optional[int] = None
-    programa_id: Optional[int] = None
-    ficha_id: Optional[int] = None
+    centro_id: Optional[str] = None
+    programa_codigo: Optional[str] = None
+    programa_version: Optional[str] = None
+    ficha_id: Optional[str] = None
     solo_afectados: bool = False
     nivel_afectacion_minimo: int = 0
     activo: bool = True

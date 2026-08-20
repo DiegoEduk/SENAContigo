@@ -18,9 +18,9 @@ class OrganizationalScope:
         user_id: int,
         rol: str,
         regional_id: Optional[str] = None,
-        centro_id: Optional[int] = None,
+        centro_id: Optional[str] = None,
         aprendiz_id: Optional[int] = None,
-        fichas_ids: List[int] = None
+        fichas_ids: List[str] = None
     ):
         self.user_id = user_id
         self.rol = rol

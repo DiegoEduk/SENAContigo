@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr
 
 class MatriculaBase(BaseModel):
     aprendiz_id: int
-    ficha_id: int
+    ficha_id: str
     estado_matricula: str = "En formación"
 
 
@@ -30,7 +30,7 @@ class AprendizBase(BaseModel):
     apellidos: str
     correo: EmailStr
     celular: Optional[str] = None
-    centro_id: Optional[int] = None
+    centro_id: Optional[str] = None
     regional_id: Optional[str] = None
     activo: bool = True
 
@@ -44,7 +44,7 @@ class AprendizUpdate(BaseModel):
     apellidos: Optional[str] = None
     correo: Optional[EmailStr] = None
     celular: Optional[str] = None
-    centro_id: Optional[int] = None
+    centro_id: Optional[str] = None
     regional_id: Optional[str] = None
     activo: Optional[bool] = None
 

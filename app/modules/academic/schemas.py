@@ -23,7 +23,6 @@ class ProgramaFormacionUpdate(BaseModel):
 
 
 class ProgramaFormacionRead(ProgramaFormacionBase):
-    id: int
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
@@ -33,8 +32,9 @@ class FichaBase(BaseModel):
     fecha_inicial: date
     fecha_final: date
     estado_ficha: str = "En ejecución"
-    centro_id: int
-    programa_id: int
+    centro_id: str
+    programa_codigo: str
+    programa_version: str = "1"
 
 
 class FichaCreate(FichaBase):
@@ -45,12 +45,12 @@ class FichaUpdate(BaseModel):
     fecha_inicial: Optional[date] = None
     fecha_final: Optional[date] = None
     estado_ficha: Optional[str] = None
-    centro_id: Optional[int] = None
-    programa_id: Optional[int] = None
+    centro_id: Optional[str] = None
+    programa_codigo: Optional[str] = None
+    programa_version: Optional[str] = None
 
 
 class FichaRead(FichaBase):
-    id: int
     created_at: datetime
     programa: Optional[ProgramaFormacionRead] = None
     model_config = ConfigDict(from_attributes=True)

@@ -251,8 +251,7 @@ erDiagram
     }
 
     CENTROS {
-        int id PK
-        string codigo_centro UK
+        string codigo_centro PK
         string nombre
         string regional_id FK
     }
@@ -264,7 +263,7 @@ erDiagram
         string nombres
         string apellidos
         string correo UK
-        int centro_id FK
+        string centro_id FK
         string regional_id FK
     }
 

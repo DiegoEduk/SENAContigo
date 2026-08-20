@@ -15,8 +15,8 @@ class AnalyticsService:
     async def get_dashboard_summary(
         session: AsyncSession,
         regional_id: Optional[str] = None,
-        centro_id: Optional[int] = None,
-        ficha_id: Optional[int] = None
+        centro_id: Optional[str] = None,
+        ficha_id: Optional[str] = None
     ) -> DashboardSummary:
         # Filter aprendices based on org level
         stmt_apr = select(func.count(Aprendiz.id))
