@@ -18,9 +18,9 @@ async def test_benefits_flow_independent_of_cases(client):
     catalog = benefits_res.json()
     assert len(catalog) >= 5
 
-    # Check for Póliza de Seguro Estudiantil
-    seguro_ben = next(b for b in catalog if b["codigo"] == "BEN-SEGURO")
-    assert seguro_ben["es_automatico_matricula"] is True
+    # Check for Apoyo de Sostenimiento
+    sostenimiento_ben = next(b for b in catalog if b["codigo"] == "BEN-SOSTENIMIENTO")
+    assert sostenimiento_ben["es_automatico_matricula"] is True
 
     # 3. Create a new custom institutional benefit in the catalog
     new_ben_res = await client.post(
@@ -58,11 +58,11 @@ async def test_benefits_flow_independent_of_cases(client):
     apr_ben_res = await client.get(f"/api/v1/beneficios/aprendiz/{aprendiz_id}", headers=headers)
     assert apr_ben_res.status_code == 200
     assigned_benefits = apr_ben_res.json()
-    # Should have assigned all automatic benefits (e.g., seguro, biblioteca, salud, orientacion, deportes)
+    # Should have assigned all automatic benefits (e.g., sostenimiento, transporte, salud, orientacion, deportes)
     assert len(assigned_benefits) >= 4
     assigned_codes = [ab["beneficio"]["codigo"] for ab in assigned_benefits]
-    assert "BEN-SEGURO" in assigned_codes
-    assert "BEN-BIBLIOTECA" in assigned_codes
+    assert "BEN-SOSTENIMIENTO" in assigned_codes
+    assert "BEN-TRANSPORTE" in assigned_codes
 
     # Verify that case_id is None (completely independent of any case or need)
     for ab in assigned_benefits:

@@ -107,8 +107,8 @@ async def seed_data():
 
             # 6. Crear Catálogo de Beneficios Institucionales SENA por Defecto
             beneficios_data = [
-                ("BEN-SEGURO", "Póliza de Seguro Estudiantil contra Accidentes", "Cobertura médica y seguro de accidentes personales durante el proceso formativo en el SENA", "SALUD_Y_PROTECCION", True),
-                ("BEN-BIBLIOTECA", "Acceso a Sistema de Bibliotecas y Repositorio Digital", "Préstamo de material bibliográfico físico y acceso ilimitado a bases de datos digitales institucionales", "INSTITUCIONAL_AUTOMATICO", True),
+                ("BEN-SOSTENIMIENTO", "Apoyo de Sostenimiento", "Apoyo económico mensual de sostenimiento regular o FIC para el proceso formativo del aprendiz SENA", "APOYO_FINANCIERO", True),
+                ("BEN-TRANSPORTE", "Apoyo de Transporte", "Subsidio o auxilio de transporte institucional para facilitar el desplazamiento al centro de formación", "APOYO_FINANCIERO", True),
                 ("BEN-SALUD-PREV", "Atención Médica Preventiva y Enfermería de Centro", "Primeros auxilios, atención básica de enfermería y campañas de prevención de salud en el centro de formación", "SALUD_Y_PROTECCION", True),
                 ("BEN-ORIENTACION-PSICO", "Orientación Psicosocial y Apoyo Emocional", "Acompañamiento y asesoría psicológica preventiva impartida por el equipo de Bienestar al Aprendiz", "INSTITUCIONAL_AUTOMATICO", True),
                 ("BEN-ALIMENTACION", "Apoyo Alimentario Institucional / Refrigerios", "Apoyo nutricional de refrigerios o almuerzos asignado por la coordinación de bienestar", "APOYO_FINANCIERO", False),
