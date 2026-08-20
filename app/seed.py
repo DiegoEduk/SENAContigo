@@ -7,10 +7,11 @@ from app.core.database import AsyncSessionLocal
 from app.core.security import get_password_hash
 from app.modules.identity.models import Rol, Usuario
 from app.modules.organization.models import CentroFormacion, Regional
-from app.modules.academic.models import ProgramaFormacion
+from app.modules.academic.models import Ficha, ProgramaFormacion
 from app.modules.variables.models import CategoriaVariable
 from app.modules.needs.models import Necesidad
 from app.modules.benefits.models import Beneficio
+from datetime import datetime, date
 
 
 async def seed_data():
@@ -77,7 +78,7 @@ async def seed_data():
                 )
                 session.add(admin)
 
-            # 4. Poblar Programas de Formación desde DF-49_1.xml
+            # 4. Poblar Programas de Formación y Fichas desde DF-49_1.xml
             xml_file = "DF-49_1.xml"
             if os.path.exists(xml_file):
                 try:
@@ -88,6 +89,11 @@ async def seed_data():
                     rows = table.findall('ss:Row', ns) if table is not None else []
                     header_idx = None
                     programs = {}
+                    fichas_raw = []
+
+                    # Cache centros map: codigo_centro -> centro_id
+                    centros_res = await session.execute(select(CentroFormacion))
+                    centros_map = {c.codigo_centro: c.id for c in centros_res.scalars().all()}
 
                     for row_idx, row in enumerate(rows):
                         cells_data = {}
@@ -101,11 +107,16 @@ async def seed_data():
                             cells_data[current_col] = val
                             current_col += 1
 
-                        if 9 in cells_data and cells_data[9] == 'CODIGO_PROGRAMA':
+                        if 5 in cells_data and cells_data[5] == 'FICHA_CARACTERIZACION':
                             header_idx = row_idx
                             continue
 
                         if header_idx is not None and row_idx > header_idx:
+                            cod_centro = cells_data.get(3, '')
+                            ficha_num = cells_data.get(5, '')
+                            f_init_raw = cells_data.get(6, '')
+                            f_fin_raw = cells_data.get(7, '')
+                            est_ficha = cells_data.get(8, '')
                             cod = cells_data.get(9, '')
                             ver = cells_data.get(10, '1')
                             prog = cells_data.get(11, '')
@@ -115,21 +126,65 @@ async def seed_data():
                                 if cod not in programs or int(ver) >= int(programs[cod]['ver']):
                                     programs[cod] = {'cod': cod, 'ver': ver, 'prog': prog[:200], 'nivel': nivel[:50]}
 
+                            if ficha_num and cod_centro and cod:
+                                f_init = f_init_raw.split(' ')[0] if ' ' in f_init_raw else f_init_raw
+                                f_fin = f_fin_raw.split(' ')[0] if ' ' in f_fin_raw else f_fin_raw
+                                fichas_raw.append({
+                                    'ficha': ficha_num,
+                                    'f_init': f_init,
+                                    'f_fin': f_fin,
+                                    'estado': est_ficha,
+                                    'cod_centro': cod_centro,
+                                    'cod_prog': cod
+                                })
+
+                    # Seed Programs
+                    progs_db_map = {}
                     for cod, item in programs.items():
                         res_p = await session.execute(select(ProgramaFormacion).where(ProgramaFormacion.codigo_programa == cod))
                         p_obj = res_p.scalar_one_or_none()
                         if not p_obj:
-                            session.add(ProgramaFormacion(
+                            p_obj = ProgramaFormacion(
                                 codigo_programa=item['cod'],
                                 version=item['ver'],
                                 nombre=item['prog'],
                                 nivel_formacion=item['nivel'],
                                 activo=True
-                            ))
+                            )
+                            session.add(p_obj)
+                            await session.flush()
                         else:
                             p_obj.version = item['ver']
                             p_obj.nombre = item['prog']
                             p_obj.nivel_formacion = item['nivel']
+                        progs_db_map[cod] = p_obj.id
+
+                    # Seed Fichas
+                    for f_item in fichas_raw:
+                        c_id = centros_map.get(f_item['cod_centro'])
+                        p_id = progs_db_map.get(f_item['cod_prog'])
+                        if c_id and p_id:
+                            res_f = await session.execute(select(Ficha).where(Ficha.ficha_caracterizacion == f_item['ficha']))
+                            f_obj = res_f.scalar_one_or_none()
+                            d_start = datetime.strptime(f_item['f_init'], "%Y-%m-%d").date() if f_item['f_init'] else date.today()
+                            d_end = datetime.strptime(f_item['f_fin'], "%Y-%m-%d").date() if f_item['f_fin'] else date.today()
+
+                            if not f_obj:
+                                session.add(Ficha(
+                                    ficha_caracterizacion=f_item['ficha'],
+                                    fecha_inicial=d_start,
+                                    fecha_final=d_end,
+                                    estado_ficha=f_item['estado'],
+                                    centro_id=c_id,
+                                    programa_id=p_id
+                                ))
+                            else:
+                                f_obj.fecha_inicial = d_start
+                                f_obj.fecha_final = d_end
+                                f_obj.estado_ficha = f_item['estado']
+                                f_obj.centro_id = c_id
+                                f_obj.programa_id = p_id
+
                 except Exception as ex_xml:
                     print(f"⚠️ Error leyendo {xml_file}: {ex_xml}")
             else:
