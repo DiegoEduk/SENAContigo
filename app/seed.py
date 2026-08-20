@@ -71,8 +71,8 @@ async def seed_data():
                     correo="admin@senacontigo.edu.co",
                     hashed_password=get_password_hash("Admin123456*"),
                     celular="3000000000",
-                    regional_id=reg.codigo_regional,
-                    centro_id=centro.codigo_centro,
+                    regional_id=None,
+                    centro_id=None,
                     activo=True,
                     roles=[superadmin_role] if superadmin_role else []
                 )
