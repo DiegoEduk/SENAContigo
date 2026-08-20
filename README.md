@@ -23,11 +23,12 @@ SENAContigo implementa un patrón **Modular Monolith** desacoplado, exponiendo u
 ```
 
 ### Principios Fundamentales
-1. **Historial Inmutable (Longitudinal)**: Las mediciones de los aprendices nunca se sobrescriben. Cada consulta genera un nuevo registro preserving la evolución temporal real.
+1. **Historial Inmutable (Longitudinal)**: Las mediciones de los aprendices nunca se sobrescriben. Cada consulta genera un nuevo registro preservando la evolución temporal real.
 2. **Configuración sobre Código (Motor de Variables)**: Nuevas preguntas, categorías y opciones con escalas de afectación configurables (0 a 4) se administran dinámicamente sin redesplegar código.
 3. **Versionamiento de Variables**: Preserva la interpretación histórica de las preguntas aunque cambien en el tiempo.
 4. **Motor de Reglas y Case Management**: Motor autónomo `IF condición THEN acción` para auto-generación de Necesidades, Alertas y Casos con prioridades.
-5. **Seguridad Scoped (RBAC)**: Permisos filtrados por nivel organizacional SENA (`SuperAdmin` Nacional, `Dirección` Regional, `Coordinador` de Centro, `Instructor` de Ficha, `Aprendiz`).
+5. **Beneficios Institucionales Directos**: Catálogo de derechos y beneficios SENA otorgados automáticamente por el hecho de la matrícula activa (Póliza de seguro estudiantil, biblioteca digital, salud preventiva, deportes), desacoplados de los casos y necesidades de atención de riesgo.
+6. **Seguridad Scoped (RBAC)**: Permisos filtrados por nivel organizacional SENA (`SuperAdmin` Nacional, `Dirección` Regional, `Coordinador` de Centro, `Instructor` de Ficha, `Aprendiz`).
 
 ---
 
@@ -62,6 +63,7 @@ app/
 │   ├── organization/       # Regionales, Centros de Formación
 │   ├── academic/           # Programas de Formación, Fichas
 │   ├── apprentices/        # Aprendices, Matrículas
+│   ├── benefits/           # Beneficios Institucionales Directos del Aprendiz
 │   ├── variables/          # Categorías, Variables, Versiones, Opciones
 │   ├── surveys/            # Encuestas, Cortes de Medición
 │   ├── responses/          # Respuestas Longitudinales Inmutables
