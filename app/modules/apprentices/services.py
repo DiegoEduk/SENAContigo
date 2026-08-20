@@ -6,6 +6,7 @@ from sqlalchemy.orm import selectinload
 from app.core.exceptions import DuplicateResourceException, NotFoundException
 from app.modules.apprentices.models import Aprendiz, Matricula
 from app.modules.apprentices.schemas import AprendizCreate, AprendizUpdate, MatriculaCreate, MatriculaUpdate
+from app.modules.benefits.services import assign_automatic_benefits_for_aprendiz
 
 
 class ApprenticesService:
@@ -63,6 +64,10 @@ class ApprenticesService:
         session.add(aprendiz)
         await session.commit()
         await session.refresh(aprendiz)
+
+        # Asignación automática de beneficios por el hecho de registrarse/matricularse en el SENA
+        await assign_automatic_benefits_for_aprendiz(session, aprendiz.id)
+
         return await ApprenticesService.get_aprendiz_by_id(session, aprendiz.id)
 
     @staticmethod

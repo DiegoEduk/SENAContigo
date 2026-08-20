@@ -46,7 +46,8 @@ INSERT INTO regionales (id, codigo_regional, nombre, activo, created_at)
 VALUES 
   (1, '11', 'REGIONAL DISTRITO CAPITAL', true, NOW()),
   (2, '05', 'REGIONAL ANTIOQUIA', true, NOW()),
-  (3, '76', 'REGIONAL VALLE', true, NOW())
+  (3, '66', 'REGIONAL RISARALDA', true, NOW()),
+  (4, '76', 'REGIONAL VALLE', true, NOW())
 ON CONFLICT (codigo_regional) DO UPDATE 
 SET nombre = EXCLUDED.nombre;
 
@@ -56,7 +57,10 @@ INSERT INTO centros (id, codigo_centro, nombre, regional_id, activo, created_at)
 VALUES 
   (1, '9201', 'CENTRO DE DISEÑO Y METROLOGÍA', 1, true, NOW()),
   (2, '9202', 'CENTRO DE ELECTRICIDAD, ELECTRÓNICA Y TELECOMUNICACIONES', 1, true, NOW()),
-  (3, '9101', 'CENTRO DE TECNOLOGÍA DE LA MANUFACTURA AVANZADA', 2, true, NOW())
+  (3, '9101', 'CENTRO DE TECNOLOGÍA DE LA MANUFACTURA AVANZADA', 2, true, NOW()),
+  (4, '9121', 'CENTRO ATENCION SECTOR AGROPECUARIO', 3, true, NOW()),
+  (5, '9308', 'CENTRO DE COMERCIO Y SERVICIOS', 3, true, NOW()),
+  (6, '9223', 'CENTRO DE DISEÑO E INNOVACIÓN TECNOLÓGICA INDUSTRIAL', 3, true, NOW())
 ON CONFLICT (codigo_centro) DO UPDATE 
 SET nombre = EXCLUDED.nombre, regional_id = EXCLUDED.regional_id;
 
@@ -214,4 +218,44 @@ ON CONFLICT DO NOTHING;
 
 SELECT setval('regla_acciones_id_seq', (SELECT MAX(id) FROM regla_acciones));
 
+-- -----------------------------------------------------------------------------
+-- 10. CATÁLOGO DE BENEFICIOS INSTITUCIONALES SENA
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS beneficios (
+    id SERIAL PRIMARY KEY,
+    codigo VARCHAR(50) UNIQUE NOT NULL,
+    nombre VARCHAR(150) NOT NULL,
+    descripcion TEXT,
+    tipo_beneficio VARCHAR(50) DEFAULT 'INSTITUCIONAL_AUTOMATICO',
+    es_automatico_matricula BOOLEAN DEFAULT true,
+    activo BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS aprendiz_beneficios (
+    id SERIAL PRIMARY KEY,
+    aprendiz_id INTEGER NOT NULL REFERENCES aprendices(id) ON DELETE CASCADE,
+    beneficio_id INTEGER NOT NULL REFERENCES beneficios(id) ON DELETE CASCADE,
+    fecha_asignacion TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    estado VARCHAR(50) DEFAULT 'ACTIVO',
+    origen VARCHAR(50) DEFAULT 'MATRICULA_AUTOMATICA',
+    caso_id INTEGER REFERENCES casos(id) ON DELETE SET NULL,
+    observaciones TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+INSERT INTO beneficios (id, codigo, nombre, descripcion, tipo_beneficio, es_automatico_matricula, activo, created_at)
+VALUES
+  (1, 'BEN-SEGURO', 'Póliza de Seguro Estudiantil contra Accidentes', 'Cobertura médica y seguro de accidentes personales durante el proceso formativo en el SENA', 'SALUD_Y_PROTECCION', true, true, NOW()),
+  (2, 'BEN-BIBLIOTECA', 'Acceso a Sistema de Bibliotecas y Repositorio Digital', 'Préstamo de material bibliográfico físico y acceso ilimitado a bases de datos digitales institucionales', 'INSTITUCIONAL_AUTOMATICO', true, true, NOW()),
+  (3, 'BEN-SALUD-PREV', 'Atención Médica Preventiva y Enfermería de Centro', 'Primeros auxilios, atención básica de enfermería y campañas de prevención de salud en el centro de formación', 'SALUD_Y_PROTECCION', true, true, NOW()),
+  (4, 'BEN-ORIENTACION-PSICO', 'Orientación Psicosocial y Apoyo Emocional', 'Acompañamiento y asesoría psicológica preventiva impartida por el equipo de Bienestar al Aprendiz', 'INSTITUCIONAL_AUTOMATICO', true, true, NOW()),
+  (5, 'BEN-ALIMENTACION', 'Apoyo Alimentario Institucional / Refrigerios', 'Apoyo nutricional de refrigerios o almuerzos asignado por la coordinación de bienestar', 'APOYO_FINANCIERO', false, true, NOW()),
+  (6, 'BEN-DEPORTES', 'Programas de Cultura, Deporte y Recreación', 'Participación libre en selecciones deportivas, actividades culturales y áreas de esparcimiento del SENA', 'CULTURA_Y_DEPORTE', true, true, NOW())
+ON CONFLICT (codigo) DO UPDATE
+SET nombre = EXCLUDED.nombre;
+
+SELECT setval('beneficios_id_seq', (SELECT MAX(id) FROM beneficios));
+
 COMMIT;
+

@@ -5,6 +5,7 @@ from app.modules.actions.router import router as acciones_router
 from app.modules.analytics.router import router as analytics_router
 from app.modules.apprentices.router import aprendices_router, matriculas_router
 from app.modules.audit.router import router as audit_router
+from app.modules.benefits.router import router as beneficios_router
 from app.modules.cases.router import router as casos_router
 from app.modules.followups.router import router as seguimientos_router
 from app.modules.identity.router import router as auth_router, users_router
@@ -35,6 +36,9 @@ api_router.include_router(fichas_router)
 api_router.include_router(aprendices_router)
 api_router.include_router(matriculas_router)
 
+# Beneficios Institucionales del Aprendiz
+api_router.include_router(beneficios_router)
+
 # Engine de Variables y Encuestas
 api_router.include_router(variables_router)
 api_router.include_router(encuestas_router)
@@ -54,3 +58,4 @@ api_router.include_router(seguimientos_router)
 api_router.include_router(analytics_router)
 api_router.include_router(notificaciones_router)
 api_router.include_router(audit_router)
+

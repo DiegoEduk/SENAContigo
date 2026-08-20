@@ -7,6 +7,7 @@ from app.modules.identity.models import Rol, Usuario
 from app.modules.organization.models import CentroFormacion, Regional
 from app.modules.variables.models import CategoriaVariable
 from app.modules.needs.models import Necesidad
+from app.modules.benefits.models import Beneficio
 
 
 async def seed_data():
@@ -103,6 +104,28 @@ async def seed_data():
                 res_nec = await session.execute(select(Necesidad).where(Necesidad.codigo == nec_code))
                 if not res_nec.scalar_one_or_none():
                     session.add(Necesidad(codigo=nec_code, nombre=nec_name, descripcion=nec_desc, categoria_relacionada=nec_cat, activa=True))
+
+            # 6. Crear Catálogo de Beneficios Institucionales SENA por Defecto
+            beneficios_data = [
+                ("BEN-SEGURO", "Póliza de Seguro Estudiantil contra Accidentes", "Cobertura médica y seguro de accidentes personales durante el proceso formativo en el SENA", "SALUD_Y_PROTECCION", True),
+                ("BEN-BIBLIOTECA", "Acceso a Sistema de Bibliotecas y Repositorio Digital", "Préstamo de material bibliográfico físico y acceso ilimitado a bases de datos digitales institucionales", "INSTITUCIONAL_AUTOMATICO", True),
+                ("BEN-SALUD-PREV", "Atención Médica Preventiva y Enfermería de Centro", "Primeros auxilios, atención básica de enfermería y campañas de prevención de salud en el centro de formación", "SALUD_Y_PROTECCION", True),
+                ("BEN-ORIENTACION-PSICO", "Orientación Psicosocial y Apoyo Emocional", "Acompañamiento y asesoría psicológica preventiva impartida por el equipo de Bienestar al Aprendiz", "INSTITUCIONAL_AUTOMATICO", True),
+                ("BEN-ALIMENTACION", "Apoyo Alimentario Institucional / Refrigerios", "Apoyo nutricional de refrigerios o almuerzos asignado por la coordinación de bienestar", "APOYO_FINANCIERO", False),
+                ("BEN-DEPORTES", "Programas de Cultura, Deporte y Recreación", "Participación libre en selecciones deportivas, actividades culturales y áreas de esparcimiento del SENA", "CULTURA_Y_DEPORTE", True)
+            ]
+
+            for ben_code, ben_name, ben_desc, ben_tipo, ben_auto in beneficios_data:
+                res_ben = await session.execute(select(Beneficio).where(Beneficio.codigo == ben_code))
+                if not res_ben.scalar_one_or_none():
+                    session.add(Beneficio(
+                        codigo=ben_code,
+                        nombre=ben_name,
+                        descripcion=ben_desc,
+                        tipo_beneficio=ben_tipo,
+                        es_automatico_matricula=ben_auto,
+                        activo=True
+                    ))
 
             await session.commit()
             print("✅ Poblamiento de datos completado exitosamente.")
