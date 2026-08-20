@@ -1,10 +1,11 @@
-import asyncio
-import traceback
+import os
+import xml.etree.ElementTree as ET
 from sqlalchemy import select
 from app.core.database import AsyncSessionLocal
 from app.core.security import get_password_hash
 from app.modules.identity.models import Rol, Usuario
 from app.modules.organization.models import CentroFormacion, Regional
+from app.modules.academic.models import ProgramaFormacion
 from app.modules.variables.models import CategoriaVariable
 from app.modules.needs.models import Necesidad
 from app.modules.benefits.models import Beneficio
@@ -74,7 +75,73 @@ async def seed_data():
                 )
                 session.add(admin)
 
-            # 4. Crear Categorías de Variables Iniciales
+            # 4. Poblar Programas de Formación desde DF-49_1.xml
+            xml_file = "DF-49_1.xml"
+            if os.path.exists(xml_file):
+                try:
+                    tree = ET.parse(xml_file)
+                    root = tree.getroot()
+                    ns = {'ss': 'urn:schemas-microsoft-com:office:spreadsheet'}
+                    table = root.find('.//ss:Table', ns)
+                    rows = table.findall('ss:Row', ns) if table is not None else []
+                    header_idx = None
+                    programs = {}
+
+                    for row_idx, row in enumerate(rows):
+                        cells_data = {}
+                        current_col = 1
+                        for cell in row.findall('ss:Cell', ns):
+                            idx_attr = cell.attrib.get('{urn:schemas-microsoft-com:office:spreadsheet}Index')
+                            if idx_attr:
+                                current_col = int(idx_attr)
+                            data_el = cell.find('ss:Data', ns)
+                            val = data_el.text.strip() if data_el is not None and data_el.text else ''
+                            cells_data[current_col] = val
+                            current_col += 1
+
+                        if 9 in cells_data and cells_data[9] == 'CODIGO_PROGRAMA':
+                            header_idx = row_idx
+                            continue
+
+                        if header_idx is not None and row_idx > header_idx:
+                            cod = cells_data.get(9, '')
+                            ver = cells_data.get(10, '1')
+                            prog = cells_data.get(11, '')
+                            nivel = cells_data.get(12, '')
+
+                            if cod and prog and nivel:
+                                if cod not in programs or int(ver) >= int(programs[cod]['ver']):
+                                    programs[cod] = {'cod': cod, 'ver': ver, 'prog': prog[:200], 'nivel': nivel[:50]}
+
+                    for cod, item in programs.items():
+                        res_p = await session.execute(select(ProgramaFormacion).where(ProgramaFormacion.codigo_programa == cod))
+                        p_obj = res_p.scalar_one_or_none()
+                        if not p_obj:
+                            session.add(ProgramaFormacion(
+                                codigo_programa=item['cod'],
+                                version=item['ver'],
+                                nombre=item['prog'],
+                                nivel_formacion=item['nivel'],
+                                activo=True
+                            ))
+                        else:
+                            p_obj.version = item['ver']
+                            p_obj.nombre = item['prog']
+                            p_obj.nivel_formacion = item['nivel']
+                except Exception as ex_xml:
+                    print(f"⚠️ Error leyendo {xml_file}: {ex_xml}")
+            else:
+                default_progs = [
+                    ("228118", "1", "ANALISIS Y DESARROLLO DE SOFTWARE.", "TECNÓLOGO"),
+                    ("233108", "1", "GESTIÓN DE REDES DE DATOS", "TECNÓLOGO"),
+                    ("220101", "1", "MANTENIMIENTO DE EQUIPOS DE CÓMPUTO", "TÉCNICO")
+                ]
+                for cod, ver, nom, niv in default_progs:
+                    res_p = await session.execute(select(ProgramaFormacion).where(ProgramaFormacion.codigo_programa == cod))
+                    if not res_p.scalar_one_or_none():
+                        session.add(ProgramaFormacion(codigo_programa=cod, version=ver, nombre=nom, nivel_formacion=niv, activo=True))
+
+            # 5. Crear Categorías de Variables Iniciales
             categorias_data = [
                 ("VIVIENDA", "Vivienda y Habitabilidad", "Preguntas sobre el estado de la vivienda y alojamiento"),
                 ("TRANSPORTE", "Transporte y Movilidad", "Preguntas sobre facilidad de desplazamiento al centro de formación"),
@@ -90,7 +157,7 @@ async def seed_data():
                 if not res_cat.scalar_one_or_none():
                     session.add(CategoriaVariable(codigo=cat_code, nombre=cat_name, descripcion=cat_desc, activa=True))
 
-            # 5. Crear Catálogo de Necesidades Iniciales
+            # 6. Crear Catálogo de Necesidades Iniciales
             necesidades_data = [
                 ("ALOJAMIENTO", "Alojamiento Temporal", "Necesidad de reubicación o alojamiento de emergencia", "VIVIENDA"),
                 ("CONECTIVIDAD", "Internet y Equipo Computacional", "Necesidad de plan de datos o préstamo de computador", "CONECTIVIDAD"),
@@ -105,7 +172,7 @@ async def seed_data():
                 if not res_nec.scalar_one_or_none():
                     session.add(Necesidad(codigo=nec_code, nombre=nec_name, descripcion=nec_desc, categoria_relacionada=nec_cat, activa=True))
 
-            # 6. Crear Catálogo de Beneficios Institucionales SENA por Defecto
+            # 7. Crear Catálogo de Beneficios Institucionales SENA por Defecto
             beneficios_data = [
                 ("BEN-SOSTENIMIENTO", "Apoyo de Sostenimiento", "Apoyo económico mensual de sostenimiento regular o FIC para el proceso formativo del aprendiz SENA", "APOYO_FINANCIERO", True),
                 ("BEN-TRANSPORTE", "Apoyo de Transporte", "Subsidio o auxilio de transporte institucional para facilitar el desplazamiento al centro de formación", "APOYO_FINANCIERO", True),
