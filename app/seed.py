@@ -3,6 +3,7 @@ import os
 import traceback
 import xml.etree.ElementTree as ET
 from sqlalchemy import select
+import app.api.router
 from app.core.database import AsyncSessionLocal
 from app.core.security import get_password_hash
 from app.modules.identity.models import Rol, Usuario
@@ -10,11 +11,18 @@ from app.modules.organization.models import CentroFormacion, Regional
 from app.modules.academic.models import Ficha, ProgramaFormacion
 from app.modules.variables.models import CategoriaVariable
 from app.modules.needs.models import Necesidad
-from app.modules.benefits.models import Beneficio
+from app.modules.apprentices.models import Aprendiz, Matricula
+from app.modules.contracts.models import ContratoAprendizaje
+from app.modules.cases.models import Caso
+from app.modules.benefits.models import Beneficio, AprendizBeneficio
 from datetime import datetime, date
 
 
 async def seed_data():
+    from app.core.database import Base, engine
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
     async with AsyncSessionLocal() as session:
         try:
             print("🌱 Iniciando poblamiento de datos iniciales en SENAContigo...")
@@ -230,7 +238,6 @@ async def seed_data():
                                     f_obj.departamento = "BOGOTÁ D.C."
                                 if not f_obj.ciudad:
                                     f_obj.ciudad = "BOGOTÁ D.C."
-
                 except Exception as ex_xml:
                     print(f"⚠️ Error leyendo {xml_file}: {ex_xml}")
             else:
@@ -243,6 +250,58 @@ async def seed_data():
                     res_p = await session.execute(select(ProgramaFormacion).where(ProgramaFormacion.codigo_programa == cod))
                     if not res_p.scalar_one_or_none():
                         session.add(ProgramaFormacion(codigo_programa=cod, version=ver, nombre=nom, nivel_formacion=niv, activo=True))
+            excel_file = "AprendicesFicha3410079.xlsx"
+            if os.path.exists(excel_file):
+                try:
+                    import pandas as pd
+                    from app.modules.apprentices.models import Aprendiz, Matricula
+                    df_apr = pd.read_excel(excel_file, skiprows=4, header=None)
+                    df_apr.columns = ['tipo_documento', 'numero_documento', 'nombres', 'apellidos', 'celular', 'correo', 'estado']
+                    
+                    ficha_id_ex = '3410079'
+                    for _, row_apr in df_apr.iterrows():
+                        t_doc = str(row_apr['tipo_documento']).strip()
+                        if t_doc.lower().startswith('tipo'):
+                            continue
+                        n_doc = str(row_apr['numero_documento']).strip()
+                        nom = str(row_apr['nombres']).strip()
+                        ape = str(row_apr['apellidos']).strip()
+                        mail = str(row_apr['correo']).strip()
+                        cel_raw = str(row_apr['celular']).strip().replace('.0', '') if pd.notna(row_apr['celular']) else None
+                        cel = cel_raw if cel_raw and cel_raw.lower() != 'nan' else None
+                        est = 'En formación' if 'FORMACION' in str(row_apr['estado']).upper() else str(row_apr['estado']).strip()
+
+                        res_a = await session.execute(select(Aprendiz).where(Aprendiz.numero_documento == n_doc))
+                        a_obj = res_a.scalar_one_or_none()
+                        if not a_obj:
+                            a_obj = Aprendiz(
+                                tipo_documento=t_doc,
+                                numero_documento=n_doc,
+                                nombres=nom,
+                                apellidos=ape,
+                                correo=mail,
+                                celular=cel,
+                                activo=True
+                            )
+                            session.add(a_obj)
+                            await session.flush()
+                        
+                        # Matricular en la ficha
+                        res_m = await session.execute(
+                            select(Matricula).where(
+                                (Matricula.aprendiz_id == a_obj.id) &
+                                (Matricula.ficha_id == ficha_id_ex)
+                            )
+                        )
+                        if not res_m.scalar_one_or_none():
+                            session.add(Matricula(
+                                aprendiz_id=a_obj.id,
+                                ficha_id=ficha_id_ex,
+                                estado_matricula=est
+                            ))
+                    print(f"✅ Se poblaron aprendices y matrículas de la ficha {ficha_id_ex} desde {excel_file}")
+                except Exception as ex_excel:
+                    print(f"⚠️ Error cargando {excel_file}: {ex_excel}")
 
             # 5. Crear Categorías de Variables Iniciales
             categorias_data = [
