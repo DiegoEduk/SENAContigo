@@ -26,11 +26,21 @@ class ResponsesService:
 
         created_responses = []
         for item in batch_in.respuestas:
+            version_id = item.variable_version_id
+            if not version_id:
+                from app.modules.variables.models import VariableVersion
+                ver_res = await session.execute(
+                    select(VariableVersion.id)
+                    .where(VariableVersion.variable_id == item.variable_id)
+                    .order_by(desc(VariableVersion.numero_version))
+                )
+                version_id = ver_res.scalar_one_or_none() or 1
+
             # Immutability Guarantee: Every submission inserts a NEW record
             resp = Respuesta(
                 aprendiz_id=batch_in.aprendiz_id,
                 variable_id=item.variable_id,
-                variable_version_id=item.variable_version_id,
+                variable_version_id=version_id,
                 opcion_id=item.opcion_id,
                 encuesta_id=batch_in.encuesta_id,
                 corte_id=batch_in.corte_id,

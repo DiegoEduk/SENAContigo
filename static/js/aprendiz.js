@@ -343,13 +343,17 @@ function prevQuestion() {
 
 async function submitSurvey() {
   try {
-    const respuestasArray = Object.keys(userAnswers).map(varId => ({
-      variable_id: parseInt(varId),
-      opcion_id: typeof userAnswers[varId] === 'number' ? userAnswers[varId] : null,
-      valor_texto: typeof userAnswers[varId] === 'string' ? userAnswers[varId] : null
-    }));
+    const respuestasArray = Object.keys(userAnswers).map(varId => {
+      const q = activeSurvey.preguntas ? activeSurvey.preguntas.find(p => p.variable_id === parseInt(varId)) : null;
+      return {
+        variable_id: parseInt(varId),
+        variable_version_id: q ? q.variable_version_id : null,
+        opcion_id: typeof userAnswers[varId] === 'number' ? userAnswers[varId] : null,
+        valor_texto: typeof userAnswers[varId] === 'string' ? userAnswers[varId] : null
+      };
+    });
 
-    await API.submitRespuestas(activeSurvey.id, respuestasArray);
+    await API.submitRespuestas(activeSurvey.id, respuestasArray, activeSurvey.corte_id || null);
     isDirtySurvey = false;
     Toast.success('¡Encuesta enviada exitosamente! Gracias por tu colaboración.', 'Encuesta Registrada');
     loadPendingSurveys();

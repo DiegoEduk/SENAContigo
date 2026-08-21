@@ -131,6 +131,18 @@ async def test_portal_public_login_and_flow(client, db_session):
     })
     assert resp_add_ben.status_code == 201
 
-    # 7. Test Encuestas Pendientes
+    # 7. Test Encuestas Pendientes y Responder Encuesta
     resp_enc = await ac.get("/api/v1/portal/encuestas-pendientes", headers=headers)
     assert resp_enc.status_code == 200
+
+    # 8. Test Submit Respuestas (sin requerir aprendiz_id ni variable_version_id explicito)
+    resp_submit = await ac.post("/api/v1/portal/responder", headers=headers, json={
+        "encuesta_id": 1,
+        "respuestas": [
+            {
+                "variable_id": 1,
+                "valor_texto": "Respuesta Test Portal"
+            }
+        ]
+    })
+    assert resp_submit.status_code == 201

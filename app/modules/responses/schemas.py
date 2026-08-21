@@ -5,14 +5,14 @@ from pydantic import BaseModel, ConfigDict
 
 class RespuestaInputItem(BaseModel):
     variable_id: int
-    variable_version_id: int
+    variable_version_id: Optional[int] = None
     opcion_id: Optional[int] = None
     valor_texto: Optional[str] = None
     valor_numero: Optional[float] = None
 
 
 class BatchRespuestaCreate(BaseModel):
-    aprendiz_id: int
+    aprendiz_id: Optional[int] = None
     encuesta_id: Optional[int] = None
     corte_id: Optional[int] = None
     origen: str = "web"

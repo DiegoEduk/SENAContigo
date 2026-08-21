@@ -404,10 +404,10 @@ const API = {
     return this.request('/portal/encuestas-pendientes');
   },
 
-  submitRespuestas(encuesta_id, respuestas) {
+  submitRespuestas(encuesta_id, respuestas, corte_id = null) {
     return this.request('/portal/responder', {
       method: 'POST',
-      body: JSON.stringify({ encuesta_id, respuestas })
+      body: JSON.stringify({ encuesta_id, corte_id, respuestas })
     });
   },
 
