@@ -23,9 +23,6 @@ class Aprendiz(Base):
     direccion_vivienda: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
     ciudad: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     departamento: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    
-    centro_id: Mapped[Optional[str]] = mapped_column(String(20), ForeignKey("centros.codigo_centro", ondelete="SET NULL"), nullable=True)
-    regional_id: Mapped[Optional[str]] = mapped_column(String(20), ForeignKey("regionales.codigo_regional", ondelete="SET NULL"), nullable=True)
 
     activo: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

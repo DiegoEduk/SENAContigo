@@ -176,8 +176,6 @@ erDiagram
     REGIONALES ||--o{ CENTROS : "posee"
     CENTROS ||--o{ FICHAS : "contiene"
     PROGRAMAS ||--o{ FICHAS : "pertenece"
-    CENTROS ||--o{ APRENDICES : "adscrito"
-    REGIONALES ||--o{ APRENDICES : "pertenece"
     APRENDICES ||--o{ MATRICULAS : "tiene"
     FICHAS ||--o{ MATRICULAS : "asociada"
 
@@ -263,8 +261,6 @@ erDiagram
         string nombres
         string apellidos
         string correo UK
-        string centro_id FK
-        string regional_id FK
     }
 
     CASOS {

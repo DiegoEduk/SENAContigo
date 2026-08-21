@@ -19,11 +19,17 @@ class AnalyticsService:
         ficha_id: Optional[str] = None
     ) -> DashboardSummary:
         # Filter aprendices based on org level
-        stmt_apr = select(func.count(Aprendiz.id))
-        if regional_id:
-            stmt_apr = stmt_apr.where(Aprendiz.regional_id == regional_id)
-        if centro_id:
-            stmt_apr = stmt_apr.where(Aprendiz.centro_id == centro_id)
+        stmt_apr = select(func.count(func.distinct(Aprendiz.id)))
+        if regional_id or centro_id or ficha_id:
+            from app.modules.apprentices.models import Matricula
+            stmt_apr = stmt_apr.join(Matricula, Aprendiz.id == Matricula.aprendiz_id).join(Ficha, Matricula.ficha_id == Ficha.ficha_caracterizacion)
+            if ficha_id:
+                stmt_apr = stmt_apr.where(Ficha.ficha_caracterizacion == ficha_id)
+            if centro_id:
+                stmt_apr = stmt_apr.where(Ficha.centro_id == centro_id)
+            if regional_id:
+                from app.modules.organization.models import CentroFormacion
+                stmt_apr = stmt_apr.join(CentroFormacion, Ficha.centro_id == CentroFormacion.codigo_centro).where(CentroFormacion.regional_id == regional_id)
 
         res_apr = await session.execute(stmt_apr)
         total_aprendices = res_apr.scalar() or 0

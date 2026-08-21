@@ -69,12 +69,20 @@ class IdentityService:
         if not matricula_valida:
             raise UnauthorizedException(f"El aprendiz no se encuentra matriculado en la ficha de formación {ficha_caracterizacion}.")
 
-        # 3. Generar Tokens
+        # 3. Obtener información de centro y regional desde la Ficha
+        from app.modules.academic.models import Ficha
+        ficha_stmt = select(Ficha).where(Ficha.ficha_caracterizacion == ficha_caracterizacion).options(selectinload(Ficha.centro))
+        ficha_res = await session.execute(ficha_stmt)
+        ficha_obj = ficha_res.scalar_one_or_none()
+        centro_id = ficha_obj.centro_id if ficha_obj else None
+        regional_id = ficha_obj.centro.regional_id if (ficha_obj and ficha_obj.centro) else None
+
+        # 4. Generar Tokens
         token_payload = {
             "correo": aprendiz.correo,
             "rol": "aprendiz",
-            "regional_id": aprendiz.regional_id,
-            "centro_id": aprendiz.centro_id,
+            "regional_id": regional_id,
+            "centro_id": centro_id,
             "aprendiz_id": aprendiz.id,
             "ficha_id": ficha_caracterizacion
         }
@@ -93,8 +101,6 @@ class IdentityService:
             "direccion_vivienda": aprendiz.direccion_vivienda,
             "ciudad": aprendiz.ciudad,
             "departamento": aprendiz.departamento,
-            "centro_id": aprendiz.centro_id,
-            "regional_id": aprendiz.regional_id,
             "activo": aprendiz.activo
         }
 

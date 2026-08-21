@@ -22,12 +22,16 @@ class ApprenticesService:
     ) -> List[Aprendiz]:
         stmt = select(Aprendiz).options(selectinload(Aprendiz.matriculas))
 
-        if centro_id:
-            stmt = stmt.where(Aprendiz.centro_id == centro_id)
-        if regional_id:
-            stmt = stmt.where(Aprendiz.regional_id == regional_id)
-        if ficha_id:
-            stmt = stmt.join(Matricula).where(Matricula.ficha_id == ficha_id)
+        if centro_id or regional_id or ficha_id:
+            from app.modules.academic.models import Ficha
+            stmt = stmt.join(Matricula, Aprendiz.id == Matricula.aprendiz_id).join(Ficha, Matricula.ficha_id == Ficha.ficha_caracterizacion)
+            if ficha_id:
+                stmt = stmt.where(Matricula.ficha_id == ficha_id)
+            if centro_id:
+                stmt = stmt.where(Ficha.centro_id == centro_id)
+            if regional_id:
+                from app.modules.organization.models import CentroFormacion
+                stmt = stmt.join(CentroFormacion, Ficha.centro_id == CentroFormacion.codigo_centro).where(CentroFormacion.regional_id == regional_id)
         if search:
             search_pattern = f"%{search}%"
             stmt = stmt.where(

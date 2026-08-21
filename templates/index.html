@@ -171,7 +171,19 @@
         function getPageUrl(page) {
           const isFile = window.location.protocol === 'file:';
           if (page === 'index' || page === '') return isFile ? 'index.html' : '/';
+          if (page === 'usuarios' || page === 'dashboard') return isFile ? 'dashboard.html' : '/usuarios';
+          if (page === 'aprendiz' || page === 'portal-aprendiz') return isFile ? 'aprendiz.html' : '/aprendiz';
           return isFile ? `${page}.html` : `/${page}`;
+        }
+
+        function getUserRole(user) {
+          if (!user) return '';
+          if (user.rol) return user.rol.toLowerCase();
+          if (Array.isArray(user.roles) && user.roles.length > 0) {
+            const r = user.roles[0];
+            return (typeof r === 'string' ? r : r.nombre || '').toLowerCase();
+          }
+          return '';
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -179,7 +191,7 @@
           if (API.getToken()) {
             const user = API.getUser();
             if (user) {
-              const rol = user.rol ? user.rol.toLowerCase() : '';
+              const rol = getUserRole(user);
               if (rol === 'aprendiz') {
                 window.location.href = getPageUrl('aprendiz');
               } else {
@@ -221,16 +233,16 @@
             API.setToken(res.access_token);
             API.setUser(res.usuario);
 
-            Toast.success(`Bienvenido(a), ${res.usuario.nombres}!`, 'Inicio de Sesión Exitoso');
+            Toast.success(`¡Bienvenido(a), ${res.usuario.nombres}!`, 'Inicio de Sesión Exitoso');
             
             setTimeout(() => {
-              const rol = res.usuario.rol ? res.usuario.rol.toLowerCase() : '';
+              const rol = getUserRole(res.usuario);
               if (rol === 'aprendiz') {
                 window.location.href = getPageUrl('aprendiz');
               } else {
                 window.location.href = getPageUrl('usuarios');
               }
-            }, 600);
+            }, 500);
           } catch (err) {
             Loading.hide();
             Toast.error(err.message || 'Fallo de Autenticación', 'Error de Acceso');

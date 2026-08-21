@@ -44,8 +44,7 @@ class PortalService:
                 setattr(aprendiz, field, value)
 
         await session.commit()
-        await session.refresh(aprendiz)
-        return aprendiz
+        return await PortalService.get_perfil(session, aprendiz_id)
 
     @staticmethod
     async def get_beneficios(session: AsyncSession, aprendiz_id: int) -> List[AprendizBeneficio]:

@@ -9,6 +9,9 @@ const API_BASE_REMOTE = 'http://uc0w0o00cgwg4wk0kkogog4g.72.62.13.66.sslip.io/ap
 const getApiBaseUrl = () => {
   const customUrl = localStorage.getItem('senacontigo_api_url');
   if (customUrl) return customUrl.replace(/\/$/, '');
+  if (window.location.protocol.startsWith('http')) {
+    return `${window.location.origin}/api/v1`;
+  }
   return API_BASE_REMOTE;
 };
 
