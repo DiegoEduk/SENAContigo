@@ -396,6 +396,34 @@ async def seed_data():
                             observaciones="Aprendiz apoyado por patrocinio empresarial durante etapa lectiva"
                         ))
 
+            # 9. Crear Encuesta Inicial de Caracterización (sin la palabra 'Nacional')
+            from app.modules.surveys.models import Encuesta, CorteEncuesta
+            res_enc = await session.execute(select(Encuesta).where(Encuesta.titulo.like("%Caracterización Socioeconómica%")))
+            enc_obj = res_enc.scalar_one_or_none()
+            if not enc_obj:
+                enc_obj = Encuesta(
+                    titulo="Encuesta de Caracterización Socioeconómica y Bienestar SENA",
+                    descripcion="Instrumento institucional para la caracterización socioeconómica, identificación de necesidades y medición de vulnerabilidad de los aprendices SENA.",
+                    tipo="CARACTERIZACION",
+                    estado="PUBLICADA",
+                    fecha_inicio=date(2026, 1, 1),
+                    fecha_fin=date(2026, 12, 31)
+                )
+                session.add(enc_obj)
+                await session.flush()
+
+                # Crear Corte de Encuesta Semilla
+                corte_obj = CorteEncuesta(
+                    encuesta_id=enc_obj.id,
+                    nombre_corte="Corte I - 2026",
+                    fecha_corte=datetime.now(),
+                    descripcion="Primer corte de caracterización del año 2026"
+                )
+                session.add(corte_obj)
+            else:
+                if "Nacional" in enc_obj.titulo:
+                    enc_obj.titulo = enc_obj.titulo.replace("Nacional ", "").replace(" Nacional", "")
+
             await session.commit()
             print("✅ Poblamiento de datos completado exitosamente.")
         except Exception as e:

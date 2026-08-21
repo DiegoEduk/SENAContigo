@@ -114,7 +114,7 @@
                 <i class="fas fa-file-contract"></i> Mi Contrato de Aprendizaje
             </button>
             <button onclick="switchTab('beneficios')" id="tab-beneficios" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2 transition">
-                <i class="fas fa-hand-holding-heart"></i> Mis Beneficios SENA
+                <i class="fas fa-hand-holding-heart"></i> Mis Apoyos SENA
             </button>
             <button onclick="switchTab('historial')" id="tab-historial" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2 transition">
                 <i class="fas fa-clock-rotate-left"></i> Mi Evolución Histórica
@@ -172,14 +172,54 @@
                             <input type="tel" id="profCelular" placeholder="Ej: 3001234567" class="w-full text-xs p-3 border border-sena-border rounded-xl focus:ring-2 focus:ring-sena-primary">
                         </div>
 
-                        <div>
+                        <!-- Select Buscable Departamento -->
+                        <div class="relative" id="colombiaDeptWrapper">
                             <label for="profDepartamento" class="block text-xs font-bold text-sena-dark mb-1">Departamento de Residencia</label>
-                            <input type="text" id="profDepartamento" placeholder="Ej: Cundinamarca" class="w-full text-xs p-3 border border-sena-border rounded-xl focus:ring-2 focus:ring-sena-primary">
+                            <div class="relative cursor-pointer" onclick="toggleColombiaDropdown('dept')">
+                                <input type="text" id="profDepartamento" readonly 
+                                       placeholder="Seleccione departamento..." 
+                                       class="w-full text-xs p-3 pr-8 border border-sena-border rounded-xl focus:ring-2 focus:ring-sena-primary bg-white cursor-pointer select-none">
+                                <i id="iconDept" class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none transition-transform duration-200"></i>
+                            </div>
+                            <!-- Panel desplegable -->
+                            <div id="panelDept" class="hidden absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-sena-border rounded-xl shadow-xl max-h-60 overflow-hidden flex flex-col">
+                                <div class="p-2 border-b border-slate-100 bg-slate-50 sticky top-0">
+                                    <div class="relative">
+                                        <input type="text" id="searchDept" oninput="filterDeptOptions()" 
+                                               placeholder="Buscar departamento..." 
+                                               class="w-full text-xs p-2 pl-7 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sena-primary bg-white">
+                                        <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                    </div>
+                                </div>
+                                <ul id="listDept" class="overflow-y-auto max-h-44 text-xs text-slate-700 divide-y divide-slate-50">
+                                    <!-- Opciones de departamento -->
+                                </ul>
+                            </div>
                         </div>
 
-                        <div>
+                        <!-- Select Buscable Ciudad / Municipio -->
+                        <div class="relative" id="colombiaCityWrapper">
                             <label for="profCiudad" class="block text-xs font-bold text-sena-dark mb-1">Ciudad / Municipio</label>
-                            <input type="text" id="profCiudad" placeholder="Ej: Bogotá" class="w-full text-xs p-3 border border-sena-border rounded-xl focus:ring-2 focus:ring-sena-primary">
+                            <div class="relative cursor-pointer" onclick="toggleColombiaDropdown('city')">
+                                <input type="text" id="profCiudad" readonly disabled
+                                       placeholder="Primero seleccione departamento..." 
+                                       class="w-full text-xs p-3 pr-8 border border-sena-border rounded-xl focus:ring-2 focus:ring-sena-primary bg-white cursor-pointer select-none disabled:bg-slate-100 disabled:cursor-not-allowed">
+                                <i id="iconCity" class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none transition-transform duration-200"></i>
+                            </div>
+                            <!-- Panel desplegable -->
+                            <div id="panelCity" class="hidden absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-sena-border rounded-xl shadow-xl max-h-60 overflow-hidden flex flex-col">
+                                <div class="p-2 border-b border-slate-100 bg-slate-50 sticky top-0">
+                                    <div class="relative">
+                                        <input type="text" id="searchCity" oninput="filterCityOptions()" 
+                                               placeholder="Buscar ciudad o municipio..." 
+                                               class="w-full text-xs p-2 pl-7 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sena-primary bg-white">
+                                        <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                    </div>
+                                </div>
+                                <ul id="listCity" class="overflow-y-auto max-h-44 text-xs text-slate-700 divide-y divide-slate-50">
+                                    <!-- Opciones de municipio -->
+                                </ul>
+                            </div>
                         </div>
 
                         <div class="sm:col-span-2">
@@ -212,11 +252,8 @@
                         <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
                             <i class="fas fa-file-contract text-sena-dark"></i> Mi Contrato de Aprendizaje
                         </h3>
-                        <p class="text-xs text-slate-500">Información de patrocinio en etapa lectiva o práctica. Puedes registrar o actualizar tus datos.</p>
+                        <p class="text-xs text-slate-500">Información de patrocinio en etapa lectiva o práctica de tu contrato de aprendizaje.</p>
                     </div>
-                    <button onclick="openModalContrato()" class="px-4 py-2 bg-sena-dark text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition flex items-center gap-1.5 shadow-sm">
-                        <i class="fas fa-plus"></i> Registrar / Editar Contrato
-                    </button>
                 </div>
 
                 <div id="myContractContent" class="pt-2">
@@ -225,19 +262,16 @@
             </div>
         </section>
 
-        <!-- TAB 4: MIS BENEFICIOS SENA -->
+        <!-- TAB 4: MIS APOYOS SENA -->
         <section id="sec-beneficios" class="hidden space-y-6">
             <div class="bg-white p-6 rounded-3xl shadow-md space-y-4">
                 <div class="flex justify-between items-center border-b border-sena-border pb-3">
                     <div>
                         <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
-                            <i class="fas fa-hand-holding-heart text-sena-dark"></i> Mis Beneficios Institucionales
+                            <i class="fas fa-hand-holding-heart text-sena-dark"></i> Mis Apoyos Institucionales
                         </h3>
-                        <p class="text-xs text-slate-500">Beneficios y auxilios institucionales otorgados o reportados.</p>
+                        <p class="text-xs text-slate-500">Apoyos y auxilios institucionales asignados.</p>
                     </div>
-                    <button onclick="openModalBeneficio()" class="px-4 py-2 bg-sena-primary text-sena-dark rounded-xl text-xs font-black hover:bg-sena-secondary transition flex items-center gap-1.5 shadow-sm">
-                        <i class="fas fa-plus"></i> Registrar Beneficio
-                    </button>
                 </div>
                 <div id="myBenefitsList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- Dynamic benefits -->
@@ -259,100 +293,6 @@
 
     </div>
 
-    <!-- MODAL REGISTRO/EDICION CONTRATO APRENDIZAJE -->
-    <div id="modalContrato" class="fixed inset-0 bg-sena-dark/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white max-w-lg w-full rounded-3xl p-6 space-y-4 border border-sena-border shadow-2xl">
-            <div class="flex justify-between items-center border-b border-sena-border pb-3">
-                <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
-                    <i class="fas fa-file-contract text-sena-primary"></i> Registrar / Actualizar Contrato
-                </h3>
-                <button onclick="closeModalContrato()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-xmark text-lg"></i></button>
-            </div>
-
-            <form onsubmit="handleSaveContract(event)" class="space-y-3">
-                <input type="hidden" id="contractEditId" value="">
-                <div>
-                    <label class="block text-xs font-bold text-sena-dark mb-1">Nombre de la Empresa Patrocinadora <span class="text-red-500">*</span></label>
-                    <input type="text" id="contEmpresa" required placeholder="Ej: BANCO COLOMBIA S.A." class="w-full text-xs p-3 border border-sena-border rounded-xl">
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-sena-dark mb-1">Departamento <span class="text-red-500">*</span></label>
-                        <input type="text" id="contDepto" required placeholder="Ej: Cundinamarca" class="w-full text-xs p-3 border border-sena-border rounded-xl">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-sena-dark mb-1">Ciudad <span class="text-red-500">*</span></label>
-                        <input type="text" id="contCiudad" required placeholder="Ej: Bogotá" class="w-full text-xs p-3 border border-sena-border rounded-xl">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-sena-dark mb-1">Fecha Inicio <span class="text-red-500">*</span></label>
-                        <input type="date" id="contFechaInicio" required class="w-full text-xs p-3 border border-sena-border rounded-xl">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-sena-dark mb-1">Fecha Fin (Opcional)</label>
-                        <input type="date" id="contFechaFin" class="w-full text-xs p-3 border border-sena-border rounded-xl">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-sena-dark mb-1">Estado del Contrato</label>
-                    <select id="contEstado" class="w-full text-xs p-3 border border-sena-border rounded-xl font-bold bg-white">
-                        <option value="EN PATROCINIO">EN PATROCINIO</option>
-                        <option value="EN ETAPA PRACTICA">EN ETAPA PRACTICA</option>
-                        <option value="ACTIVO">ACTIVO</option>
-                        <option value="FINALIZADO">FINALIZADO</option>
-                        <option value="SUSPENDIDO">SUSPENDIDO</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-sena-dark mb-1">Observaciones / Detalles</label>
-                    <textarea id="contObs" rows="2" placeholder="Observaciones adicionales sobre el patrocinio..." class="w-full text-xs p-3 border border-sena-border rounded-xl"></textarea>
-                </div>
-
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeModalContrato()" class="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl">Cancelar</button>
-                    <button type="submit" class="px-5 py-2 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary transition">Guardar Contrato</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL REGISTRO BENEFICIO -->
-    <div id="modalBeneficio" class="fixed inset-0 bg-sena-dark/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white max-w-md w-full rounded-3xl p-6 space-y-4 border border-sena-border shadow-2xl">
-            <div class="flex justify-between items-center border-b border-sena-border pb-3">
-                <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
-                    <i class="fas fa-hand-holding-heart text-sena-primary"></i> Registrar Beneficio SENA
-                </h3>
-                <button onclick="closeModalBeneficio()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-xmark text-lg"></i></button>
-            </div>
-
-            <form onsubmit="handleSaveBenefit(event)" class="space-y-3">
-                <div>
-                    <label class="block text-xs font-bold text-sena-dark mb-1">Seleccione Beneficio / Auxilio <span class="text-red-500">*</span></label>
-                    <select id="benSelectId" required class="w-full text-xs p-3 border border-sena-border rounded-xl font-bold bg-white">
-                        <option value="">Cargando catálogo...</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-sena-dark mb-1">Observaciones</label>
-                    <textarea id="benObs" rows="3" placeholder="Detalle cómo fue otorgado o solicitado el beneficio..." class="w-full text-xs p-3 border border-sena-border rounded-xl"></textarea>
-                </div>
-
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeModalBeneficio()" class="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl">Cancelar</button>
-                    <button type="submit" class="px-5 py-2 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary transition">Guardar Beneficio</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
 
     </div>
 
@@ -365,6 +305,7 @@
     </footer>
 
     <script src="../static/js/api.js"></script>
+    <script src="../static/js/colombiaData.js"></script>
     <script src="../static/js/aprendiz.js"></script>
 </body>
 </html>

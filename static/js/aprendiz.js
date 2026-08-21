@@ -12,6 +12,8 @@ let myContractsCache = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
   try {
+    initColombiaSelects();
+
     if (!API.getToken()) {
       showLoginView();
       return;
@@ -159,9 +161,28 @@ async function loadProfile() {
     document.getElementById('profApellidos').value = perfil.apellidos || '';
     document.getElementById('profCorreo').value = perfil.correo || '';
     document.getElementById('profCelular').value = perfil.celular || '';
-    document.getElementById('profDepartamento').value = perfil.departamento || '';
-    document.getElementById('profCiudad').value = perfil.ciudad || '';
     document.getElementById('profDireccion').value = perfil.direccion_vivienda || '';
+
+    // Cargar Departamento y Ciudad en los selects buscables
+    const deptVal = perfil.departamento || '';
+    const cityVal = perfil.ciudad || '';
+
+    if (deptVal) {
+      const matchedDept = Object.keys(COLOMBIA_DATA).find(d => normalizeString(d) === normalizeString(deptVal));
+      if (matchedDept) {
+        selectDepartment(matchedDept, true);
+        document.getElementById('profCiudad').value = cityVal;
+      } else {
+        document.getElementById('profDepartamento').value = deptVal;
+        document.getElementById('profCiudad').value = cityVal;
+        document.getElementById('profCiudad').disabled = false;
+      }
+    } else {
+      document.getElementById('profDepartamento').value = '';
+      document.getElementById('profCiudad').value = '';
+      document.getElementById('profCiudad').disabled = true;
+      document.getElementById('profCiudad').placeholder = "Primero seleccione departamento...";
+    }
   } catch (err) {
     Loading.hide();
     Toast.error('Error al cargar datos del perfil: ' + err.message);
@@ -242,9 +263,9 @@ function renderSurveyQuestion() {
         ${q.opciones.map(opt => {
           const isSelected = userAnswers[q.variable_id] === opt.id;
           return `
-            <label onclick="selectOption(${q.variable_id}, ${opt.id})" class="flex items-center p-3 rounded-xl border ${isSelected ? 'border-[#27F531] bg-[#8FFA94]/20 font-bold' : 'border-sena-border hover:bg-slate-50'} cursor-pointer transition">
+            <label onclick="selectOption(${q.variable_id}, ${opt.id})" class="flex items-center p-3.5 rounded-xl border ${isSelected ? 'border-[#27F531] bg-[#8FFA94]/20 font-bold' : 'border-sena-border hover:bg-slate-50'} cursor-pointer transition">
               <input type="radio" name="var_${q.variable_id}" value="${opt.id}" ${isSelected ? 'checked' : ''} class="text-[#27F531] focus:ring-[#27F531]">
-              <span class="ml-3 text-xs text-sena-dark">${opt.texto_opcion}</span>
+              <span class="ml-3 text-sm text-sena-dark font-medium">${opt.texto_opcion}</span>
             </label>
           `;
         }).join('')}
@@ -253,7 +274,7 @@ function renderSurveyQuestion() {
   } else {
     inputFieldsHtml = `
       <div class="pt-2">
-        <textarea id="textAns_${q.variable_id}" oninput="userAnswers[${q.variable_id}] = this.value; isDirtySurvey=true;" rows="3" class="w-full text-xs p-3 border border-sena-border rounded-xl focus:ring-2 focus:ring-[#27F531]" placeholder="Escriba su respuesta aquí...">${userAnswers[q.variable_id] || ''}</textarea>
+        <textarea id="textAns_${q.variable_id}" oninput="userAnswers[${q.variable_id}] = this.value; isDirtySurvey=true;" rows="3" class="w-full text-sm p-3.5 border border-sena-border rounded-xl focus:ring-2 focus:ring-[#27F531]" placeholder="Escriba su respuesta aquí...">${userAnswers[q.variable_id] || ''}</textarea>
       </div>
     `;
   }
@@ -273,10 +294,9 @@ function renderSurveyQuestion() {
         <div class="bg-[#27F531] h-full transition-all duration-300" style="width: ${progressPct}%"></div>
       </div>
 
-      <!-- Question Text -->
-      <div class="py-2 space-y-1">
-        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Variable: ${q.variable_codigo || 'PREGUNTA'}</span>
-        <h4 class="text-sm font-black text-sena-dark">${q.texto_pregunta || q.nombre}</h4>
+      <!-- Question Text (Sin título de variable, con tamaño de pregunta incrementado) -->
+      <div class="py-3">
+        <h4 class="text-base sm:text-lg font-black text-sena-dark leading-snug">${q.texto_pregunta || q.nombre}</h4>
       </div>
 
       ${inputFieldsHtml}
@@ -355,7 +375,7 @@ async function loadMyContract() {
             <i class="fas fa-folder-open"></i>
           </div>
           <h4 class="font-black text-sena-dark text-base">No registras un Contrato de Aprendizaje aún</h4>
-          <p class="text-xs text-slate-500 max-w-md mx-auto">Haz clic en el botón <strong>"+ Registrar / Editar Contrato"</strong> para diligenciar tus datos de patrocinio de etapa lectiva o práctica.</p>
+          <p class="text-xs text-slate-500 max-w-md mx-auto">No se encuentra ningún contrato de aprendizaje asignado o registrado actualmente.</p>
         </div>
       `;
       return;
@@ -374,9 +394,6 @@ async function loadMyContract() {
             </div>
             <div class="flex items-center gap-2">
               <span class="badge-state ${badgeStyle}">${c.estado_contrato}</span>
-              <button onclick="editContract(${c.id})" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition">
-                <i class="fas fa-pen-to-square"></i> Editar
-              </button>
             </div>
           </div>
 
@@ -406,79 +423,17 @@ async function loadMyContract() {
   }
 }
 
-function openModalContrato() {
-  document.getElementById('contractEditId').value = '';
-  document.getElementById('contEmpresa').value = '';
-  document.getElementById('contDepto').value = '';
-  document.getElementById('contCiudad').value = '';
-  document.getElementById('contFechaInicio').value = '';
-  document.getElementById('contFechaFin').value = '';
-  document.getElementById('contEstado').value = 'EN PATROCINIO';
-  document.getElementById('contObs').value = '';
-  document.getElementById('modalContrato').classList.remove('hidden');
-}
-
-function closeModalContrato() {
-  document.getElementById('modalContrato').classList.add('hidden');
-}
-
-function editContract(id) {
-  const c = myContractsCache.find(x => x.id === id);
-  if (!c) return;
-
-  document.getElementById('contractEditId').value = c.id;
-  document.getElementById('contEmpresa').value = c.nombre_empresa || '';
-  document.getElementById('contDepto').value = c.departamento || '';
-  document.getElementById('contCiudad').value = c.ciudad || '';
-  document.getElementById('contFechaInicio').value = c.fecha_inicio_contrato || '';
-  document.getElementById('contFechaFin').value = c.fecha_fin_contrato || '';
-  document.getElementById('contEstado').value = c.estado_contrato || 'EN PATROCINIO';
-  document.getElementById('contObs').value = c.observaciones || '';
-  document.getElementById('modalContrato').classList.remove('hidden');
-}
-
-async function handleSaveContract(e) {
-  e.preventDefault();
-  const id = document.getElementById('contractEditId').value;
-  const data = {
-    nombre_empresa: document.getElementById('contEmpresa').value.trim(),
-    departamento: document.getElementById('contDepto').value.trim(),
-    ciudad: document.getElementById('contCiudad').value.trim(),
-    fecha_inicio_contrato: document.getElementById('contFechaInicio').value,
-    fecha_fin_contrato: document.getElementById('contFechaFin').value || null,
-    estado_contrato: document.getElementById('contEstado').value,
-    observaciones: document.getElementById('contObs').value.trim() || null
-  };
-
-  try {
-    Loading.show('Guardando datos de contrato...');
-    if (id) {
-      await API.updateContratoAprendiz(id, data);
-      Toast.success('Contrato actualizado exitosamente.');
-    } else {
-      await API.registrarContratoAprendiz(data);
-      Toast.success('Contrato registrado exitosamente.');
-    }
-    Loading.hide();
-    closeModalContrato();
-    loadMyContract();
-  } catch (err) {
-    Loading.hide();
-    Toast.error(err.message, 'Fallo al guardar contrato');
-  }
-}
-
-// TAB 4: MIS BENEFICIOS
+// TAB 4: MIS APOYOS SENA
 async function loadMyBenefits() {
   const container = document.getElementById('myBenefitsList');
   if (!container) return;
-  container.innerHTML = `<p class="col-span-2 text-center text-slate-400 py-6">Cargando beneficios...</p>`;
+  container.innerHTML = `<p class="col-span-2 text-center text-slate-400 py-6">Cargando apoyos...</p>`;
 
   try {
     const beneficios = await API.getMisBeneficios();
 
     if (!beneficios || !beneficios.length) {
-      container.innerHTML = `<div class="col-span-2 p-6 text-center text-slate-400 bg-[#F3F2F2] rounded-2xl border border-sena-border">No tienes beneficios registrados aún. Utiliza el botón "+ Registrar Beneficio" si recibes o deseas solicitar algún auxilio.</div>`;
+      container.innerHTML = `<div class="col-span-2 p-6 text-center text-slate-400 bg-[#F3F2F2] rounded-2xl border border-sena-border">No tienes apoyos institucionales asignados aún.</div>`;
       return;
     }
 
@@ -488,57 +443,12 @@ async function loadMyBenefits() {
           <span class="text-[10px] font-black uppercase bg-[#8FFA94] text-sena-dark px-2.5 py-0.5 rounded-full">${b.estado || 'ACTIVO'}</span>
           <span class="text-[10px] text-slate-400 font-bold">${b.origen || 'AUTOMATICO'}</span>
         </div>
-        <h4 class="font-black text-sena-dark text-sm">${b.beneficio_nombre || 'Beneficio SENA'}</h4>
+        <h4 class="font-black text-sena-dark text-sm">${b.beneficio_nombre || 'Apoyo SENA'}</h4>
         <p class="text-xs text-slate-500">${b.observaciones || 'Otorgado por la institución.'}</p>
       </div>
     `).join('');
   } catch (err) {
-    container.innerHTML = `<p class="col-span-2 text-center text-red-500 py-6">Error cargando beneficios: ${err.message}</p>`;
-  }
-}
-
-async function openModalBeneficio() {
-  const select = document.getElementById('benSelectId');
-  select.innerHTML = `<option value="">Cargando catálogo...</option>`;
-  document.getElementById('modalBeneficio').classList.remove('hidden');
-
-  try {
-    const catalogo = await API.request('/beneficios');
-    if (!catalogo || !catalogo.length) {
-      select.innerHTML = `<option value="">No hay beneficios disponibles en catálogo</option>`;
-      return;
-    }
-    select.innerHTML = catalogo.map(b => `<option value="${b.id}">${b.nombre} (${b.codigo})</option>`).join('');
-  } catch (err) {
-    select.innerHTML = `<option value="">Error cargando beneficios</option>`;
-  }
-}
-
-function closeModalBeneficio() {
-  document.getElementById('modalBeneficio').classList.add('hidden');
-}
-
-async function handleSaveBenefit(e) {
-  e.preventDefault();
-  const beneficio_id = parseInt(document.getElementById('benSelectId').value);
-  const observaciones = document.getElementById('benObs').value.trim();
-
-  if (!beneficio_id) {
-    Toast.warning('Seleccione un beneficio válido.');
-    return;
-  }
-
-  try {
-    Loading.show('Registrando beneficio...');
-    await API.registrarBeneficioAprendiz({ beneficio_id, observaciones });
-    Loading.hide();
-
-    Toast.success('Beneficio registrado exitosamente.');
-    closeModalBeneficio();
-    loadMyBenefits();
-  } catch (err) {
-    Loading.hide();
-    Toast.error(err.message, 'Error al registrar beneficio');
+    container.innerHTML = `<p class="col-span-2 text-center text-red-500 py-6">Error cargando apoyos: ${err.message}</p>`;
   }
 }
 
@@ -569,4 +479,137 @@ async function loadMyHistory() {
   } catch (err) {
     container.innerHTML = `<p class="text-center text-red-500 py-6">Error cargando historial: ${err.message}</p>`;
   }
+}
+
+/**
+ * Lógica de Selects Buscables de Departamentos y Municipios de Colombia
+ */
+function normalizeString(str) {
+  return str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
+}
+
+function initColombiaSelects() {
+  if (typeof COLOMBIA_DATA === 'undefined') return;
+  const depts = Object.keys(COLOMBIA_DATA).sort();
+  renderDeptOptions(depts);
+
+  // Cerrar paneles al hacer clic fuera
+  document.addEventListener('click', (e) => {
+    const deptWrapper = document.getElementById('colombiaDeptWrapper');
+    const cityWrapper = document.getElementById('colombiaCityWrapper');
+    if (deptWrapper && !deptWrapper.contains(e.target)) {
+      closeColombiaDropdown('dept');
+    }
+    if (cityWrapper && !cityWrapper.contains(e.target)) {
+      closeColombiaDropdown('city');
+    }
+  });
+}
+
+function toggleColombiaDropdown(type) {
+  if (type === 'city') {
+    const inputCity = document.getElementById('profCiudad');
+    if (inputCity && inputCity.disabled) return;
+  }
+  const panel = document.getElementById(type === 'dept' ? 'panelDept' : 'panelCity');
+  const icon = document.getElementById(type === 'dept' ? 'iconDept' : 'iconCity');
+  const searchInput = document.getElementById(type === 'dept' ? 'searchDept' : 'searchCity');
+  
+  if (!panel) return;
+  const isHidden = panel.classList.contains('hidden');
+  closeColombiaDropdown('dept');
+  closeColombiaDropdown('city');
+  
+  if (isHidden) {
+    panel.classList.remove('hidden');
+    if (icon) icon.classList.add('rotate-180');
+    if (searchInput) {
+      searchInput.value = '';
+      if (type === 'dept') filterDeptOptions();
+      else filterCityOptions();
+      setTimeout(() => searchInput.focus(), 50);
+    }
+  }
+}
+
+function closeColombiaDropdown(type) {
+  const panel = document.getElementById(type === 'dept' ? 'panelDept' : 'panelCity');
+  const icon = document.getElementById(type === 'dept' ? 'iconDept' : 'iconCity');
+  if (panel) panel.classList.add('hidden');
+  if (icon) icon.classList.remove('rotate-180');
+}
+
+function renderDeptOptions(depts) {
+  const list = document.getElementById('listDept');
+  if (!list) return;
+  if (depts.length === 0) {
+    list.innerHTML = `<li class="p-3 text-slate-400 text-center italic">No se encontraron departamentos</li>`;
+    return;
+  }
+  list.innerHTML = depts.map(d => `
+    <li onclick="selectDepartment('${d.replace(/'/g, "\\'")}')" 
+        class="p-2.5 hover:bg-slate-100 cursor-pointer transition flex items-center justify-between font-medium">
+      <span>${d}</span>
+    </li>
+  `).join('');
+}
+
+function filterDeptOptions() {
+  if (typeof COLOMBIA_DATA === 'undefined') return;
+  const searchEl = document.getElementById('searchDept');
+  const query = searchEl ? normalizeString(searchEl.value) : '';
+  const depts = Object.keys(COLOMBIA_DATA).sort().filter(d => normalizeString(d).includes(query));
+  renderDeptOptions(depts);
+}
+
+function selectDepartment(deptName, keepSelectedCity = false) {
+  const inputDept = document.getElementById('profDepartamento');
+  const inputCity = document.getElementById('profCiudad');
+  
+  if (inputDept) inputDept.value = deptName;
+  closeColombiaDropdown('dept');
+
+  if (inputCity) {
+    inputCity.disabled = false;
+    inputCity.placeholder = "Seleccione una ciudad o municipio...";
+    if (!keepSelectedCity) {
+      inputCity.value = '';
+    }
+  }
+
+  if (typeof COLOMBIA_DATA !== 'undefined') {
+    const cities = (COLOMBIA_DATA[deptName] || []).slice().sort();
+    renderCityOptions(cities);
+  }
+}
+
+function renderCityOptions(cities) {
+  const list = document.getElementById('listCity');
+  if (!list) return;
+  if (cities.length === 0) {
+    list.innerHTML = `<li class="p-3 text-slate-400 text-center italic">No se encontraron municipios</li>`;
+    return;
+  }
+  list.innerHTML = cities.map(c => `
+    <li onclick="selectCity('${c.replace(/'/g, "\\'")}')" 
+        class="p-2.5 hover:bg-slate-100 cursor-pointer transition flex items-center justify-between">
+      <span>${c}</span>
+    </li>
+  `).join('');
+}
+
+function filterCityOptions() {
+  if (typeof COLOMBIA_DATA === 'undefined') return;
+  const currentDept = document.getElementById('profDepartamento').value;
+  const searchEl = document.getElementById('searchCity');
+  const query = searchEl ? normalizeString(searchEl.value) : '';
+  const allCities = (COLOMBIA_DATA[currentDept] || []).slice().sort();
+  const filtered = allCities.filter(c => normalizeString(c).includes(query));
+  renderCityOptions(filtered);
+}
+
+function selectCity(cityName) {
+  const inputCity = document.getElementById('profCiudad');
+  if (inputCity) inputCity.value = cityName;
+  closeColombiaDropdown('city');
 }
