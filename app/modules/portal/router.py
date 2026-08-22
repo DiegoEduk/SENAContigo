@@ -199,4 +199,4 @@ async def get_mi_historial(
 ):
     """Obtener el historial longitudinal de respuestas del aprendiz en el tiempo."""
     aprendiz_id = _resolve_aprendiz_id(current_user)
-    return await ResponsesService.get_aprendiz_history(db, aprendiz_id)
+    return await ResponsesService.get_aprendiz_history_grouped(db, aprendiz_id)

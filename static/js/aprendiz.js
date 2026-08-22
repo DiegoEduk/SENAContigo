@@ -535,33 +535,59 @@ async function loadMyHistory() {
       return;
     }
 
-    container.innerHTML = historial.map(h => {
-      const fecha = h.fecha_respuesta ? h.fecha_respuesta.split('T')[0] : 'N/A';
+    container.innerHTML = historial.map((h, idx) => {
       const varCodigo = h.variable_codigo || 'VAR';
       const varNombre = h.variable_nombre || 'Variable';
       const pregunta = h.pregunta_texto || 'Pregunta registrada';
-      const respuesta = h.respuesta_texto || 'Respuesta registrada';
+      const respuestasList = h.respuestas && h.respuestas.length ? h.respuestas : [
+        { id: h.id || 0, fecha_respuesta: h.fecha_respuesta, respuesta_texto: h.respuesta_texto || 'Respuesta registrada', origen: h.origen || 'web' }
+      ];
+
+      const listHtml = respuestasList.map((resp, rIdx) => {
+        const fechaRaw = resp.fecha_respuesta || '';
+        const fechaDate = fechaRaw ? fechaRaw.split('T')[0] : 'N/A';
+        const fechaHora = fechaRaw && fechaRaw.includes('T') ? fechaRaw.split('T')[1].substring(0, 5) : '';
+        const isLatest = rIdx === 0;
+
+        return `
+          <div class="p-3.5 rounded-xl border ${isLatest ? 'bg-emerald-50/70 border-emerald-300' : 'bg-[#F8F9FA] border-slate-200'} flex items-center justify-between gap-3 transition">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                ${isLatest ? '<span class="text-[9px] font-black uppercase bg-emerald-600 text-white px-2 py-0.5 rounded-full">Última medición</span>' : '<span class="text-[9px] font-extrabold uppercase bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">Medición anterior</span>'}
+                <span class="text-[10px] font-bold text-slate-500"><i class="far fa-clock mr-1"></i>${fechaDate} ${fechaHora}</span>
+              </div>
+              <p class="text-xs font-black ${isLatest ? 'text-emerald-950' : 'text-slate-700'} mt-1 flex items-center gap-1.5">
+                <i class="fas ${isLatest ? 'fa-circle-check text-emerald-600' : 'fa-history text-slate-400'} text-xs"></i> ${resp.respuesta_texto || 'Respuesta registrada'}
+              </p>
+            </div>
+          </div>
+        `;
+      }).join('');
 
       return `
-        <div class="p-5 bg-white rounded-2xl border border-sena-border shadow-sm space-y-3">
-          <div class="flex justify-between items-start border-b border-sena-border pb-2.5">
-            <div class="flex items-center gap-2">
+        <div class="p-5 bg-white rounded-2xl border border-sena-border shadow-sm space-y-3.5">
+          <!-- Variable & Order Header -->
+          <div class="flex justify-between items-center border-b border-sena-border pb-3">
+            <div class="flex items-center gap-2.5">
+              <span class="w-6 h-6 rounded-full bg-sena-dark text-white text-[10px] font-black flex items-center justify-center">${idx + 1}</span>
               <span class="text-[10px] font-black uppercase text-sena-dark bg-[#8FFA94] px-2.5 py-0.5 rounded-full">${varCodigo}</span>
               <h4 class="font-black text-sena-dark text-sm">${varNombre}</h4>
             </div>
-            <span class="text-[10px] font-bold text-slate-400"><i class="far fa-calendar-alt mr-1"></i>${fecha}</span>
+            <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider">${respuestasList.length} ${respuestasList.length === 1 ? 'medición' : 'mediciones'}</span>
           </div>
 
-          <div class="space-y-1 pt-1">
+          <!-- Question Text -->
+          <div class="space-y-1">
             <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block">Pregunta Realizada</span>
-            <p class="text-xs font-bold text-sena-dark leading-snug">${pregunta}</p>
+            <p class="text-xs sm:text-sm font-bold text-sena-dark leading-snug">${pregunta}</p>
           </div>
 
-          <div class="space-y-1 bg-[#F3F2F2] p-3 rounded-xl border border-slate-200">
-            <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block">Respuesta Proporcionada</span>
-            <p class="text-xs font-black text-emerald-800 flex items-center gap-1.5">
-              <i class="fas fa-circle-check text-xs text-emerald-600"></i> ${respuesta}
-            </p>
+          <!-- Answers List -->
+          <div class="space-y-2 pt-1">
+            <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block">Historial de Respuestas</span>
+            <div class="space-y-2">
+              ${listHtml}
+            </div>
           </div>
         </div>
       `;

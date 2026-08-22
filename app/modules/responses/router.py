@@ -25,7 +25,7 @@ async def record_responses(
     )
 
 
-@router.get("/aprendiz/{aprendiz_id}/historico", response_model=List[RespuestaHistorialRead])
+@router.get("/aprendiz/{aprendiz_id}/historico", response_model=List[RespuestaRead])
 async def get_aprendiz_history(
     aprendiz_id: int,
     db: AsyncSession = Depends(get_db),

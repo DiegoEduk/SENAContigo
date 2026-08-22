@@ -73,7 +73,7 @@ class ResponsesService:
         return created_responses
 
     @staticmethod
-    async def get_aprendiz_history(session: AsyncSession, aprendiz_id: int) -> List[dict]:
+    async def get_aprendiz_history(session: AsyncSession, aprendiz_id: int) -> List[Respuesta]:
         stmt = (
             select(Respuesta)
             .where(Respuesta.aprendiz_id == aprendiz_id)
@@ -85,26 +85,75 @@ class ResponsesService:
             )
         )
         res = await session.execute(stmt)
-        respuestas = list(res.scalars().all())
+        return list(res.scalars().all())
 
-        historial = []
-        for r in respuestas:
+    @staticmethod
+    async def get_aprendiz_history_grouped(session: AsyncSession, aprendiz_id: int) -> List[dict]:
+        from app.modules.surveys.models import EncuestaVariable
+
+        stmt = (
+            select(Respuesta, EncuestaVariable.orden)
+            .outerjoin(
+                EncuestaVariable,
+                (EncuestaVariable.encuesta_id == Respuesta.encuesta_id) &
+                (EncuestaVariable.variable_id == Respuesta.variable_id)
+            )
+            .where(Respuesta.aprendiz_id == aprendiz_id)
+            .order_by(
+                func.coalesce(EncuestaVariable.orden, 999),
+                Respuesta.id.asc()
+            )
+            .options(
+                selectinload(Respuesta.variable),
+                selectinload(Respuesta.version),
+                selectinload(Respuesta.opcion)
+            )
+        )
+        res = await session.execute(stmt)
+        rows = res.all()
+
+        grouped_dict = {}
+        ordered_var_ids = []
+
+        for row in rows:
+            r = row[0]
+            orden_val = row[1] if row[1] is not None else 999
+            var_id = r.variable_id
+
             pregunta = r.version.titulo_pregunta if r.version else (r.variable.descripcion or r.variable.nombre if r.variable else "Pregunta")
             respuesta_val = r.opcion.texto if r.opcion else (r.valor_texto or "Respuesta registrada")
 
-            historial.append({
+            if var_id not in grouped_dict:
+                ordered_var_ids.append(var_id)
+                grouped_dict[var_id] = {
+                    "variable_id": var_id,
+                    "variable_codigo": r.variable.codigo if r.variable else "N/A",
+                    "variable_nombre": r.variable.nombre if r.variable else "Variable",
+                    "pregunta_texto": pregunta,
+                    "orden": orden_val,
+                    "respuestas": []
+                }
+
+            grouped_dict[var_id]["respuestas"].append({
                 "id": r.id,
                 "fecha_respuesta": r.fecha_respuesta,
-                "aprendiz_id": r.aprendiz_id,
-                "variable_id": r.variable_id,
-                "variable_version_id": r.variable_version_id,
-                "variable_codigo": r.variable.codigo if r.variable else "N/A",
-                "variable_nombre": r.variable.nombre if r.variable else "Variable",
-                "pregunta_texto": pregunta,
                 "respuesta_texto": respuesta_val,
                 "origen": r.origen
             })
-        return historial
+
+        result = [grouped_dict[vid] for vid in ordered_var_ids]
+        result.sort(key=lambda x: (x["orden"], x["variable_id"]))
+
+        for item in result:
+            item["respuestas"].sort(key=lambda resp: resp["fecha_respuesta"], reverse=True)
+            if item["respuestas"]:
+                latest = item["respuestas"][0]
+                item["id"] = latest["id"]
+                item["fecha_respuesta"] = latest["fecha_respuesta"]
+                item["respuesta_texto"] = latest["respuesta_texto"]
+                item["origen"] = latest["origen"]
+
+        return result
 
     @staticmethod
     async def get_estado_actual_aprendiz(session: AsyncSession, aprendiz_id: int) -> EstadoActualAprendiz:

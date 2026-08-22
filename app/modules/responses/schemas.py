@@ -34,17 +34,29 @@ class RespuestaRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class RespuestaHistorialRead(BaseModel):
+class HistorialItemDetalle(BaseModel):
     id: int
     fecha_respuesta: datetime
-    aprendiz_id: Optional[int] = None
+    respuesta_texto: str
+    origen: str = "web"
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RespuestaHistorialRead(BaseModel):
     variable_id: int
-    variable_version_id: Optional[int] = None
     variable_codigo: Optional[str] = None
     variable_nombre: Optional[str] = None
     pregunta_texto: Optional[str] = None
+    orden: int = 0
+    respuestas: List[HistorialItemDetalle] = []
+
+    # Campos planos opcionales para compatibilidad previa
+    id: Optional[int] = None
+    fecha_respuesta: Optional[datetime] = None
+    aprendiz_id: Optional[int] = None
+    variable_version_id: Optional[int] = None
     respuesta_texto: Optional[str] = None
-    origen: str
+    origen: Optional[str] = "web"
     model_config = ConfigDict(from_attributes=True)
 
 
