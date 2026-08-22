@@ -217,11 +217,13 @@ async function handleUpdateProfile(e) {
   }
 }
 
+let isReanswering = false;
+
 // TAB 2: SURVEY WIZARD
 async function loadPendingSurveys() {
   const container = document.getElementById('surveyWizardContainer');
   if (!container) return;
-  container.innerHTML = `<p class="text-center text-slate-400 py-8">Cargando encuestas pendientes...</p>`;
+  container.innerHTML = `<p class="text-center text-slate-400 py-8">Cargando encuestas...</p>`;
 
   try {
     const encuestas = await API.getEncuestasPendientes();
@@ -239,6 +241,13 @@ async function loadPendingSurveys() {
     }
 
     activeSurvey = encuestas[0];
+
+    // Verificar si la encuesta ya fue respondida previamente por el aprendiz y no ha solicitado re-responder
+    if (activeSurvey.ya_respondida && !isReanswering) {
+      renderCompletedSurveyBanner(container);
+      return;
+    }
+
     currentQuestionIndex = 0;
     userAnswers = {};
     isDirtySurvey = false;
@@ -246,6 +255,40 @@ async function loadPendingSurveys() {
   } catch (err) {
     container.innerHTML = `<p class="text-center text-red-500 py-8">Error cargando encuestas: ${err.message}</p>`;
   }
+}
+
+function renderCompletedSurveyBanner(container) {
+  if (!container) container = document.getElementById('surveyWizardContainer');
+  if (!container || !activeSurvey) return;
+
+  container.innerHTML = `
+    <div class="p-8 bg-white rounded-3xl border border-sena-border shadow-sm text-center space-y-5">
+      <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-3xl mx-auto border border-emerald-300">
+        <i class="fas fa-circle-check"></i>
+      </div>
+      <div class="space-y-2">
+        <span class="text-[10px] font-black uppercase text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-200 tracking-wider">Encuesta Diligenciada</span>
+        <h3 class="text-xl font-black text-sena-dark mt-2">${activeSurvey.nombre || activeSurvey.titulo}</h3>
+        <p class="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+          Ya has registrado previamente tus respuestas para esta encuesta. Tu información socioeconómica se encuentra almacenada y disponible en tu historial.
+        </p>
+      </div>
+
+      <div class="pt-4 border-t border-sena-border flex flex-col sm:flex-row items-center justify-center gap-3">
+        <button onclick="startReansweringSurvey()" class="w-full sm:w-auto px-6 py-3 bg-[#252525] text-white font-black text-xs uppercase tracking-wider rounded-xl hover:bg-slate-800 transition shadow-md flex items-center justify-center gap-2">
+          <i class="fas fa-arrows-rotate text-[#27F531]"></i> Volver a responder la encuesta
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function startReansweringSurvey() {
+  isReanswering = true;
+  currentQuestionIndex = 0;
+  userAnswers = {};
+  isDirtySurvey = false;
+  renderSurveyQuestion();
 }
 
 function renderSurveyQuestion() {
@@ -375,6 +418,7 @@ async function submitSurvey() {
 
     await API.submitRespuestas(activeSurvey.id, respuestasArray, activeSurvey.corte_id || null);
     isDirtySurvey = false;
+    isReanswering = false;
     userAnswers = {};
     Toast.success('¡Encuesta enviada exitosamente! Gracias por tu colaboración.', 'Encuesta Registrada');
     loadPendingSurveys();
@@ -491,16 +535,37 @@ async function loadMyHistory() {
       return;
     }
 
-    container.innerHTML = historial.map(h => `
-      <div class="p-4 bg-white rounded-2xl border border-sena-border shadow-sm flex items-center justify-between">
-        <div>
-          <span class="text-[10px] font-bold text-slate-400 block">${h.fecha_respuesta ? h.fecha_respuesta.split('T')[0] : 'N/A'}</span>
-          <h4 class="font-bold text-sena-dark text-xs">${h.variable ? h.variable.nombre : 'Variable'}</h4>
-          ${h.valor_texto ? `<p class="text-xs text-slate-600 mt-1">${h.valor_texto}</p>` : ''}
+    container.innerHTML = historial.map(h => {
+      const fecha = h.fecha_respuesta ? h.fecha_respuesta.split('T')[0] : 'N/A';
+      const varCodigo = h.variable_codigo || 'VAR';
+      const varNombre = h.variable_nombre || 'Variable';
+      const pregunta = h.pregunta_texto || 'Pregunta registrada';
+      const respuesta = h.respuesta_texto || 'Respuesta registrada';
+
+      return `
+        <div class="p-5 bg-white rounded-2xl border border-sena-border shadow-sm space-y-3">
+          <div class="flex justify-between items-start border-b border-sena-border pb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-black uppercase text-sena-dark bg-[#8FFA94] px-2.5 py-0.5 rounded-full">${varCodigo}</span>
+              <h4 class="font-black text-sena-dark text-sm">${varNombre}</h4>
+            </div>
+            <span class="text-[10px] font-bold text-slate-400"><i class="far fa-calendar-alt mr-1"></i>${fecha}</span>
+          </div>
+
+          <div class="space-y-1 pt-1">
+            <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block">Pregunta Realizada</span>
+            <p class="text-xs font-bold text-sena-dark leading-snug">${pregunta}</p>
+          </div>
+
+          <div class="space-y-1 bg-[#F3F2F2] p-3 rounded-xl border border-slate-200">
+            <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block">Respuesta Proporcionada</span>
+            <p class="text-xs font-black text-emerald-800 flex items-center gap-1.5">
+              <i class="fas fa-circle-check text-xs text-emerald-600"></i> ${respuesta}
+            </p>
+          </div>
         </div>
-        <span class="badge-state bg-[#8FFA94] text-sena-dark">${h.opcion ? h.opcion.texto : 'Respuesta Registrada'}</span>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   } catch (err) {
     container.innerHTML = `<p class="text-center text-red-500 py-6">Error cargando historial: ${err.message}</p>`;
   }

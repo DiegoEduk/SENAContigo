@@ -200,6 +200,16 @@ class PortalService:
                     "opciones": opciones
                 })
 
+            from app.modules.responses.models import Respuesta
+            from sqlalchemy import func
+            resp_check = await session.execute(
+                select(func.count(Respuesta.id)).where(
+                    (Respuesta.aprendiz_id == aprendiz_id) &
+                    (Respuesta.encuesta_id == enc.id)
+                )
+            )
+            count_resp = resp_check.scalar_one_or_none() or 0
+
             corte_actual = enc.cortes[0] if enc.cortes else None
             resultado.append({
                 "id": enc.id,
@@ -208,6 +218,8 @@ class PortalService:
                 "descripcion": enc.descripcion,
                 "tipo": enc.tipo,
                 "corte_id": corte_actual.id if corte_actual else None,
+                "ya_respondida": count_resp > 0,
+                "total_respuestas": count_resp,
                 "preguntas": preguntas
             })
 

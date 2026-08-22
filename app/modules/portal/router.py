@@ -12,7 +12,7 @@ from app.modules.contracts.schemas import ContratoCreate, ContratoRead, Contrato
 from app.modules.contracts.services import ContractsService
 from app.modules.portal.schemas import PerfilAprendizUpdate, PortalBeneficioCreate, PortalContratoCreate, PortalContratoUpdate
 from app.modules.portal.services import PortalService
-from app.modules.responses.schemas import BatchRespuestaCreate, RespuestaRead
+from app.modules.responses.schemas import BatchRespuestaCreate, RespuestaHistorialRead, RespuestaRead
 from app.modules.responses.services import ResponsesService
 
 router = APIRouter(prefix="/portal", tags=["Portal del Aprendiz"])
@@ -192,7 +192,7 @@ async def responder_encuesta(
     )
 
 
-@router.get("/mi-historial", response_model=List[RespuestaRead])
+@router.get("/mi-historial", response_model=List[RespuestaHistorialRead])
 async def get_mi_historial(
     db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user_token)

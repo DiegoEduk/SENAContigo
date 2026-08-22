@@ -73,7 +73,7 @@ class ResponsesService:
         return created_responses
 
     @staticmethod
-    async def get_aprendiz_history(session: AsyncSession, aprendiz_id: int) -> List[Respuesta]:
+    async def get_aprendiz_history(session: AsyncSession, aprendiz_id: int) -> List[dict]:
         stmt = (
             select(Respuesta)
             .where(Respuesta.aprendiz_id == aprendiz_id)
@@ -85,7 +85,26 @@ class ResponsesService:
             )
         )
         res = await session.execute(stmt)
-        return list(res.scalars().all())
+        respuestas = list(res.scalars().all())
+
+        historial = []
+        for r in respuestas:
+            pregunta = r.version.titulo_pregunta if r.version else (r.variable.descripcion or r.variable.nombre if r.variable else "Pregunta")
+            respuesta_val = r.opcion.texto if r.opcion else (r.valor_texto or "Respuesta registrada")
+
+            historial.append({
+                "id": r.id,
+                "fecha_respuesta": r.fecha_respuesta,
+                "aprendiz_id": r.aprendiz_id,
+                "variable_id": r.variable_id,
+                "variable_version_id": r.variable_version_id,
+                "variable_codigo": r.variable.codigo if r.variable else "N/A",
+                "variable_nombre": r.variable.nombre if r.variable else "Variable",
+                "pregunta_texto": pregunta,
+                "respuesta_texto": respuesta_val,
+                "origen": r.origen
+            })
+        return historial
 
     @staticmethod
     async def get_estado_actual_aprendiz(session: AsyncSession, aprendiz_id: int) -> EstadoActualAprendiz:

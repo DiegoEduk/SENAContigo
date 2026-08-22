@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.dependencies import get_current_user_token
 from app.core.security import TokenData
-from app.modules.responses.schemas import BatchRespuestaCreate, EstadoActualAprendiz, RespuestaRead
+from app.modules.responses.schemas import BatchRespuestaCreate, EstadoActualAprendiz, RespuestaHistorialRead, RespuestaRead
 from app.modules.responses.services import ResponsesService
 
 router = APIRouter(prefix="/respuestas", tags=["Respuestas Longitudinales e Histórico"])
@@ -25,7 +25,7 @@ async def record_responses(
     )
 
 
-@router.get("/aprendiz/{aprendiz_id}/historico", response_model=List[RespuestaRead])
+@router.get("/aprendiz/{aprendiz_id}/historico", response_model=List[RespuestaHistorialRead])
 async def get_aprendiz_history(
     aprendiz_id: int,
     db: AsyncSession = Depends(get_db),

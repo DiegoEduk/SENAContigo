@@ -34,6 +34,20 @@ class RespuestaRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class RespuestaHistorialRead(BaseModel):
+    id: int
+    fecha_respuesta: datetime
+    aprendiz_id: Optional[int] = None
+    variable_id: int
+    variable_version_id: Optional[int] = None
+    variable_codigo: Optional[str] = None
+    variable_nombre: Optional[str] = None
+    pregunta_texto: Optional[str] = None
+    respuesta_texto: Optional[str] = None
+    origen: str
+    model_config = ConfigDict(from_attributes=True)
+
+
 class EstadoActualAprendizItem(BaseModel):
     variable_id: int
     variable_nombre: str
