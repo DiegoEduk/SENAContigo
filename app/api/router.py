@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+import app.models  # noqa: F401
 
 from app.modules.academic.router import fichas_router, programas_router
 from app.modules.actions.router import router as acciones_router

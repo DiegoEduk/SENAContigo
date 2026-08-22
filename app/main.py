@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+import app.models  # noqa: F401
 from app.api.router import api_router
 from app.core.config import settings
 from app.core.database import Base, engine
