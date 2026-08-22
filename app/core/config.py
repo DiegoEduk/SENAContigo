@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
+    TIMEZONE: str = "America/Bogota"
 
     # Database
     DATABASE_URL: str = "sqlite+aiosqlite:///./senacontigo.db"

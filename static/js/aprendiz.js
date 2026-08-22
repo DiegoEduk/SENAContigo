@@ -521,59 +521,91 @@ async function loadMyBenefits() {
   }
 }
 
-// TAB 5: MI HISTORIAL
+let allHistoryQuestions = [];
+let targetSingleQuestion = null;
+let singleQuestionAnswerVal = null;
+
+// TAB 5: MI EVOLUCIÓN HISTÓRICA
 async function loadMyHistory() {
   const container = document.getElementById('myHistoryTimeline');
   if (!container) return;
-  container.innerHTML = `<p class="text-center text-slate-400 py-6">Cargando historial...</p>`;
+  container.innerHTML = `<p class="text-center text-slate-400 py-6">Cargando preguntas de caracterización...</p>`;
 
   try {
     const historial = await API.getMiHistorial();
+    allHistoryQuestions = historial || [];
 
-    if (!historial || !historial.length) {
-      container.innerHTML = `<div class="p-6 text-center text-slate-400 bg-[#F3F2F2] rounded-2xl border border-sena-border">No has diligenciado respuestas anteriormente.</div>`;
+    if (!allHistoryQuestions || !allHistoryQuestions.length) {
+      container.innerHTML = `<div class="p-6 text-center text-slate-400 bg-[#F3F2F2] rounded-2xl border border-sena-border">No hay preguntas de caracterización disponibles.</div>`;
       return;
     }
 
-    container.innerHTML = historial.map((h, idx) => {
+    container.innerHTML = allHistoryQuestions.map((h, idx) => {
       const varCodigo = h.variable_codigo || 'VAR';
       const varNombre = h.variable_nombre || 'Variable';
       const pregunta = h.pregunta_texto || 'Pregunta registrada';
-      const respuestasList = h.respuestas && h.respuestas.length ? h.respuestas : [
-        { id: h.id || 0, fecha_respuesta: h.fecha_respuesta, respuesta_texto: h.respuesta_texto || 'Respuesta registrada', origen: h.origen || 'web' }
-      ];
+      const isPendiente = h.pendiente === true || !h.respuestas || h.respuestas.length === 0;
+      const respuestasList = h.respuestas || [];
 
-      const listHtml = respuestasList.map((resp, rIdx) => {
-        const fechaRaw = resp.fecha_respuesta || '';
-        const fechaDate = fechaRaw ? fechaRaw.split('T')[0] : 'N/A';
-        const fechaHora = fechaRaw && fechaRaw.includes('T') ? fechaRaw.split('T')[1].substring(0, 5) : '';
-        const isLatest = rIdx === 0;
-
-        return `
-          <div class="p-3.5 rounded-xl border ${isLatest ? 'bg-emerald-50/70 border-emerald-300' : 'bg-[#F8F9FA] border-slate-200'} flex items-center justify-between gap-3 transition">
-            <div class="space-y-1">
-              <div class="flex items-center gap-2">
-                ${isLatest ? '<span class="text-[9px] font-black uppercase bg-emerald-600 text-white px-2 py-0.5 rounded-full">Última medición</span>' : '<span class="text-[9px] font-extrabold uppercase bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">Medición anterior</span>'}
-                <span class="text-[10px] font-bold text-slate-500"><i class="far fa-clock mr-1"></i>${fechaDate} ${fechaHora}</span>
-              </div>
-              <p class="text-xs font-black ${isLatest ? 'text-emerald-950' : 'text-slate-700'} mt-1 flex items-center gap-1.5">
-                <i class="fas ${isLatest ? 'fa-circle-check text-emerald-600' : 'fa-history text-slate-400'} text-xs"></i> ${resp.respuesta_texto || 'Respuesta registrada'}
-              </p>
+      let listHtml = '';
+      if (isPendiente) {
+        listHtml = `
+          <div class="p-4 bg-red-50/80 border border-red-200 rounded-xl text-red-900 text-xs font-semibold flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <i class="fas fa-circle-exclamation text-red-500 text-sm animate-pulse"></i>
+              <span>Esta pregunta está pendiente de respuesta en tu caracterización socioeconómica.</span>
             </div>
+            <button onclick="openSingleQuestionModal(${h.variable_id})" class="px-3.5 py-1.5 bg-red-600 text-white font-black text-[11px] uppercase tracking-wider rounded-xl hover:bg-red-700 transition shadow-sm flex items-center gap-1.5 self-end sm:self-auto">
+              <i class="fas fa-pen-to-square"></i> Responder Ahora
+            </button>
           </div>
         `;
-      }).join('');
+      } else {
+        listHtml = respuestasList.map((resp, rIdx) => {
+          const fechaRaw = resp.fecha_respuesta || '';
+          const fechaDate = fechaRaw ? fechaRaw.split('T')[0] : 'N/A';
+          const fechaHora = fechaRaw && fechaRaw.includes('T') ? fechaRaw.split('T')[1].substring(0, 5) : '';
+          const isLatest = rIdx === 0;
+
+          return `
+            <div class="p-3.5 rounded-xl border ${isLatest ? 'bg-emerald-50/70 border-emerald-300' : 'bg-[#F8F9FA] border-slate-200'} flex items-center justify-between gap-3 transition">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  ${isLatest ? '<span class="text-[9px] font-black uppercase bg-emerald-600 text-white px-2 py-0.5 rounded-full">Última medición</span>' : '<span class="text-[9px] font-extrabold uppercase bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">Medición anterior</span>'}
+                  <span class="text-[10px] font-bold text-slate-500"><i class="far fa-clock mr-1"></i>${fechaDate} ${fechaHora}</span>
+                </div>
+                <p class="text-xs font-black ${isLatest ? 'text-emerald-950' : 'text-slate-700'} mt-1 flex items-center gap-1.5">
+                  <i class="fas ${isLatest ? 'fa-circle-check text-emerald-600' : 'fa-history text-slate-400'} text-xs"></i> ${resp.respuesta_texto || 'Respuesta registrada'}
+                </p>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
 
       return `
-        <div class="p-5 bg-white rounded-2xl border border-sena-border shadow-sm space-y-3.5">
-          <!-- Variable & Order Header -->
-          <div class="flex justify-between items-center border-b border-sena-border pb-3">
+        <div class="p-5 bg-white rounded-2xl border ${isPendiente ? 'border-red-200 bg-red-50/10' : 'border-sena-border'} shadow-sm space-y-3.5">
+          <!-- Variable & Header -->
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-sena-border pb-3 gap-2">
             <div class="flex items-center gap-2.5">
-              <span class="w-6 h-6 rounded-full bg-sena-dark text-white text-[10px] font-black flex items-center justify-center">${idx + 1}</span>
+              <span class="w-6 h-6 rounded-full ${isPendiente ? 'bg-red-500' : 'bg-sena-dark'} text-white text-[10px] font-black flex items-center justify-center">${idx + 1}</span>
               <span class="text-[10px] font-black uppercase text-sena-dark bg-[#8FFA94] px-2.5 py-0.5 rounded-full">${varCodigo}</span>
               <h4 class="font-black text-sena-dark text-sm">${varNombre}</h4>
             </div>
-            <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider">${respuestasList.length} ${respuestasList.length === 1 ? 'medición' : 'mediciones'}</span>
+
+            <div class="flex items-center gap-2 flex-wrap">
+              ${isPendiente ? `
+                <span class="badge-state bg-red-100 text-red-700 border border-red-300 font-black text-[10px] uppercase flex items-center gap-1">
+                  <i class="fas fa-circle-exclamation text-red-500"></i> Pendiente de respuesta
+                </span>
+              ` : `
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider">${respuestasList.length} ${respuestasList.length === 1 ? 'medición' : 'mediciones'}</span>
+              `}
+
+              <button onclick="openSingleQuestionModal(${h.variable_id})" class="px-3.5 py-1.5 bg-sena-dark text-white font-extrabold text-xs rounded-xl hover:bg-slate-800 transition flex items-center gap-1.5 shadow-sm">
+                <i class="fas fa-[#27F531] fa-plus"></i> Registrar nueva respuesta
+              </button>
+            </div>
           </div>
 
           <!-- Question Text -->
@@ -582,7 +614,7 @@ async function loadMyHistory() {
             <p class="text-xs sm:text-sm font-bold text-sena-dark leading-snug">${pregunta}</p>
           </div>
 
-          <!-- Answers List -->
+          <!-- Answers List / Status -->
           <div class="space-y-2 pt-1">
             <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block">Historial de Respuestas</span>
             <div class="space-y-2">
@@ -594,6 +626,88 @@ async function loadMyHistory() {
     }).join('');
   } catch (err) {
     container.innerHTML = `<p class="text-center text-red-500 py-6">Error cargando historial: ${err.message}</p>`;
+  }
+}
+
+/**
+ * LÓGICA DEL MODAL DE RESPUESTA POR PREGUNTA INDIVIDUAL
+ */
+function openSingleQuestionModal(variableId) {
+  targetSingleQuestion = allHistoryQuestions.find(q => q.variable_id === variableId);
+  if (!targetSingleQuestion) {
+    Toast.error('No se pudo encontrar la pregunta seleccionada.', 'Error');
+    return;
+  }
+
+  singleQuestionAnswerVal = null;
+
+  document.getElementById('sqModalBadge').textContent = targetSingleQuestion.variable_codigo || 'VAR';
+  document.getElementById('sqModalTitle').textContent = targetSingleQuestion.variable_nombre || 'Pregunta';
+  document.getElementById('sqModalQuestionText').textContent = targetSingleQuestion.pregunta_texto || '';
+
+  const container = document.getElementById('sqModalChoicesContainer');
+  if (!container) return;
+
+  if (targetSingleQuestion.opciones && targetSingleQuestion.opciones.length) {
+    container.innerHTML = `
+      <div class="space-y-2">
+        ${targetSingleQuestion.opciones.map(opt => `
+          <label onclick="singleQuestionAnswerVal = ${opt.id}" class="flex items-center p-3.5 rounded-xl border border-sena-border hover:bg-emerald-50/50 hover:border-emerald-300 cursor-pointer transition">
+            <input type="radio" name="sqOption" value="${opt.id}" class="text-[#27F531] focus:ring-[#27F531]">
+            <span class="ml-3 text-xs sm:text-sm text-sena-dark font-semibold">${opt.texto}</span>
+          </label>
+        `).join('')}
+      </div>
+    `;
+  } else {
+    container.innerHTML = `
+      <div>
+        <textarea id="sqTextarea" oninput="singleQuestionAnswerVal = this.value" rows="3" class="w-full text-xs sm:text-sm p-3.5 border border-sena-border rounded-xl focus:ring-2 focus:ring-[#27F531]" placeholder="Escriba su respuesta aquí..."></textarea>
+      </div>
+    `;
+  }
+
+  document.getElementById('modalSingleQuestion')?.classList.remove('hidden');
+}
+
+function closeSingleQuestionModal() {
+  document.getElementById('modalSingleQuestion')?.classList.add('hidden');
+  targetSingleQuestion = null;
+  singleQuestionAnswerVal = null;
+}
+
+async function submitSingleQuestionAnswer() {
+  try {
+    if (!targetSingleQuestion) return;
+
+    if (singleQuestionAnswerVal === null || singleQuestionAnswerVal === undefined || singleQuestionAnswerVal === '') {
+      Toast.warning('Por favor seleccione una opción o ingrese su respuesta antes de guardar.', 'Respuesta Requerida');
+      return;
+    }
+
+    const isOptId = typeof singleQuestionAnswerVal === 'number' || (typeof singleQuestionAnswerVal === 'string' && !isNaN(parseInt(singleQuestionAnswerVal)) && /^\d+$/.test(String(singleQuestionAnswerVal).trim()));
+
+    const payloadItem = {
+      variable_id: targetSingleQuestion.variable_id,
+      variable_version_id: targetSingleQuestion.variable_version_id || null,
+      opcion_id: isOptId ? parseInt(singleQuestionAnswerVal) : null,
+      valor_texto: !isOptId ? String(singleQuestionAnswerVal) : null
+    };
+
+    Loading.show('Guardando respuesta...');
+    await API.submitRespuestas(
+      targetSingleQuestion.encuesta_id || 1,
+      [payloadItem],
+      targetSingleQuestion.corte_id || null
+    );
+    Loading.hide();
+
+    Toast.success('¡Respuesta registrada exitosamente!', 'Medición Guardada');
+    closeSingleQuestionModal();
+    await loadMyHistory();
+  } catch (err) {
+    Loading.hide();
+    Toast.error(err.message || 'Error al guardar respuesta', 'Fallo al Guardar');
   }
 }
 

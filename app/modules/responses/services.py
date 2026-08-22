@@ -89,59 +89,105 @@ class ResponsesService:
 
     @staticmethod
     async def get_aprendiz_history_grouped(session: AsyncSession, aprendiz_id: int) -> List[dict]:
-        from app.modules.surveys.models import EncuestaVariable
+        from app.modules.surveys.models import Encuesta, EncuestaVariable
+        from app.modules.variables.models import Variable, VariableVersion
 
-        stmt = (
-            select(Respuesta, EncuestaVariable.orden)
-            .outerjoin(
-                EncuestaVariable,
-                (EncuestaVariable.encuesta_id == Respuesta.encuesta_id) &
-                (EncuestaVariable.variable_id == Respuesta.variable_id)
+        # 1. Obtener encuestas activas y sus variables/opciones
+        stmt_enc = (
+            select(Encuesta)
+            .where(Encuesta.estado.in_(["PUBLICADA", "ACTIVA"]))
+            .options(
+                selectinload(Encuesta.variables_asociadas)
+                .selectinload(EncuestaVariable.variable)
+                .selectinload(Variable.versiones)
+                .selectinload(VariableVersion.opciones),
+                selectinload(Encuesta.cortes)
             )
+        )
+        res_enc = await session.execute(stmt_enc)
+        encuestas = list(res_enc.scalars().all())
+
+        all_questions_dict = {}
+        ordered_var_ids = []
+
+        for enc in encuestas:
+            corte_actual = enc.cortes[0] if enc.cortes else None
+            for ev in sorted(enc.variables_asociadas, key=lambda x: x.orden):
+                var = ev.variable
+                if not var:
+                    continue
+                v_version = var.versiones[0] if var.versiones else None
+                opciones = [
+                    {
+                        "id": op.id,
+                        "texto": op.texto,
+                        "valor_numerico": op.valor_numerico
+                    }
+                    for op in sorted(v_version.opciones if v_version else [], key=lambda o: o.orden)
+                ]
+
+                if var.id not in all_questions_dict:
+                    ordered_var_ids.append(var.id)
+                    all_questions_dict[var.id] = {
+                        "variable_id": var.id,
+                        "variable_codigo": var.codigo,
+                        "variable_nombre": var.nombre,
+                        "pregunta_texto": v_version.titulo_pregunta if v_version else (var.descripcion or var.nombre),
+                        "orden": ev.orden,
+                        "tipo_respuesta": var.tipo_respuesta,
+                        "variable_version_id": v_version.id if v_version else None,
+                        "encuesta_id": enc.id,
+                        "corte_id": corte_actual.id if corte_actual else None,
+                        "opciones": opciones,
+                        "pendiente": True,
+                        "respuestas": []
+                    }
+
+        # 2. Consultar respuestas registradas para el aprendiz
+        stmt_resp = (
+            select(Respuesta)
             .where(Respuesta.aprendiz_id == aprendiz_id)
-            .order_by(
-                func.coalesce(EncuestaVariable.orden, 999),
-                Respuesta.id.asc()
-            )
+            .order_by(Respuesta.id.asc())
             .options(
                 selectinload(Respuesta.variable),
                 selectinload(Respuesta.version),
                 selectinload(Respuesta.opcion)
             )
         )
-        res = await session.execute(stmt)
-        rows = res.all()
+        res_resp = await session.execute(stmt_resp)
+        respuestas = list(res_resp.scalars().all())
 
-        grouped_dict = {}
-        ordered_var_ids = []
-
-        for row in rows:
-            r = row[0]
-            orden_val = row[1] if row[1] is not None else 999
+        for r in respuestas:
             var_id = r.variable_id
-
             pregunta = r.version.titulo_pregunta if r.version else (r.variable.descripcion or r.variable.nombre if r.variable else "Pregunta")
             respuesta_val = r.opcion.texto if r.opcion else (r.valor_texto or "Respuesta registrada")
 
-            if var_id not in grouped_dict:
+            if var_id not in all_questions_dict:
                 ordered_var_ids.append(var_id)
-                grouped_dict[var_id] = {
+                all_questions_dict[var_id] = {
                     "variable_id": var_id,
                     "variable_codigo": r.variable.codigo if r.variable else "N/A",
                     "variable_nombre": r.variable.nombre if r.variable else "Variable",
                     "pregunta_texto": pregunta,
-                    "orden": orden_val,
+                    "orden": 999,
+                    "tipo_respuesta": r.variable.tipo_respuesta if r.variable else "opcion_unica",
+                    "variable_version_id": r.variable_version_id,
+                    "encuesta_id": r.encuesta_id,
+                    "corte_id": r.corte_id,
+                    "opciones": [],
+                    "pendiente": True,
                     "respuestas": []
                 }
 
-            grouped_dict[var_id]["respuestas"].append({
+            all_questions_dict[var_id]["pendiente"] = False
+            all_questions_dict[var_id]["respuestas"].append({
                 "id": r.id,
                 "fecha_respuesta": r.fecha_respuesta,
                 "respuesta_texto": respuesta_val,
                 "origen": r.origen
             })
 
-        result = [grouped_dict[vid] for vid in ordered_var_ids]
+        result = [all_questions_dict[vid] for vid in ordered_var_ids]
         result.sort(key=lambda x: (x["orden"], x["variable_id"]))
 
         for item in result:

@@ -10,7 +10,11 @@ from app.api.router import api_router
 from app.core.config import settings
 from app.core.database import Base, engine
 from app.core.exceptions import SENAContigoException, custom_http_exception_handler
+from app.core.time import setup_colombia_timezone
 from app.seed import seed_data
+
+# Configurar zona horaria de Colombia (America/Bogota, UTC-5)
+setup_colombia_timezone()
 
 
 @asynccontextmanager
