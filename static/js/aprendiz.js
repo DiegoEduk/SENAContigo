@@ -343,22 +343,43 @@ function prevQuestion() {
 
 async function submitSurvey() {
   try {
-    const respuestasArray = Object.keys(userAnswers).map(varId => {
-      const q = activeSurvey.preguntas ? activeSurvey.preguntas.find(p => p.variable_id === parseInt(varId)) : null;
-      return {
-        variable_id: parseInt(varId),
-        variable_version_id: q ? q.variable_version_id : null,
-        opcion_id: typeof userAnswers[varId] === 'number' ? userAnswers[varId] : null,
-        valor_texto: typeof userAnswers[varId] === 'string' ? userAnswers[varId] : null
-      };
-    });
+    if (!activeSurvey) return;
+
+    const answersKeys = Object.keys(userAnswers);
+    if (!answersKeys.length) {
+      Toast.warning('Por favor responda las preguntas de la encuesta antes de enviar.', 'Encuesta Incompleta');
+      return;
+    }
+
+    const respuestasArray = answersKeys
+      .map(varId => {
+        const q = activeSurvey.preguntas ? activeSurvey.preguntas.find(p => p.variable_id === parseInt(varId)) : null;
+        const val = userAnswers[varId];
+
+        if (val === null || val === undefined || val === '') return null;
+
+        const isOptId = typeof val === 'number' || (typeof val === 'string' && !isNaN(parseInt(val)) && /^\d+$/.test(String(val).trim()));
+        return {
+          variable_id: parseInt(varId),
+          variable_version_id: q ? q.variable_version_id : null,
+          opcion_id: isOptId ? parseInt(val) : null,
+          valor_texto: !isOptId ? String(val) : null
+        };
+      })
+      .filter(item => item !== null);
+
+    if (!respuestasArray.length) {
+      Toast.warning('Por favor seleccione una opción o escriba su respuesta antes de enviar.', 'Encuesta Incompleta');
+      return;
+    }
 
     await API.submitRespuestas(activeSurvey.id, respuestasArray, activeSurvey.corte_id || null);
     isDirtySurvey = false;
+    userAnswers = {};
     Toast.success('¡Encuesta enviada exitosamente! Gracias por tu colaboración.', 'Encuesta Registrada');
     loadPendingSurveys();
   } catch (err) {
-    Toast.error(err.message, 'Fallo al enviar encuesta');
+    Toast.error(err.message || 'No se pudo registrar la encuesta', 'Fallo al enviar encuesta');
   }
 }
 

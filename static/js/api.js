@@ -176,14 +176,24 @@ const API = {
         throw new Error('Su sesión ha expirado. Por favor ingrese de nuevo.');
       }
 
-      const data = await response.json().catch(() => ({ detail: 'Respuesta no válida del servidor' }));
+      let data = {};
+      try {
+        data = await response.json();
+      } catch (e) {
+        data = { detail: 'Respuesta no válida o vacía del servidor' };
+      }
 
       if (!response.ok) {
+        console.error(`[API Error ${response.status}] Endpoint: ${endpoint}`, data);
         let msg = 'Error en el servidor';
         if (typeof data.detail === 'string') {
           msg = data.detail;
         } else if (Array.isArray(data.detail)) {
-          msg = data.detail.map(e => e.msg || e.detail).join(', ');
+          msg = data.detail.map(e => (typeof e === 'string' ? e : e.msg || e.detail || JSON.stringify(e))).join(', ');
+        } else if (data.detail && typeof data.detail === 'object') {
+          msg = JSON.stringify(data.detail);
+        } else if (data.message) {
+          msg = data.message;
         }
         throw new Error(msg);
       }
