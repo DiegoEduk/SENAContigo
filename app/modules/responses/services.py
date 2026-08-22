@@ -24,6 +24,14 @@ class ResponsesService:
         if not aprendiz_res.scalar_one_or_none():
             raise NotFoundException("Aprendiz", batch_in.aprendiz_id)
 
+        # Validate user_id exists in usuarios table to respect Foreign Key constraint
+        valid_user_id = None
+        if user_id:
+            from app.modules.identity.models import Usuario
+            u_res = await session.execute(select(Usuario.id).where(Usuario.id == user_id))
+            if u_res.scalar_one_or_none():
+                valid_user_id = user_id
+
         created_responses = []
         for item in batch_in.respuestas:
             version_id = item.variable_version_id
@@ -46,7 +54,7 @@ class ResponsesService:
                 corte_id=batch_in.corte_id,
                 valor_texto=item.valor_texto,
                 valor_numero=str(item.valor_numero) if item.valor_numero is not None else None,
-                registrado_por_usuario_id=user_id,
+                registrado_por_usuario_id=valid_user_id,
                 origen=batch_in.origen,
                 ip_origen=ip_origen
             )

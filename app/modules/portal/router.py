@@ -188,7 +188,7 @@ async def responder_encuesta(
     ip = request.client.host if request.client else None
 
     return await ResponsesService.record_batch_responses(
-        db, batch_in=batch_in, user_id=current_user.user_id, ip_origen=ip
+        db, batch_in=batch_in, user_id=None, ip_origen=ip
     )
 
 
