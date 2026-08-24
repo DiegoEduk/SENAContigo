@@ -775,14 +775,30 @@ function renderHistoryTimelineCards(container) {
     const varNombre = h.variable_nombre || 'Variable';
     const pregunta = h.pregunta_texto || 'Pregunta registrada';
     const isPendiente = h.pendiente === true || !h.respuestas || h.respuestas.length === 0;
-    const respuestasList = h.respuestas || [];
+
+    // Deduplicar estrictamente respuestas por id o por texto+fecha
+    const rawList = h.respuestas && h.respuestas.length ? h.respuestas : (
+      (h.id && h.respuesta_texto) ? [{ id: h.id, fecha_respuesta: h.fecha_respuesta, respuesta_texto: h.respuesta_texto, origen: h.origen || 'web' }] : []
+    );
+
+    const seenKeys = new Set();
+    const respuestasList = [];
+    for (const r of rawList) {
+      const key = r.id ? `id_${r.id}` : `${r.respuesta_texto}_${r.fecha_respuesta}`;
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key);
+        respuestasList.push(r);
+      }
+    }
 
     let listHtml = '';
-    if (isPendiente) {
+    if (isPendiente || respuestasList.length === 0) {
       listHtml = `
-        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 text-xs font-medium flex items-center justify-between gap-3">
+        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-xs font-medium flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <span>Sin respuestas registradas en esta medición.</span>
-          <span class="text-xs font-bold text-red-600">Pendiente</span>
+          <button onclick="openSingleQuestionModal(${h.variable_id})" class="px-3.5 py-1.5 bg-sena-dark text-white font-bold text-xs rounded-xl hover:bg-slate-800 transition shadow-sm flex items-center gap-1.5 self-end sm:self-auto">
+            <i class="fas fa-pen-to-square text-[#27F531]"></i> Responder ahora
+          </button>
         </div>
       `;
     } else {
@@ -816,11 +832,7 @@ function renderHistoryTimelineCards(container) {
           </div>
 
           <div class="flex items-center gap-3 flex-wrap">
-            ${isPendiente ? `
-              <span class="text-xs font-bold text-red-600">Pendiente</span>
-            ` : `
-              <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider">${respuestasList.length} ${respuestasList.length === 1 ? 'medición' : 'mediciones'}</span>
-            `}
+            <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider">${respuestasList.length} ${respuestasList.length === 1 ? 'medición' : 'mediciones'}</span>
 
             <button onclick="openSingleQuestionModal(${h.variable_id})" class="px-3.5 py-1.5 bg-sena-dark text-white font-extrabold text-xs rounded-xl hover:bg-slate-800 transition flex items-center gap-1.5 shadow-sm">
               <i class="fas fa-[#27F531] fa-plus"></i> Registrar nueva respuesta
