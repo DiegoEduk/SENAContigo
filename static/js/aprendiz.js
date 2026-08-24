@@ -547,12 +547,14 @@ async function loadMyBenefits() {
 let allHistoryQuestions = [];
 let targetSingleQuestion = null;
 let singleQuestionAnswerVal = null;
+let historyWizardStepIndex = 0;
+let historyWizardAnswers = {};
 
 // TAB 5: MI EVOLUCIÓN HISTÓRICA
 async function loadMyHistory() {
   const container = document.getElementById('myHistoryTimeline');
   if (!container) return;
-  container.innerHTML = `<p class="text-center text-slate-400 py-6">Cargando preguntas de caracterización...</p>`;
+  container.innerHTML = `<p class="text-center text-slate-400 py-6">Cargando caracterización...</p>`;
 
   try {
     const historial = await API.getMiHistorial();
@@ -563,83 +565,285 @@ async function loadMyHistory() {
       return;
     }
 
-    container.innerHTML = allHistoryQuestions.map((h, idx) => {
-      const varCodigo = h.variable_codigo || 'VAR';
-      const varNombre = h.variable_nombre || 'Variable';
-      const pregunta = h.pregunta_texto || 'Pregunta registrada';
-      const isPendiente = h.pendiente === true || !h.respuestas || h.respuestas.length === 0;
-      const respuestasList = h.respuestas || [];
+    // Evaluar si el aprendiz ya tiene al menos una respuesta registrada
+    const totalRespuestasRegistradas = allHistoryQuestions.reduce((acc, q) => {
+      const cant = (q.respuestas && q.respuestas.length) ? q.respuestas.length : (q.pendiente === false ? 1 : 0);
+      return acc + cant;
+    }, 0);
 
-      let listHtml = '';
-      if (isPendiente) {
-        listHtml = `
-          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 text-xs font-medium flex items-center justify-between gap-3">
-            <span>Sin respuestas registradas en esta medición.</span>
-            <span class="text-xs font-bold text-red-600">Pendiente</span>
-          </div>
-        `;
-      } else {
-        listHtml = respuestasList.map((resp, rIdx) => {
-          const fechaFormateada = formatFechaColombia(resp.fecha_respuesta);
-          const isLatest = rIdx === 0;
+    const hasAnyAnswer = totalRespuestasRegistradas > 0;
 
-          return `
-            <div class="p-3.5 rounded-xl border ${isLatest ? 'bg-emerald-50/70 border-emerald-300' : 'bg-[#F8F9FA] border-slate-200'} flex items-center justify-between gap-3 transition">
-              <div class="space-y-1">
-                <div class="flex items-center gap-2">
-                  ${isLatest ? '<span class="text-[9px] font-black uppercase bg-emerald-600 text-white px-2 py-0.5 rounded-full">Última medición</span>' : '<span class="text-[9px] font-extrabold uppercase bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">Medición anterior</span>'}
-                  <span class="text-[10px] font-bold text-slate-500"><i class="far fa-clock mr-1"></i>${fechaFormateada}</span>
-                </div>
-                <p class="text-xs font-black ${isLatest ? 'text-emerald-950' : 'text-slate-700'} mt-1 flex items-center gap-1.5">
-                  <i class="fas ${isLatest ? 'fa-circle-check text-emerald-600' : 'fa-history text-slate-400'} text-xs"></i> ${resp.respuesta_texto || 'Respuesta registrada'}
-                </p>
-              </div>
-            </div>
-          `;
-        }).join('');
-      }
-
-      return `
-        <div class="p-5 bg-white rounded-2xl border border-sena-border shadow-sm space-y-3.5">
-          <!-- Variable & Header -->
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-sena-border pb-3 gap-2">
-            <div class="flex items-center gap-2.5">
-              <span class="w-6 h-6 rounded-full bg-sena-dark text-white text-[10px] font-black flex items-center justify-center">${idx + 1}</span>
-              <h4 class="font-black text-sena-dark text-sm">${varNombre}</h4>
-            </div>
-
-            <div class="flex items-center gap-3 flex-wrap">
-              ${isPendiente ? `
-                <span class="text-xs font-bold text-red-600">Pendiente</span>
-              ` : `
-                <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider">${respuestasList.length} ${respuestasList.length === 1 ? 'medición' : 'mediciones'}</span>
-              `}
-
-              <button onclick="openSingleQuestionModal(${h.variable_id})" class="px-3.5 py-1.5 bg-sena-dark text-white font-extrabold text-xs rounded-xl hover:bg-slate-800 transition flex items-center gap-1.5 shadow-sm">
-                <i class="fas fa-[#27F531] fa-plus"></i> Registrar nueva respuesta
-              </button>
-            </div>
-          </div>
-
-          <!-- Question Text -->
-          <div class="space-y-1">
-            <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block">Pregunta Realizada</span>
-            <p class="text-xs sm:text-sm font-bold text-sena-dark leading-snug">${pregunta}</p>
-          </div>
-
-          <!-- Answers List / Status -->
-          <div class="space-y-2 pt-1">
-            <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block">Historial de Respuestas</span>
-            <div class="space-y-2">
-              ${listHtml}
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('');
+    if (!hasAnyAnswer) {
+      // CASO A: No ha respondido ninguna pregunta -> Presentar Wizard multipaso con autoguardado
+      renderHistoryWizardUnanswered(container);
+    } else {
+      // CASO B: Ya tiene al menos 1 respuesta -> Mostrar diseño de Evolución Histórica
+      renderHistoryTimelineCards(container);
+    }
   } catch (err) {
     container.innerHTML = `<p class="text-center text-red-500 py-6">Error cargando historial: ${err.message}</p>`;
   }
+}
+
+/**
+ * CASO A: Renderizado del Wizard Multipaso con Autoguardado Pregunta por Pregunta
+ */
+function renderHistoryWizardUnanswered(container) {
+  if (!allHistoryQuestions || !allHistoryQuestions.length) return;
+
+  if (historyWizardStepIndex >= allHistoryQuestions.length) {
+    historyWizardStepIndex = allHistoryQuestions.length - 1;
+  }
+  if (historyWizardStepIndex < 0) {
+    historyWizardStepIndex = 0;
+  }
+
+  const total = allHistoryQuestions.length;
+  const q = allHistoryQuestions[historyWizardStepIndex];
+  const progressPct = Math.round(((historyWizardStepIndex + 1) / total) * 100);
+  const selectedVal = historyWizardAnswers[q.variable_id];
+
+  let inputFieldsHtml = '';
+  if (q.opciones && q.opciones.length) {
+    inputFieldsHtml = `
+      <div class="space-y-2.5 pt-2">
+        ${q.opciones.map(opt => {
+          const isSelected = selectedVal === opt.id;
+          return `
+            <label onclick="autoSaveHistoryWizardOption(${q.variable_id}, ${opt.id})" class="flex items-center p-3.5 rounded-xl border ${isSelected ? 'border-[#27F531] bg-[#8FFA94]/20 font-bold' : 'border-sena-border hover:bg-slate-50'} cursor-pointer transition">
+              <input type="radio" name="hw_opt_${q.variable_id}" value="${opt.id}" ${isSelected ? 'checked' : ''} class="text-[#27F531] focus:ring-[#27F531]">
+              <span class="ml-3 text-sm text-sena-dark font-medium">${opt.texto}</span>
+            </label>
+          `;
+        }).join('')}
+      </div>
+    `;
+  } else {
+    inputFieldsHtml = `
+      <div class="pt-2">
+        <textarea id="hw_text_${q.variable_id}" onchange="autoSaveHistoryWizardText(${q.variable_id}, this.value)" rows="3" class="w-full text-sm p-3.5 border border-sena-border rounded-xl focus:ring-2 focus:ring-[#27F531]" placeholder="Escriba su respuesta aquí...">${selectedVal || ''}</textarea>
+      </div>
+    `;
+  }
+
+  container.innerHTML = `
+    <div class="space-y-5 bg-white p-6 sm:p-8 rounded-3xl border border-sena-border shadow-sm">
+      <!-- Header del Wizard -->
+      <div class="flex justify-between items-start pb-4 border-b border-sena-border gap-2">
+        <div class="space-y-1">
+          <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Caracterización Socioeconómica y Bienestar</span>
+          <h3 class="font-black text-sena-dark text-lg sm:text-xl">${q.variable_nombre || 'Pregunta de Caracterización'}</h3>
+          <p class="text-xs text-slate-500">Cada respuesta se guarda automáticamente en tiempo real.</p>
+        </div>
+        <span class="text-xs font-black text-sena-dark bg-[#8FFA94] px-3.5 py-1 rounded-full whitespace-nowrap">Pregunta ${historyWizardStepIndex + 1} de ${total}</span>
+      </div>
+
+      <!-- Barra de Progreso -->
+      <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+        <div class="bg-[#27F531] h-full transition-all duration-300" style="width: ${progressPct}%"></div>
+      </div>
+
+      <!-- Texto de la Pregunta -->
+      <div class="py-2">
+        <h4 class="text-base sm:text-lg font-black text-sena-dark leading-snug">${q.pregunta_texto || q.variable_nombre}</h4>
+      </div>
+
+      <!-- Opciones -->
+      ${inputFieldsHtml}
+
+      <!-- Indicador de Autoguardado -->
+      <div id="autoSaveStatusIndicator" class="text-[11px] font-extrabold text-slate-400 flex items-center gap-1.5 pt-1">
+        ${selectedVal ? '<span class="text-emerald-600 flex items-center gap-1"><i class="fas fa-circle-check"></i> Respuesta guardada automáticamente</span>' : '<span>Selecciona una opción para guardar inmediatamente</span>'}
+      </div>
+
+      <!-- Botones de Navegación -->
+      <div class="flex justify-between items-center pt-6 border-t border-sena-border">
+        <button onclick="prevHistoryWizardStep()" ${historyWizardStepIndex === 0 ? 'disabled class="opacity-40 cursor-not-allowed text-xs text-slate-400 px-4 py-2.5"' : 'class="px-5 py-2.5 bg-slate-200 text-sena-dark font-bold text-xs rounded-xl hover:bg-slate-300 transition flex items-center gap-1"'}>
+          <i class="fas fa-chevron-left"></i> Anterior
+        </button>
+
+        ${historyWizardStepIndex === total - 1 ? `
+          <button onclick="finishHistoryWizard()" class="px-6 py-2.5 bg-sena-dark text-white font-black text-xs uppercase tracking-wider rounded-xl hover:bg-slate-800 transition shadow-md flex items-center gap-2">
+            <i class="fas fa-circle-check text-[#27F531]"></i> Finalizar y Ver Histórico
+          </button>
+        ` : `
+          <button onclick="nextHistoryWizardStep()" class="px-5 py-2.5 bg-sena-dark text-white font-bold text-xs rounded-xl hover:bg-slate-800 transition flex items-center gap-1">
+            Siguiente <i class="fas fa-chevron-right ml-1"></i>
+          </button>
+        `}
+      </div>
+    </div>
+  `;
+}
+
+async function autoSaveHistoryWizardOption(varId, optId) {
+  historyWizardAnswers[varId] = optId;
+  const q = allHistoryQuestions.find(p => p.variable_id === varId);
+  if (!q) return;
+
+  const payloadItem = {
+    variable_id: varId,
+    variable_version_id: q.variable_version_id || null,
+    opcion_id: optId,
+    valor_texto: null
+  };
+
+  const container = document.getElementById('myHistoryTimeline');
+  if (container) renderHistoryWizardUnanswered(container);
+
+  try {
+    const indicator = document.getElementById('autoSaveStatusIndicator');
+    if (indicator) indicator.innerHTML = `<span class="text-slate-500 animate-pulse"><i class="fas fa-spinner fa-spin mr-1"></i> Guardando respuesta...</span>`;
+
+    await API.submitRespuestas(q.encuesta_id || 1, [payloadItem], q.corte_id || null);
+
+    if (indicator) indicator.innerHTML = `<span class="text-emerald-600 flex items-center gap-1"><i class="fas fa-circle-check"></i> Respuesta guardada automáticamente</span>`;
+
+    q.pendiente = false;
+    if (!q.respuestas) q.respuestas = [];
+    q.respuestas.push({
+      id: Date.now(),
+      fecha_respuesta: new Date().toISOString(),
+      respuesta_texto: (q.opciones.find(o => o.id === optId) || {}).texto || 'Respuesta guardada',
+      origen: 'web'
+    });
+  } catch (err) {
+    Toast.error(err.message || 'Error al guardar respuesta automática', 'Error');
+  }
+}
+
+async function autoSaveHistoryWizardText(varId, textVal) {
+  if (!textVal || !textVal.trim()) return;
+  historyWizardAnswers[varId] = textVal;
+  const q = allHistoryQuestions.find(p => p.variable_id === varId);
+  if (!q) return;
+
+  const payloadItem = {
+    variable_id: varId,
+    variable_version_id: q.variable_version_id || null,
+    opcion_id: null,
+    valor_texto: String(textVal)
+  };
+
+  try {
+    const indicator = document.getElementById('autoSaveStatusIndicator');
+    if (indicator) indicator.innerHTML = `<span class="text-slate-500 animate-pulse"><i class="fas fa-spinner fa-spin mr-1"></i> Guardando respuesta...</span>`;
+
+    await API.submitRespuestas(q.encuesta_id || 1, [payloadItem], q.corte_id || null);
+
+    if (indicator) indicator.innerHTML = `<span class="text-emerald-600 flex items-center gap-1"><i class="fas fa-circle-check"></i> Respuesta guardada automáticamente</span>`;
+
+    q.pendiente = false;
+    if (!q.respuestas) q.respuestas = [];
+    q.respuestas.push({
+      id: Date.now(),
+      fecha_respuesta: new Date().toISOString(),
+      respuesta_texto: textVal,
+      origen: 'web'
+    });
+  } catch (err) {
+    Toast.error(err.message || 'Error al guardar respuesta automática', 'Error');
+  }
+}
+
+function nextHistoryWizardStep() {
+  if (historyWizardStepIndex < allHistoryQuestions.length - 1) {
+    historyWizardStepIndex++;
+    const container = document.getElementById('myHistoryTimeline');
+    if (container) renderHistoryWizardUnanswered(container);
+  }
+}
+
+function prevHistoryWizardStep() {
+  if (historyWizardStepIndex > 0) {
+    historyWizardStepIndex--;
+    const container = document.getElementById('myHistoryTimeline');
+    if (container) renderHistoryWizardUnanswered(container);
+  }
+}
+
+async function finishHistoryWizard() {
+  Toast.success('¡Proceso de caracterización completado!', 'Encuesta Registrada');
+  await loadMyHistory();
+}
+
+/**
+ * CASO B: Renderizado de la Línea de Tiempo de Evolución Histórica
+ */
+function renderHistoryTimelineCards(container) {
+  container.innerHTML = allHistoryQuestions.map((h, idx) => {
+    const varNombre = h.variable_nombre || 'Variable';
+    const pregunta = h.pregunta_texto || 'Pregunta registrada';
+    const isPendiente = h.pendiente === true || !h.respuestas || h.respuestas.length === 0;
+    const respuestasList = h.respuestas || [];
+
+    let listHtml = '';
+    if (isPendiente) {
+      listHtml = `
+        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 text-xs font-medium flex items-center justify-between gap-3">
+          <span>Sin respuestas registradas en esta medición.</span>
+          <span class="text-xs font-bold text-red-600">Pendiente</span>
+        </div>
+      `;
+    } else {
+      listHtml = respuestasList.map((resp, rIdx) => {
+        const fechaFormateada = formatFechaColombia(resp.fecha_respuesta);
+        const isLatest = rIdx === 0;
+
+        return `
+          <div class="p-3.5 rounded-xl border ${isLatest ? 'bg-emerald-50/70 border-emerald-300' : 'bg-[#F8F9FA] border-slate-200'} flex items-center justify-between gap-3 transition">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                ${isLatest ? '<span class="text-[9px] font-black uppercase bg-emerald-600 text-white px-2 py-0.5 rounded-full">Última medición</span>' : '<span class="text-[9px] font-extrabold uppercase bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">Medición anterior</span>'}
+                <span class="text-[10px] font-bold text-slate-500"><i class="far fa-clock mr-1"></i>${fechaFormateada}</span>
+              </div>
+              <p class="text-xs font-black ${isLatest ? 'text-emerald-950' : 'text-slate-700'} mt-1 flex items-center gap-1.5">
+                <i class="fas ${isLatest ? 'fa-circle-check text-emerald-600' : 'fa-history text-slate-400'} text-xs"></i> ${resp.respuesta_texto || 'Respuesta registrada'}
+              </p>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    return `
+      <div class="p-5 bg-white rounded-2xl border border-sena-border shadow-sm space-y-3.5">
+        <!-- Variable & Header -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-sena-border pb-3 gap-2">
+          <div class="flex items-center gap-2.5">
+            <span class="w-6 h-6 rounded-full bg-sena-dark text-white text-[10px] font-black flex items-center justify-center">${idx + 1}</span>
+            <h4 class="font-black text-sena-dark text-sm">${varNombre}</h4>
+          </div>
+
+          <div class="flex items-center gap-3 flex-wrap">
+            ${isPendiente ? `
+              <span class="text-xs font-bold text-red-600">Pendiente</span>
+            ` : `
+              <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider">${respuestasList.length} ${respuestasList.length === 1 ? 'medición' : 'mediciones'}</span>
+            `}
+
+            <button onclick="openSingleQuestionModal(${h.variable_id})" class="px-3.5 py-1.5 bg-sena-dark text-white font-extrabold text-xs rounded-xl hover:bg-slate-800 transition flex items-center gap-1.5 shadow-sm">
+              <i class="fas fa-[#27F531] fa-plus"></i> Registrar nueva respuesta
+            </button>
+          </div>
+        </div>
+
+        <!-- Question Text -->
+        <div class="space-y-1">
+          <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block">Pregunta Realizada</span>
+          <p class="text-xs sm:text-sm font-bold text-sena-dark leading-snug">${pregunta}</p>
+        </div>
+
+        <!-- Answers List / Status -->
+        <div class="space-y-2 pt-1">
+          <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block">Historial de Respuestas</span>
+          <div class="space-y-2">
+            ${listHtml}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 /**
