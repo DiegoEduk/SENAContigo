@@ -179,10 +179,11 @@ class ResponsesService:
                     "respuestas": []
                 }
 
+            from app.core.time import to_colombia_time
             all_questions_dict[var_id]["pendiente"] = False
             all_questions_dict[var_id]["respuestas"].append({
                 "id": r.id,
-                "fecha_respuesta": r.fecha_respuesta,
+                "fecha_respuesta": to_colombia_time(r.fecha_respuesta),
                 "respuesta_texto": respuesta_val,
                 "origen": r.origen
             })

@@ -48,5 +48,16 @@ async def create_corte(
     db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(require_roles(["superadmin", "direccion", "coordinador"]))
 ):
-    """Generar un nuevo corte histórico para una encuesta (ej. Medición Antes vs. Después)."""
+    """Crear un nuevo corte de medición para la encuesta."""
     return await SurveysService.create_corte(db, encuesta_id, corte_in)
+
+
+@router.post("/reset-estructura-oficial", status_code=status.HTTP_200_OK)
+async def reset_estructura_oficial(
+    db: AsyncSession = Depends(get_db),
+    current_user: TokenData = Depends(require_roles(["superadmin"]))
+):
+    """Reconstruir la encuesta con las 20 preguntas y opciones oficiales SENAContigo."""
+    from scripts.rebuild_survey_data import rebuild_survey_db
+    await rebuild_survey_db()
+    return {"message": "Estructura oficial de 20 preguntas reconstruida exitosamente"}

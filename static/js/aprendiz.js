@@ -10,6 +10,29 @@ let userAnswers = {};
 let isDirtySurvey = false;
 let myContractsCache = [];
 
+function formatFechaColombia(fechaRaw) {
+  if (!fechaRaw) return 'N/A';
+  try {
+    const d = new Date(fechaRaw);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleString('es-CO', {
+        timeZone: 'America/Bogota',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    }
+  } catch (e) {}
+
+  const parts = String(fechaRaw).split('T');
+  const dateStr = parts[0] || '';
+  const timeStr = parts[1] ? parts[1].substring(0, 5) : '';
+  return `${dateStr} ${timeStr}`.trim();
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     initColombiaSelects();
@@ -550,21 +573,14 @@ async function loadMyHistory() {
       let listHtml = '';
       if (isPendiente) {
         listHtml = `
-          <div class="p-4 bg-red-50/80 border border-red-200 rounded-xl text-red-900 text-xs font-semibold flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div class="flex items-center gap-2">
-              <i class="fas fa-circle-exclamation text-red-500 text-sm animate-pulse"></i>
-              <span>Esta pregunta está pendiente de respuesta en tu caracterización socioeconómica.</span>
-            </div>
-            <button onclick="openSingleQuestionModal(${h.variable_id})" class="px-3.5 py-1.5 bg-red-600 text-white font-black text-[11px] uppercase tracking-wider rounded-xl hover:bg-red-700 transition shadow-sm flex items-center gap-1.5 self-end sm:self-auto">
-              <i class="fas fa-pen-to-square"></i> Responder Ahora
-            </button>
+          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 text-xs font-medium flex items-center justify-between gap-3">
+            <span>Sin respuestas registradas en esta medición.</span>
+            <span class="text-xs font-bold text-red-600">Pendiente</span>
           </div>
         `;
       } else {
         listHtml = respuestasList.map((resp, rIdx) => {
-          const fechaRaw = resp.fecha_respuesta || '';
-          const fechaDate = fechaRaw ? fechaRaw.split('T')[0] : 'N/A';
-          const fechaHora = fechaRaw && fechaRaw.includes('T') ? fechaRaw.split('T')[1].substring(0, 5) : '';
+          const fechaFormateada = formatFechaColombia(resp.fecha_respuesta);
           const isLatest = rIdx === 0;
 
           return `
@@ -572,7 +588,7 @@ async function loadMyHistory() {
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
                   ${isLatest ? '<span class="text-[9px] font-black uppercase bg-emerald-600 text-white px-2 py-0.5 rounded-full">Última medición</span>' : '<span class="text-[9px] font-extrabold uppercase bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">Medición anterior</span>'}
-                  <span class="text-[10px] font-bold text-slate-500"><i class="far fa-clock mr-1"></i>${fechaDate} ${fechaHora}</span>
+                  <span class="text-[10px] font-bold text-slate-500"><i class="far fa-clock mr-1"></i>${fechaFormateada}</span>
                 </div>
                 <p class="text-xs font-black ${isLatest ? 'text-emerald-950' : 'text-slate-700'} mt-1 flex items-center gap-1.5">
                   <i class="fas ${isLatest ? 'fa-circle-check text-emerald-600' : 'fa-history text-slate-400'} text-xs"></i> ${resp.respuesta_texto || 'Respuesta registrada'}
@@ -584,20 +600,17 @@ async function loadMyHistory() {
       }
 
       return `
-        <div class="p-5 bg-white rounded-2xl border ${isPendiente ? 'border-red-200 bg-red-50/10' : 'border-sena-border'} shadow-sm space-y-3.5">
+        <div class="p-5 bg-white rounded-2xl border border-sena-border shadow-sm space-y-3.5">
           <!-- Variable & Header -->
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-sena-border pb-3 gap-2">
             <div class="flex items-center gap-2.5">
-              <span class="w-6 h-6 rounded-full ${isPendiente ? 'bg-red-500' : 'bg-sena-dark'} text-white text-[10px] font-black flex items-center justify-center">${idx + 1}</span>
-              <span class="text-[10px] font-black uppercase text-sena-dark bg-[#8FFA94] px-2.5 py-0.5 rounded-full">${varCodigo}</span>
+              <span class="w-6 h-6 rounded-full bg-sena-dark text-white text-[10px] font-black flex items-center justify-center">${idx + 1}</span>
               <h4 class="font-black text-sena-dark text-sm">${varNombre}</h4>
             </div>
 
-            <div class="flex items-center gap-2 flex-wrap">
+            <div class="flex items-center gap-3 flex-wrap">
               ${isPendiente ? `
-                <span class="badge-state bg-red-100 text-red-700 border border-red-300 font-black text-[10px] uppercase flex items-center gap-1">
-                  <i class="fas fa-circle-exclamation text-red-500"></i> Pendiente de respuesta
-                </span>
+                <span class="text-xs font-bold text-red-600">Pendiente</span>
               ` : `
                 <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider">${respuestasList.length} ${respuestasList.length === 1 ? 'medición' : 'mediciones'}</span>
               `}
@@ -641,7 +654,6 @@ function openSingleQuestionModal(variableId) {
 
   singleQuestionAnswerVal = null;
 
-  document.getElementById('sqModalBadge').textContent = targetSingleQuestion.variable_codigo || 'VAR';
   document.getElementById('sqModalTitle').textContent = targetSingleQuestion.variable_nombre || 'Pregunta';
   document.getElementById('sqModalQuestionText').textContent = targetSingleQuestion.pregunta_texto || '';
 
