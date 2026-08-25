@@ -2,14 +2,6 @@ import io
 from datetime import datetime
 from typing import Dict, Any, Optional
 
-from reportlab.lib.pagesizes import letter
-from reportlab.lib import colors
-from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable, KeepTogether
-)
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT, TA_JUSTIFY
-
 
 def generate_tabulation_pdf(
     tabulation_data: Dict[str, Any],
@@ -19,6 +11,17 @@ def generate_tabulation_pdf(
     generado_por: str = "Sistema SENAContigo"
 ) -> bytes:
     """Genera un archivo PDF con el informe institucional de tabulación de la encuesta socioeconómica."""
+    try:
+        from reportlab.lib.pagesizes import letter
+        from reportlab.lib import colors
+        from reportlab.platypus import (
+            SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable, KeepTogether
+        )
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT, TA_JUSTIFY
+    except ImportError:
+        raise RuntimeError("La librería 'reportlab' no está instalada en este entorno Python.")
+
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer,

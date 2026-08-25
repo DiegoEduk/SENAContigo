@@ -94,13 +94,17 @@ async def export_tabulation_pdf(
         if c_obj:
             centro_nombre = c_obj.nombre
 
-    pdf_bytes = generate_tabulation_pdf(
-        tabulation_data=tabulation_dict,
-        regional_nombre=regional_nombre,
-        centro_nombre=centro_nombre,
-        ficha_codigo=ficha_nombre,
-        generado_por=f"{current_user.correo} ({current_user.rol})"
-    )
+    try:
+        pdf_bytes = generate_tabulation_pdf(
+            tabulation_data=tabulation_dict,
+            regional_nombre=regional_nombre,
+            centro_nombre=centro_nombre,
+            ficha_codigo=ficha_nombre,
+            generado_por=f"{current_user.correo} ({current_user.rol})"
+        )
+    except Exception as exc:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=f"Error al generar el informe en PDF: {str(exc)}")
 
     filename = f"Informe_Tabulacion_SENAContigo_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
     return Response(
