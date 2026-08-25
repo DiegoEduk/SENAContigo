@@ -108,7 +108,7 @@
             <div class="lg:hidden relative">
                 <div class="flex items-center justify-between px-1 pb-2">
                     <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                        <i class="fas fa-bars-staggered text-sena-dark"></i> Menú del Portal
+                        <i class="fas fa-bars-staggered text-sena-dark"></i> Menú
                     </span>
                     <span class="text-[9px] font-black uppercase text-[#2E8800] bg-[#EBF8E1] px-2.5 py-0.5 rounded-full border border-[#39A900]/30 flex items-center gap-1">
                         <i class="fas fa-hand-pointer text-[9px] text-[#39A900]"></i> Toca para desplegar
@@ -148,19 +148,26 @@
             </div>
 
             <!-- Desktop Tabs Bar (visible en pantallas de escritorio >= lg) -->
-            <div class="hidden lg:flex flex-wrap gap-2">
-                <button onclick="switchTab('perfil')" id="tab-perfil" class="px-4 py-2.5 rounded-xl text-xs font-black bg-sena-primary text-sena-dark flex items-center gap-2 transition">
-                    <i class="fas fa-user-gear"></i> Mi Perfil Personal
-                </button>
-                <button onclick="switchTab('historial')" id="tab-historial" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2 transition">
-                    <i class="fas fa-chart-pie"></i> Información Socioeconómica
-                </button>
-                <button onclick="switchTab('contrato')" id="tab-contrato" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2 transition">
-                    <i class="fas fa-file-contract"></i> Mi Contrato de Aprendizaje
-                </button>
-                <button onclick="switchTab('beneficios')" id="tab-beneficios" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2 transition">
-                    <i class="fas fa-hand-holding-heart"></i> Mis Apoyos SENA
-                </button>
+            <div class="hidden lg:flex flex-col space-y-2">
+                <div class="flex items-center gap-1.5 px-1">
+                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                        <i class="fas fa-bars-staggered text-sena-dark"></i> Menú
+                    </span>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="switchTab('perfil')" id="tab-perfil" class="px-4 py-2.5 rounded-xl text-xs font-black bg-sena-primary text-sena-dark flex items-center gap-2 transition">
+                        <i class="fas fa-user-gear"></i> Mi Perfil Personal
+                    </button>
+                    <button onclick="switchTab('historial')" id="tab-historial" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2 transition">
+                        <i class="fas fa-chart-pie"></i> Información Socioeconómica
+                    </button>
+                    <button onclick="switchTab('contrato')" id="tab-contrato" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2 transition">
+                        <i class="fas fa-file-contract"></i> Mi Contrato de Aprendizaje
+                    </button>
+                    <button onclick="switchTab('beneficios')" id="tab-beneficios" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2 transition">
+                        <i class="fas fa-hand-holding-heart"></i> Mis Apoyos SENA
+                    </button>
+                </div>
             </div>
         </nav>
 
