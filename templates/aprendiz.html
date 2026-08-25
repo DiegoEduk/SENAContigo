@@ -103,19 +103,31 @@
     <div id="aprendizWorkspace" class="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex-grow w-full space-y-6 hidden">
         
         <!-- Navigation Bar (Desktop Tabs + Custom Mobile/Tablet Dropdown) -->
-        <nav class="bg-white p-2.5 sm:p-3 rounded-2xl shadow-sm relative">
+        <nav class="bg-white p-3 sm:p-3.5 rounded-2xl shadow-sm border border-slate-200/80 relative">
             <!-- Custom Mobile/Tablet Dropdown Selector (visible en móviles y tabletas < lg) -->
             <div class="lg:hidden relative">
+                <div class="flex items-center justify-between px-1 pb-2">
+                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                        <i class="fas fa-bars-staggered text-sena-dark"></i> Menú del Portal
+                    </span>
+                    <span class="text-[9px] font-black uppercase text-[#2E8800] bg-[#EBF8E1] px-2.5 py-0.5 rounded-full border border-[#39A900]/30 flex items-center gap-1">
+                        <i class="fas fa-hand-pointer text-[9px] text-[#39A900]"></i> Toca para desplegar
+                    </span>
+                </div>
+
                 <button type="button" onclick="toggleMobileNavDropdown()" id="mobileNavDropdownTrigger" 
-                        class="w-full flex items-center justify-between p-3.5 bg-sena-primary text-sena-dark font-black text-xs rounded-xl shadow-sm border border-sena-primary/40 transition active:scale-[0.99]">
+                        class="w-full flex items-center justify-between p-3.5 bg-sena-primary text-sena-dark font-black text-xs rounded-xl shadow-sm border border-sena-primary/40 transition active:scale-[0.99] cursor-pointer hover:shadow-md">
                     <span id="mobileNavLabel" class="flex items-center gap-2">
                         <i class="fas fa-user-gear text-sm"></i> Mi Perfil Personal
                     </span>
-                    <i id="mobileNavChevron" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[10px] font-bold text-sena-dark/70 uppercase tracking-wider">Ver Secciones</span>
+                        <i id="mobileNavChevron" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                    </div>
                 </button>
 
                 <!-- Custom Dropdown Floating Panel -->
-                <div id="mobileNavDropdownMenu" class="hidden absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl border border-sena-border shadow-xl z-50 p-2 space-y-1 backdrop-blur-md">
+                <div id="mobileNavDropdownMenu" class="hidden absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl border border-sena-border shadow-2xl z-50 p-2 space-y-1 backdrop-blur-md">
                     <button onclick="selectMobileTab('perfil')" id="mob-tab-perfil" 
                             class="w-full text-left px-3.5 py-3 rounded-xl text-xs font-black bg-sena-primary text-sena-dark flex items-center gap-2.5 transition">
                         <i class="fas fa-user-gear text-sm"></i> 1. Mi Perfil Personal
