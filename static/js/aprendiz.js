@@ -127,6 +127,12 @@ function switchTab(tabName) {
   isDirtySurvey = false;
   currentTab = tabName;
 
+  // Sincronizar selector móvil si está presente
+  const mobileSelect = document.getElementById('mobileTabSelect');
+  if (mobileSelect) {
+    mobileSelect.value = tabName;
+  }
+
   const buttons = document.querySelectorAll('[id^="tab-"]');
   buttons.forEach(btn => {
     btn.classList.remove('bg-[#27F531]', 'text-[#252525]', 'font-black');
@@ -153,17 +159,14 @@ function loadTabContent() {
     case 'perfil':
       loadProfile();
       break;
-    case 'encuestas':
-      loadPendingSurveys();
+    case 'historial':
+      loadMyHistory();
       break;
     case 'contrato':
       loadMyContract();
       break;
     case 'beneficios':
       loadMyBenefits();
-      break;
-    case 'historial':
-      loadMyHistory();
       break;
   }
 }

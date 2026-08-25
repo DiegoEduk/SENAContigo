@@ -102,23 +102,39 @@
     <!-- Main Workspace (Solo visible tras autenticación) -->
     <div id="aprendizWorkspace" class="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex-grow w-full space-y-6 hidden">
         
-        <!-- Navigation Tabs Bar -->
-        <nav class="flex flex-wrap gap-2 bg-white p-2.5 rounded-2xl shadow-sm">
-            <button onclick="switchTab('perfil')" id="tab-perfil" class="px-4 py-2.5 rounded-xl text-xs font-black bg-sena-primary text-sena-dark flex items-center gap-2 transition">
-                <i class="fas fa-user-gear"></i> Mi Perfil Personal
-            </button>
-            <button onclick="switchTab('encuestas')" id="tab-encuestas" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2 transition">
-                <i class="fas fa-list-check"></i> Encuestas Pendientes
-            </button>
-            <button onclick="switchTab('contrato')" id="tab-contrato" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2 transition">
-                <i class="fas fa-file-contract"></i> Mi Contrato de Aprendizaje
-            </button>
-            <button onclick="switchTab('beneficios')" id="tab-beneficios" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2 transition">
-                <i class="fas fa-hand-holding-heart"></i> Mis Apoyos SENA
-            </button>
-            <button onclick="switchTab('historial')" id="tab-historial" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2 transition">
-                <i class="fas fa-clock-rotate-left"></i> Mi Evolución Histórica
-            </button>
+        <!-- Navigation Bar (Desktop Tabs + Mobile Dropdown) -->
+        <nav class="bg-white p-3 rounded-2xl shadow-sm">
+            <!-- Mobile Dropdown Selector (visible en pantallas pequeñas) -->
+            <div class="sm:hidden space-y-1.5">
+                <label for="mobileTabSelect" class="block text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">
+                    Navegación del Portal
+                </label>
+                <div class="relative">
+                    <select id="mobileTabSelect" onchange="switchTab(this.value)" class="w-full text-xs font-black text-sena-dark bg-sena-bg border border-sena-border rounded-xl p-3 pr-10 appearance-none focus:outline-none focus:ring-2 focus:ring-sena-primary cursor-pointer">
+                        <option value="perfil">👤 1. Mi Perfil Personal</option>
+                        <option value="historial">📊 2. Información Socioeconómica</option>
+                        <option value="contrato">📄 3. Mi Contrato de Aprendizaje</option>
+                        <option value="beneficios">🎁 4. Mis Apoyos SENA</option>
+                    </select>
+                    <i class="fas fa-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                </div>
+            </div>
+
+            <!-- Desktop Tabs Bar (visible en pantallas sm o mayores) -->
+            <div class="hidden sm:flex flex-wrap gap-2">
+                <button onclick="switchTab('perfil')" id="tab-perfil" class="px-4 py-2.5 rounded-xl text-xs font-black bg-sena-primary text-sena-dark flex items-center gap-2 transition">
+                    <i class="fas fa-user-gear"></i> Mi Perfil Personal
+                </button>
+                <button onclick="switchTab('historial')" id="tab-historial" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2 transition">
+                    <i class="fas fa-chart-pie"></i> Información Socioeconómica
+                </button>
+                <button onclick="switchTab('contrato')" id="tab-contrato" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2 transition">
+                    <i class="fas fa-file-contract"></i> Mi Contrato de Aprendizaje
+                </button>
+                <button onclick="switchTab('beneficios')" id="tab-beneficios" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2 transition">
+                    <i class="fas fa-hand-holding-heart"></i> Mis Apoyos SENA
+                </button>
+            </div>
         </nav>
 
         <!-- TAB 1: MI PERFIL PERSONAL (DATOS DE CONTACTO Y VIVIENDI) -->
@@ -237,10 +253,15 @@
             </div>
         </section>
 
-        <!-- TAB 2: ENCUESTAS PENDIENTES (WIZARD MULTIPASO) -->
-        <section id="sec-encuestas" class="hidden space-y-6">
-            <div id="surveyWizardContainer" class="bg-white p-6 rounded-3xl shadow-md space-y-6">
-                <!-- Dynamic Survey Render -->
+        <!-- TAB 2: INFORMACIÓN SOCIOECONÓMICA -->
+        <section id="sec-historial" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-3xl shadow-md space-y-4">
+                <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
+                    <i class="fas fa-chart-pie text-sena-dark"></i> Caracterización e Información Socioeconómica
+                </h3>
+                <div id="myHistoryTimeline" class="space-y-3">
+                    <!-- Dynamic Timeline -->
+                </div>
             </div>
         </section>
 
@@ -275,18 +296,6 @@
                 </div>
                 <div id="myBenefitsList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- Dynamic benefits -->
-                </div>
-            </div>
-        </section>
-
-        <!-- TAB 5: MI EVOLUCIÓN HISTÓRICA -->
-        <section id="sec-historial" class="hidden space-y-6">
-            <div class="bg-white p-6 rounded-3xl shadow-md space-y-4">
-                <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
-                    <i class="fas fa-timeline text-sena-dark"></i> Línea de Tiempo de Respuestas Registradas
-                </h3>
-                <div id="myHistoryTimeline" class="space-y-3">
-                    <!-- Dynamic Timeline -->
                 </div>
             </div>
         </section>
