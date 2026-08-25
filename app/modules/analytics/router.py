@@ -8,7 +8,8 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user_token
 from app.core.security import TokenData
 from app.modules.analytics.schemas import (
-    DashboardSummary, TabulacionResponse, AllowedFiltersResponse, FilterOptionsResponse
+    DashboardSummary, TabulacionResponse, AllowedFiltersResponse, FilterOptionsResponse,
+    BeneficiosAnalyticsResponse, CasosAnalyticsResponse, ContratacionAnalyticsResponse
 )
 from app.modules.analytics.services import AnalyticsService
 from app.core.pdf_generator import generate_tabulation_pdf
@@ -161,5 +162,79 @@ async def export_tabulation_pdf(
         content=pdf_bytes,
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
+
+
+@router.get("/beneficios", response_model=BeneficiosAnalyticsResponse)
+async def get_beneficios_analytics(
+    regional_id: Optional[List[str]] = Query(None),
+    centro_id: Optional[List[str]] = Query(None),
+    ficha_id: Optional[List[str]] = Query(None),
+    programa_codigo: Optional[List[str]] = Query(None),
+    nivel_riesgo: Optional[List[str]] = Query(None),
+    db: AsyncSession = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user_token)
+):
+    """Obtener el análisis estadístico de otorgamiento y cobertura de beneficios institucionales."""
+    if current_user.rol in ["direccion", "Dirección"] and current_user.regional_id:
+        regional_id = [current_user.regional_id]
+    elif current_user.rol in ["coordinador", "Coordinador", "instructor", "lider_bienestar", "lider_contratacion"] and current_user.centro_id:
+        centro_id = [current_user.centro_id]
+
+    return await AnalyticsService.get_beneficios_analytics(
+        db,
+        regional_id=regional_id,
+        centro_id=centro_id,
+        ficha_id=ficha_id,
+        programa_codigo=programa_codigo,
+        nivel_riesgo=nivel_riesgo
+    )
+
+
+@router.get("/casos", response_model=CasosAnalyticsResponse)
+async def get_casos_analytics(
+    regional_id: Optional[List[str]] = Query(None),
+    centro_id: Optional[List[str]] = Query(None),
+    ficha_id: Optional[List[str]] = Query(None),
+    programa_codigo: Optional[List[str]] = Query(None),
+    db: AsyncSession = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user_token)
+):
+    """Obtener el análisis estadístico de casos de atención, seguimiento y alertas tempranas."""
+    if current_user.rol in ["direccion", "Dirección"] and current_user.regional_id:
+        regional_id = [current_user.regional_id]
+    elif current_user.rol in ["coordinador", "Coordinador", "instructor", "lider_bienestar", "lider_contratacion"] and current_user.centro_id:
+        centro_id = [current_user.centro_id]
+
+    return await AnalyticsService.get_casos_analytics(
+        db,
+        regional_id=regional_id,
+        centro_id=centro_id,
+        ficha_id=ficha_id,
+        programa_codigo=programa_codigo
+    )
+
+
+@router.get("/contratacion", response_model=ContratacionAnalyticsResponse)
+async def get_contratacion_analytics(
+    regional_id: Optional[List[str]] = Query(None),
+    centro_id: Optional[List[str]] = Query(None),
+    ficha_id: Optional[List[str]] = Query(None),
+    programa_codigo: Optional[List[str]] = Query(None),
+    db: AsyncSession = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user_token)
+):
+    """Obtener el análisis estadístico de patrocinio empresarial, vinculación laboral y contratos."""
+    if current_user.rol in ["direccion", "Dirección"] and current_user.regional_id:
+        regional_id = [current_user.regional_id]
+    elif current_user.rol in ["coordinador", "Coordinador", "instructor", "lider_bienestar", "lider_contratacion"] and current_user.centro_id:
+        centro_id = [current_user.centro_id]
+
+    return await AnalyticsService.get_contratacion_analytics(
+        db,
+        regional_id=regional_id,
+        centro_id=centro_id,
+        ficha_id=ficha_id,
+        programa_codigo=programa_codigo
     )
 

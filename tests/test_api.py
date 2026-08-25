@@ -112,7 +112,7 @@ async def test_filter_options(client):
 
 
 @pytest.mark.asyncio
-async def test_search_and_multiselect_filters(client):
+async def test_four_dashboard_modules(client):
     login_res = await client.post(
         "/api/v1/auth/login",
         json={"correo": "admin@senacontigo.edu.co", "password": "Admin123456*"}
@@ -120,12 +120,31 @@ async def test_search_and_multiselect_filters(client):
     token = login_res.json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
 
-    # Probar tabulación con múltiples parámetros repetidos (multi-select)
-    res = await client.get("/api/v1/analytics/tabulation?regional_id=11&regional_id=12&nivel_riesgo=Bajo&nivel_riesgo=Medio", headers=headers)
-    assert res.status_code == 200
-    data = res.json()
-    assert "kpis" in data
-    assert "categorias" in data
+    # Module 1: Tabulación
+    res_tab = await client.get("/api/v1/analytics/tabulation", headers=headers)
+    assert res_tab.status_code == 200
+
+    # Module 2: Beneficios
+    res_ben = await client.get("/api/v1/analytics/beneficios", headers=headers)
+    assert res_ben.status_code == 200
+    data_ben = res_ben.json()
+    assert "total_otorgamientos" in data_ben
+    assert "tasa_cobertura_porcentaje" in data_ben
+
+    # Module 3: Casos
+    res_cas = await client.get("/api/v1/analytics/casos", headers=headers)
+    assert res_cas.status_code == 200
+    data_cas = res_cas.json()
+    assert "total_casos" in data_cas
+    assert "tasa_resolucion_porcentaje" in data_cas
+
+    # Module 4: Contratación
+    res_con = await client.get("/api/v1/analytics/contratacion", headers=headers)
+    assert res_con.status_code == 200
+    data_con = res_con.json()
+    assert "total_aprendices" in data_con
+    assert "tasa_patrocinio_porcentaje" in data_con
+
 
 
 

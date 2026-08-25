@@ -140,30 +140,8 @@ function setupUserInterface() {
       scopeEl.innerHTML = `<p><i class="fas fa-file-contract text-sena-primary mr-1"></i> Módulo de Contratación</p>`;
     } else if (roles.includes('lider_bienestar')) {
       scopeEl.innerHTML = `<p><i class="fas fa-heart text-sena-primary mr-1"></i> Módulo de Bienestar</p>`;
-    }
-  }
-
-  // Filter sidebar items according to user role permissions
-  const menuPermissions = {
-    superadmin: ['resumen', 'tabulacion', 'aprendices', 'fichas', 'contratos', 'beneficios', 'casos', 'variables', 'encuestas', 'analytics', 'audit'],
-    direccion: ['resumen', 'tabulacion', 'aprendices', 'fichas', 'contratos', 'beneficios', 'casos', 'variables', 'encuestas', 'analytics'],
-    coordinador: ['resumen', 'tabulacion', 'aprendices', 'fichas', 'contratos', 'beneficios', 'casos', 'variables', 'encuestas'],
-    instructor: ['resumen', 'tabulacion', 'aprendices', 'fichas', 'casos'],
-    lider_contratacion: ['resumen', 'tabulacion', 'contratos', 'aprendices'],
-    lider_bienestar: ['resumen', 'tabulacion', 'beneficios', 'casos', 'aprendices']
-  };
-
-  let allowedTabs = ['resumen', 'tabulacion', 'aprendices', 'fichas', 'contratos', 'beneficios', 'casos', 'variables', 'encuestas', 'analytics', 'audit'];
-  
-  if (!roles.includes('superadmin')) {
-    allowedTabs = [];
-    roles.forEach(r => {
-      if (menuPermissions[r]) {
-        allowedTabs = [...new Set([...allowedTabs, ...menuPermissions[r]])];
-      }
-    });
-    if (allowedTabs.length === 0) allowedTabs = ['resumen'];
-  }
+      // Filter sidebar items according to user role permissions
+  const allowedTabs = ['tabulacion', 'beneficios', 'casos', 'contratos'];
 
   // Hide non-permitted nav buttons
   const navBtns = document.querySelectorAll('[id^="nav-"]');
@@ -178,7 +156,7 @@ function setupUserInterface() {
 
   // Adjust initial tab based on role if default tab is forbidden
   if (!allowedTabs.includes(currentTab)) {
-    navSwitch(allowedTabs[0]);
+    navSwitch('tabulacion');
   }
 }
 
@@ -189,6 +167,12 @@ function toggleSidebar() {
 
 function navSwitch(tabName) {
   currentTab = tabName;
+
+  // Auto-cerrar menú en dispositivos móviles y tabletas al seleccionar una opción
+  if (window.innerWidth < 1024) {
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) sidebar.classList.add('hidden');
+  }
 
   // Update nav buttons highlight
   const navBtns = document.querySelectorAll('[id^="nav-"]');
@@ -207,48 +191,33 @@ function navSwitch(tabName) {
   const breadcrumbEl = document.getElementById('breadcrumbCurrent');
   if (breadcrumbEl) {
     const titles = {
-      resumen: 'Resumen General',
-      tabulacion: 'Tabulación & Diagnóstico Socioeconómico',
-      aprendices: 'Aprendices & Matrículas',
-      fichas: 'Fichas Formativas',
-      contratos: 'Contratación de Aprendices',
-      beneficios: 'Beneficios Institucionales',
-      casos: 'Gestión de Casos & Alertas',
-      variables: 'Variables Dinámicas',
-      encuestas: 'Engine de Encuestas',
-      analytics: 'Evolución Longitudinal',
-      audit: 'Auditoría del Sistema'
+      tabulacion: '1. Tabulación & Diagnóstico Socioeconómico',
+      beneficios: '2. Análisis de Beneficios Institucionales',
+      casos: '3. Casos de Atención & Alertas Tempranas',
+      contratos: '4. Análisis de Contratación de Aprendices'
     };
-    breadcrumbEl.innerText = titles[tabName] || tabName;
+    breadcrumbEl.innerText = titles[tabName] || 'Tabulación & Diagnóstico';
   }
 
-  // Hide all sections
-  const sections = document.querySelectorAll('section[id^="sec-"]');
-  sections.forEach(sec => sec.classList.add('hidden'));
-
-  // Show active section
-  const activeSec = document.getElementById(`sec-${tabName}`);
-  if (activeSec) activeSec.classList.remove('hidden');
+  // Toggle workspace sections visibility
+  ['tabulacion', 'beneficios', 'casos', 'contratos'].forEach(t => {
+    const sec = document.getElementById(`sec-${t}`);
+    if (sec) {
+      if (t === tabName) {
+        sec.classList.remove('hidden');
+      } else {
+        sec.classList.add('hidden');
+      }
+    }
+  });
 
   loadCurrentTab();
 }
 
 function loadCurrentTab() {
   switch (currentTab) {
-    case 'resumen':
-      loadResumenData();
-      break;
     case 'tabulacion':
       loadTabulationData();
-      break;
-    case 'aprendices':
-      loadAprendicesData();
-      break;
-    case 'fichas':
-      loadFichasData();
-      break;
-    case 'contratos':
-      loadContratos();
       break;
     case 'beneficios':
       loadBeneficiosData();
@@ -256,17 +225,11 @@ function loadCurrentTab() {
     case 'casos':
       loadCasosData();
       break;
-    case 'variables':
-      loadVariablesData();
+    case 'contratos':
+      loadContratacionData();
       break;
-    case 'encuestas':
-      loadEncuestasData();
-      break;
-    case 'analytics':
-      loadAnalyticsData();
-      break;
-    case 'audit':
-      loadAuditLogsData();
+    default:
+      loadTabulationData();
       break;
   }
 }
@@ -1030,8 +993,8 @@ function renderTabulationCategories(categorias) {
               </span>
               <span class="font-mono text-slate-500">${op.frecuencia_absoluta} (${op.frecuencia_relativa}%)</span>
             </div>
-            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-              <div class="bg-sena-dark h-full rounded-full transition-all duration-500" style="width: ${op.frecuencia_relativa}%"></div>
+            <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+              <div class="h-full rounded-full transition-all duration-500 shadow-xs" style="width: ${op.frecuencia_relativa}%; background: linear-gradient(to right, #6b7c8a, #1f5a7a);"></div>
             </div>
           </div>
         `;
@@ -1303,6 +1266,264 @@ document.addEventListener('click', (e) => {
     }
   });
 });
+
+// SECTION BENEFICIOS INSTITUCIONALES
+let chartBeneficiosTipo = null;
+let chartBeneficiosRiesgo = null;
+
+async function loadBeneficiosData() {
+  try {
+    Loading.show('Cargando estadísticas de beneficios...');
+    const filterParams = getActiveFilterParams();
+    const data = await API.getAnalyticsBeneficios(filterParams);
+    Loading.hide();
+
+    document.getElementById('benKpiOtorgamientos').innerText = data.total_otorgamientos || 0;
+    document.getElementById('benKpiUnicos').innerText = data.aprendices_beneficiados_unicos || 0;
+    document.getElementById('benKpiCobertura').innerText = `${data.tasa_cobertura_porcentaje || 0}%`;
+
+    renderBeneficiosCharts(data);
+  } catch (err) {
+    Loading.hide();
+    console.error('Error cargando analítica de beneficios:', err);
+    Toast.error(err.message || 'No se pudieron cargar los datos de beneficios.');
+  }
+}
+
+function renderBeneficiosCharts(data) {
+  const distTipo = data.distribucion_por_tipo || {};
+  const labelsTipo = Object.keys(distTipo);
+  const valuesTipo = Object.values(distTipo);
+
+  const ctxTipo = document.getElementById('chartBeneficiosTipo')?.getContext('2d');
+  if (ctxTipo) {
+    if (chartBeneficiosTipo) chartBeneficiosTipo.destroy();
+    chartBeneficiosTipo = new Chart(ctxTipo, {
+      type: 'bar',
+      data: {
+        labels: labelsTipo.length ? labelsTipo : ['Sin Datos'],
+        datasets: [{
+          label: 'Otorgamientos',
+          data: valuesTipo.length ? valuesTipo : [0],
+          backgroundColor: '#00324D',
+          borderRadius: 8
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+
+  const distRiesgo = data.distribucion_por_riesgo || { Bajo: 0, Medio: 0, Alto: 0, Crítico: 0 };
+  const ctxRiesgo = document.getElementById('chartBeneficiosRiesgo')?.getContext('2d');
+  if (ctxRiesgo) {
+    if (chartBeneficiosRiesgo) chartBeneficiosRiesgo.destroy();
+    chartBeneficiosRiesgo = new Chart(ctxRiesgo, {
+      type: 'doughnut',
+      data: {
+        labels: ['Bajo', 'Medio', 'Alto', 'Crítico'],
+        datasets: [{
+          data: [distRiesgo.Bajo || 0, distRiesgo.Medio || 0, distRiesgo.Alto || 0, distRiesgo.Crítico || 0],
+          backgroundColor: ['#22c55e', '#eab308', '#f97316', '#ef4444'],
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+  }
+}
+
+// SECTION CASOS DE ATENCIÓN & ALERTAS
+let chartCasosEstado = null;
+let chartCasosPrioridad = null;
+
+async function loadCasosData() {
+  try {
+    Loading.show('Cargando analítica de casos de atención...');
+    const filterParams = getActiveFilterParams();
+    const data = await API.getAnalyticsCasos(filterParams);
+    Loading.hide();
+
+    document.getElementById('casosKpiTotal').innerText = data.total_casos || 0;
+    document.getElementById('casosKpiActivos').innerText = (data.casos_abiertos || 0) + (data.casos_en_proceso || 0);
+    document.getElementById('casosKpiResolucion').innerText = `${data.tasa_resolucion_porcentaje || 0}%`;
+    document.getElementById('casosKpiCriticos').innerText = data.casos_criticos_altos_abiertos || 0;
+
+    renderCasosCharts(data);
+  } catch (err) {
+    Loading.hide();
+    console.error('Error cargando analítica de casos:', err);
+    Toast.error(err.message || 'No se pudieron cargar los casos de atención.');
+  }
+}
+
+function renderCasosCharts(data) {
+  const distEst = data.distribucion_por_estado || {};
+  const ctxEst = document.getElementById('chartCasosEstado')?.getContext('2d');
+  if (ctxEst) {
+    if (chartCasosEstado) chartCasosEstado.destroy();
+    chartCasosEstado = new Chart(ctxEst, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(distEst).length ? Object.keys(distEst) : ['Sin Datos'],
+        datasets: [{
+          data: Object.values(distEst).length ? Object.values(distEst) : [0],
+          backgroundColor: ['#eab308', '#3b82f6', '#22c55e', '#94a3b8'],
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+  }
+
+  const distPrio = data.distribucion_por_prioridad || {};
+  const ctxPrio = document.getElementById('chartCasosPrioridad')?.getContext('2d');
+  if (ctxPrio) {
+    if (chartCasosPrioridad) chartCasosPrioridad.destroy();
+    chartCasosPrioridad = new Chart(ctxPrio, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(distPrio).length ? Object.keys(distPrio) : ['Baja', 'Media', 'Alta', 'Crítica'],
+        datasets: [{
+          label: 'Casos',
+          data: Object.values(distPrio).length ? Object.values(distPrio) : [0, 0, 0, 0],
+          backgroundColor: '#39a900',
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+}
+
+// SECTION CONTRATACIÓN DE APRENDICES
+let chartContratacionEstado = null;
+let chartContratacionTipo = null;
+
+async function loadContratacionData() {
+  try {
+    Loading.show('Cargando analítica de contratación...');
+    const filterParams = getActiveFilterParams();
+    const data = await API.getAnalyticsContratacion(filterParams);
+    Loading.hide();
+
+    document.getElementById('conKpiTotal').innerText = data.total_aprendices || 0;
+    document.getElementById('conKpiContratados').innerText = data.aprendices_contratados || 0;
+    document.getElementById('conKpiPatrocinio').innerText = `${data.tasa_patrocinio_porcentaje || 0}%`;
+    document.getElementById('conKpiVencer').innerText = data.contratos_por_vencer_30d || 0;
+
+    renderContratacionCharts(data);
+    renderTopEmpresasTable(data.top_empresas_patrocinadoras || []);
+  } catch (err) {
+    Loading.hide();
+    console.error('Error cargando analítica de contratación:', err);
+    Toast.error(err.message || 'No se pudieron cargar los datos de contratación.');
+  }
+}
+
+function renderContratacionCharts(data) {
+  const ctxEst = document.getElementById('chartContratacionEstado')?.getContext('2d');
+  if (ctxEst) {
+    if (chartContratacionEstado) chartContratacionEstado.destroy();
+    chartContratacionEstado = new Chart(ctxEst, {
+      type: 'doughnut',
+      data: {
+        labels: ['Contratado / Patrocinado', 'Sin Contrato Registrado'],
+        datasets: [{
+          data: [data.aprendices_contratados || 0, data.aprendices_sin_contrato || 0],
+          backgroundColor: ['#22c55e', '#94a3b8'],
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+  }
+
+  const distTipo = data.distribucion_por_tipo_contrato || {};
+  const ctxTipo = document.getElementById('chartContratacionTipo')?.getContext('2d');
+  if (ctxTipo) {
+    if (chartContratacionTipo) chartContratacionTipo.destroy();
+    chartContratacionTipo = new Chart(ctxTipo, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(distTipo).length ? Object.keys(distTipo) : ['Sin Registro'],
+        datasets: [{
+          label: 'Aprendices',
+          data: Object.values(distTipo).length ? Object.values(distTipo) : [0],
+          backgroundColor: '#00324D',
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+}
+
+function renderTopEmpresasTable(empresas) {
+  const container = document.getElementById('topEmpresasContainer');
+  if (!container) return;
+
+  if (!empresas.length) {
+    container.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">No hay contratos registrados aún en esta jurisdicción.</div>`;
+    return;
+  }
+
+  let html = `
+    <div class="overflow-x-auto">
+      <table class="w-full text-xs text-left text-slate-700">
+        <thead class="bg-sena-bg text-sena-dark font-extrabold uppercase text-[10px]">
+          <tr>
+            <th class="p-3">#</th>
+            <th class="p-3">Empresa Patrocinadora</th>
+            <th class="p-3 text-right">Aprendices Contratados</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 font-medium">
+  `;
+
+  empresas.forEach((item, idx) => {
+    html += `
+      <tr class="hover:bg-slate-50">
+        <td class="p-3 font-bold text-slate-400">${idx + 1}</td>
+        <td class="p-3 font-bold text-slate-800">${item.empresa}</td>
+        <td class="p-3 text-right font-mono font-bold text-sena-dark">${item.contratos}</td>
+      </tr>
+    `;
+  });
+
+  html += `
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  container.innerHTML = html;
+}
+
 
 
 

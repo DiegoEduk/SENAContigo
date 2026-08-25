@@ -479,3 +479,240 @@ class AnalyticsService:
             ficha_id=ficha_id
         )
 
+    @staticmethod
+    async def get_beneficios_analytics(
+        session: AsyncSession,
+        regional_id: Optional[Any] = None,
+        centro_id: Optional[Any] = None,
+        ficha_id: Optional[Any] = None,
+        programa_codigo: Optional[Any] = None,
+        nivel_riesgo: Optional[Any] = None
+    ):
+        from app.modules.benefits.models import AprendizBeneficio, Beneficio
+        from app.modules.academic.models import Ficha
+        from app.modules.organization.models import CentroFormacion
+        from app.modules.analytics.schemas import BeneficiosAnalyticsResponse
+
+        def to_list(val):
+            if val is None: return []
+            if isinstance(val, (list, tuple)): return [str(v) for v in val if str(v).strip()]
+            if isinstance(val, str): return [v.strip() for v in val.split(",") if v.strip()]
+            return [str(val)]
+
+        reg_list = to_list(regional_id)
+        c_list = to_list(centro_id)
+        f_list = to_list(ficha_id)
+        p_list = to_list(programa_codigo)
+
+        stmt = select(AprendizBeneficio, Beneficio).join(
+            Beneficio, AprendizBeneficio.beneficio_id == Beneficio.id
+        )
+
+        if reg_list or c_list or f_list or p_list:
+            stmt = stmt.join(Aprendiz, AprendizBeneficio.aprendiz_id == Aprendiz.id)\
+                       .join(Matricula, Aprendiz.id == Matricula.aprendiz_id)\
+                       .join(Ficha, Matricula.ficha_id == Ficha.ficha_caracterizacion)
+            if f_list: stmt = stmt.where(Ficha.ficha_caracterizacion.in_(f_list))
+            if p_list: stmt = stmt.where(Ficha.programa_codigo.in_(p_list))
+            if c_list: stmt = stmt.where(Ficha.centro_id.in_(c_list))
+            if reg_list: stmt = stmt.join(CentroFormacion, Ficha.centro_id == CentroFormacion.codigo_centro).where(CentroFormacion.regional_id.in_(reg_list))
+
+        res = await session.execute(stmt)
+        rows = res.all()
+
+        total_otorgamientos = len(rows)
+        aprendices_ids = set()
+        dist_tipo = {}
+
+        for otorg, ben in rows:
+            aprendices_ids.add(otorg.aprendiz_id)
+            tipo = ben.nombre or ben.tipo_beneficio or "Apoyo Institucional"
+            dist_tipo[tipo] = dist_tipo.get(tipo, 0) + 1
+
+        stmt_apr = select(func.count(Aprendiz.id.distinct()))
+        if reg_list or c_list or f_list or p_list:
+            stmt_apr = stmt_apr.join(Matricula, Aprendiz.id == Matricula.aprendiz_id)\
+                               .join(Ficha, Matricula.ficha_id == Ficha.ficha_caracterizacion)
+            if f_list: stmt_apr = stmt_apr.where(Ficha.ficha_caracterizacion.in_(f_list))
+            if p_list: stmt_apr = stmt_apr.where(Ficha.programa_codigo.in_(p_list))
+            if c_list: stmt_apr = stmt_apr.where(Ficha.centro_id.in_(c_list))
+            if reg_list: stmt_apr = stmt_apr.join(CentroFormacion, Ficha.centro_id == CentroFormacion.codigo_centro).where(CentroFormacion.regional_id.in_(reg_list))
+
+        res_apr = await session.execute(stmt_apr)
+        total_apr_juris = res_apr.scalar_one_or_none() or 0
+
+        unicos = len(aprendices_ids)
+        cobertura = round((unicos / total_apr_juris * 100), 2) if total_apr_juris > 0 else 0.0
+
+        return BeneficiosAnalyticsResponse(
+            total_otorgamientos=total_otorgamientos,
+            aprendices_beneficiados_unicos=unicos,
+            tasa_cobertura_porcentaje=cobertura,
+            distribucion_por_tipo=dist_tipo,
+            distribucion_por_riesgo={"Bajo": 0, "Medio": 0, "Alto": 0, "Crítico": 0},
+            desglose_centros=[]
+        )
+
+    @staticmethod
+    async def get_casos_analytics(
+        session: AsyncSession,
+        regional_id: Optional[Any] = None,
+        centro_id: Optional[Any] = None,
+        ficha_id: Optional[Any] = None,
+        programa_codigo: Optional[Any] = None
+    ):
+        from app.modules.cases.models import Caso
+        from app.modules.academic.models import Ficha
+        from app.modules.organization.models import CentroFormacion
+        from app.modules.analytics.schemas import CasosAnalyticsResponse
+
+        def to_list(val):
+            if val is None: return []
+            if isinstance(val, (list, tuple)): return [str(v) for v in val if str(v).strip()]
+            if isinstance(val, str): return [v.strip() for v in val.split(",") if v.strip()]
+            return [str(val)]
+
+        reg_list = to_list(regional_id)
+        c_list = to_list(centro_id)
+        f_list = to_list(ficha_id)
+        p_list = to_list(programa_codigo)
+
+        stmt = select(Caso)
+        if reg_list or c_list or f_list or p_list:
+            stmt = stmt.join(Aprendiz, Caso.aprendiz_id == Aprendiz.id)\
+                       .join(Matricula, Aprendiz.id == Matricula.aprendiz_id)\
+                       .join(Ficha, Matricula.ficha_id == Ficha.ficha_caracterizacion)
+            if f_list: stmt = stmt.where(Ficha.ficha_caracterizacion.in_(f_list))
+            if p_list: stmt = stmt.where(Ficha.programa_codigo.in_(p_list))
+            if c_list: stmt = stmt.where(Ficha.centro_id.in_(c_list))
+            if reg_list: stmt = stmt.join(CentroFormacion, Ficha.centro_id == CentroFormacion.codigo_centro).where(CentroFormacion.regional_id.in_(reg_list))
+
+        res = await session.execute(stmt)
+        casos = res.scalars().all()
+
+        total = len(casos)
+        abiertos = 0
+        en_proceso = 0
+        cerrados = 0
+        criticos_abiertos = 0
+
+        dist_estado = {}
+        dist_prioridad = {}
+        dist_tipo = {}
+
+        for c in casos:
+            est = (c.estado or "Abierto").capitalize()
+            prio = (c.nivel_prioridad or "Media").capitalize()
+            tipo = c.tipo_atencion or "General"
+
+            dist_estado[est] = dist_estado.get(est, 0) + 1
+            dist_prioridad[prio] = dist_prioridad.get(prio, 0) + 1
+            dist_tipo[tipo] = dist_tipo.get(tipo, 0) + 1
+
+            if est.lower() in ["abierto", "abierta"]: abiertos += 1
+            elif est.lower() in ["en proceso", "en_proceso"]: en_proceso += 1
+            elif est.lower() in ["cerrado", "cerrada", "resuelto"]: cerrados += 1
+
+            if est.lower() in ["abierto", "en proceso"] and prio.lower() in ["alta", "crítica", "critica"]:
+                criticos_abiertos += 1
+
+        resolucion = round((cerrados / total * 100), 2) if total > 0 else 0.0
+
+        return CasosAnalyticsResponse(
+            total_casos=total,
+            casos_abiertos=abiertos,
+            casos_en_proceso=en_proceso,
+            casos_cerrados=cerrados,
+            tasa_resolucion_porcentaje=resolucion,
+            casos_criticos_altos_abiertos=criticos_abiertos,
+            distribucion_por_estado=dist_estado,
+            distribucion_por_prioridad=dist_prioridad,
+            distribucion_por_tipo_atencion=dist_tipo
+        )
+
+    @staticmethod
+    async def get_contratacion_analytics(
+        session: AsyncSession,
+        regional_id: Optional[Any] = None,
+        centro_id: Optional[Any] = None,
+        ficha_id: Optional[Any] = None,
+        programa_codigo: Optional[Any] = None
+    ):
+        from datetime import datetime, timedelta
+        from app.modules.contracts.models import ContratoAprendizaje
+        from app.modules.academic.models import Ficha
+        from app.modules.organization.models import CentroFormacion
+        from app.modules.analytics.schemas import ContratacionAnalyticsResponse
+
+        def to_list(val):
+            if val is None: return []
+            if isinstance(val, (list, tuple)): return [str(v) for v in val if str(v).strip()]
+            if isinstance(val, str): return [v.strip() for v in val.split(",") if v.strip()]
+            return [str(val)]
+
+        reg_list = to_list(regional_id)
+        c_list = to_list(centro_id)
+        f_list = to_list(ficha_id)
+        p_list = to_list(programa_codigo)
+
+        stmt_apr = select(Aprendiz.id.distinct())
+        if reg_list or c_list or f_list or p_list:
+            stmt_apr = stmt_apr.join(Matricula, Aprendiz.id == Matricula.aprendiz_id)\
+                               .join(Ficha, Matricula.ficha_id == Ficha.ficha_caracterizacion)
+            if f_list: stmt_apr = stmt_apr.where(Ficha.ficha_caracterizacion.in_(f_list))
+            if p_list: stmt_apr = stmt_apr.where(Ficha.programa_codigo.in_(p_list))
+            if c_list: stmt_apr = stmt_apr.where(Ficha.centro_id.in_(c_list))
+            if reg_list: stmt_apr = stmt_apr.join(CentroFormacion, Ficha.centro_id == CentroFormacion.codigo_centro).where(CentroFormacion.regional_id.in_(reg_list))
+
+        res_apr = await session.execute(stmt_apr)
+        aprendices_ids = set(res_apr.scalars().all())
+        total_apr = len(aprendices_ids)
+
+        stmt_con = select(ContratoAprendizaje)
+        if aprendices_ids:
+            stmt_con = stmt_con.where(ContratoAprendizaje.aprendiz_id.in_(aprendices_ids))
+
+        res_con = await session.execute(stmt_con)
+        contratos = res_con.scalars().all()
+
+        contratados_ids = set()
+        dist_tipo = {}
+        dist_estado = {}
+        empresas_count = {}
+        por_vencer_30d = 0
+        hoy = datetime.now().date()
+        limite_30d = hoy + timedelta(days=30)
+
+        for c in contratos:
+            contratados_ids.add(c.aprendiz_id)
+            tipo = c.tipo_contrato or "Contrato de Aprendizaje"
+            est = c.estado_contrato or "Activo"
+            emp = c.empresa_patrocinadora or "Empresa No Registrada"
+
+            dist_tipo[tipo] = dist_tipo.get(tipo, 0) + 1
+            dist_estado[est] = dist_estado.get(est, 0) + 1
+            empresas_count[emp] = empresas_count.get(emp, 0) + 1
+
+            if c.fecha_fin and hoy <= c.fecha_fin <= limite_30d:
+                por_vencer_30d += 1
+
+        n_contratados = len(contratados_ids)
+        sin_contrato = max(0, total_apr - n_contratados)
+        tasa_patrocinio = round((n_contratados / total_apr * 100), 2) if total_apr > 0 else 0.0
+
+        top_empresas = [
+            {"empresa": k, "contratos": v}
+            for k, v in sorted(empresas_count.items(), key=lambda x: x[1], reverse=True)[:5]
+        ]
+
+        return ContratacionAnalyticsResponse(
+            total_aprendices=total_apr,
+            aprendices_contratados=n_contratados,
+            aprendices_sin_contrato=sin_contrato,
+            tasa_patrocinio_porcentaje=tasa_patrocinio,
+            contratos_por_vencer_30d=por_vencer_30d,
+            distribucion_por_tipo_contrato=dist_tipo,
+            distribucion_por_estado_contrato=dist_estado,
+            top_empresas_patrocinadoras=top_empresas
+        )
+

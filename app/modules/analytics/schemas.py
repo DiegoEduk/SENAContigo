@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel, ConfigDict
 
 
@@ -89,6 +89,41 @@ class FilterOptionsResponse(BaseModel):
     fichas: List[FilterItem] = []
     niveles_riesgo: List[FilterItem] = []
     categorias: List[FilterItem] = []
+    model_config = ConfigDict(from_attributes=True)
+
+
+class BeneficiosAnalyticsResponse(BaseModel):
+    total_otorgamientos: int
+    aprendices_beneficiados_unicos: int
+    tasa_cobertura_porcentaje: float
+    distribucion_por_tipo: Dict[str, int] = {}
+    distribucion_por_riesgo: Dict[str, int] = {}
+    desglose_centros: List[Dict[str, Any]] = []
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CasosAnalyticsResponse(BaseModel):
+    total_casos: int
+    casos_abiertos: int
+    casos_en_proceso: int
+    casos_cerrados: int
+    tasa_resolucion_porcentaje: float
+    casos_criticos_altos_abiertos: int
+    distribucion_por_estado: Dict[str, int] = {}
+    distribucion_por_prioridad: Dict[str, int] = {}
+    distribucion_por_tipo_atencion: Dict[str, int] = {}
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ContratacionAnalyticsResponse(BaseModel):
+    total_aprendices: int
+    aprendices_contratados: int
+    aprendices_sin_contrato: int
+    tasa_patrocinio_porcentaje: float
+    contratos_por_vencer_30d: int
+    distribucion_por_tipo_contrato: Dict[str, int] = {}
+    distribucion_por_estado_contrato: Dict[str, int] = {}
+    top_empresas_patrocinadoras: List[Dict[str, Any]] = []
     model_config = ConfigDict(from_attributes=True)
 
 

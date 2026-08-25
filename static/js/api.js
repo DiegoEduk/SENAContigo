@@ -528,6 +528,21 @@ const API = {
     return this.request(`/analytics/tabulation${q}`);
   },
 
+  getAnalyticsBeneficios(params = {}) {
+    const q = this.buildQueryString(params);
+    return this.request(`/analytics/beneficios${q}`);
+  },
+
+  getAnalyticsCasos(params = {}) {
+    const q = this.buildQueryString(params);
+    return this.request(`/analytics/casos${q}`);
+  },
+
+  getAnalyticsContratacion(params = {}) {
+    const q = this.buildQueryString(params);
+    return this.request(`/analytics/contratacion${q}`);
+  },
+
   async downloadTabulationPDF(params = {}) {
     const q = this.buildQueryString(params);
     const token = this.getToken();

@@ -116,52 +116,24 @@
     <div id="usuariosWorkspace" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full grid grid-cols-1 lg:grid-cols-12 gap-6 hidden">
         
         <!-- Sidebar Navigation -->
-        <aside id="sidebar" class="lg:col-span-3 space-y-3 sidebar-transition">
+        <aside id="sidebar" class="hidden lg:block lg:col-span-3 space-y-3 sidebar-transition">
             <div class="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition space-y-1">
-                <p class="px-3 py-1.5 text-[10px] font-black text-slate-400 uppercase tracking-wider">Menú Principal</p>
+                <p class="px-3 py-1.5 text-[10px] font-black text-slate-400 uppercase tracking-wider">Módulos de Análisis Estadístico</p>
                 
-                <button onclick="navSwitch('resumen')" id="nav-resumen" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-sena-dark hover:bg-sena-bg flex items-center gap-2.5 transition">
-                    <i class="fas fa-chart-pie w-4 text-center text-sena-primary"></i> Resumen General
+                <button onclick="navSwitch('tabulacion')" id="nav-tabulacion" class="w-full text-left px-3.5 py-3 rounded-xl text-xs font-bold text-sena-dark hover:bg-sena-bg flex items-center gap-2.5 transition">
+                    <i class="fas fa-table-list w-4 text-center text-sena-primary text-sm"></i> 1. Tabulación & Diagnóstico
                 </button>
 
-                <button onclick="navSwitch('aprendices')" id="nav-aprendices" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2.5 transition">
-                    <i class="fas fa-user-graduate w-4 text-center text-slate-500"></i> Aprendices & Matrículas
+                <button onclick="navSwitch('beneficios')" id="nav-beneficios" class="w-full text-left px-3.5 py-3 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2.5 transition">
+                    <i class="fas fa-hand-holding-heart w-4 text-center text-slate-500 text-sm"></i> 2. Beneficios Institucionales
                 </button>
 
-                <button onclick="navSwitch('fichas')" id="nav-fichas" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2.5 transition">
-                    <i class="fas fa-id-card w-4 text-center text-slate-500"></i> Fichas Formativas
+                <button onclick="navSwitch('casos')" id="nav-casos" class="w-full text-left px-3.5 py-3 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2.5 transition">
+                    <i class="fas fa-headset w-4 text-center text-slate-500 text-sm"></i> 3. Casos de Atención & Alertas
                 </button>
 
-                <button onclick="navSwitch('contratos')" id="nav-contratos" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2.5 transition">
-                    <i class="fas fa-file-contract w-4 text-center text-slate-500"></i> Contratación de Aprendices
-                </button>
-
-                <button onclick="navSwitch('beneficios')" id="nav-beneficios" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2.5 transition">
-                    <i class="fas fa-hand-holding-heart w-4 text-center text-slate-500"></i> Beneficios Institucionales
-                </button>
-
-                <button onclick="navSwitch('casos')" id="nav-casos" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2.5 transition">
-                    <i class="fas fa-headset w-4 text-center text-slate-500"></i> Casos de Atención & Alertas
-                </button>
-
-                <button onclick="navSwitch('tabulacion')" id="nav-tabulacion" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2.5 transition">
-                    <i class="fas fa-table-list w-4 text-center text-sena-primary"></i> Tabulación & Diagnóstico
-                </button>
-
-                <button onclick="navSwitch('variables')" id="nav-variables" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2.5 transition">
-                    <i class="fas fa-sliders w-4 text-center text-slate-500"></i> Variables Dinámicas
-                </button>
-
-                <button onclick="navSwitch('encuestas')" id="nav-encuestas" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2.5 transition">
-                    <i class="fas fa-list-check w-4 text-center text-slate-500"></i> Engine de Encuestas
-                </button>
-
-                <button onclick="navSwitch('analytics')" id="nav-analytics" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2.5 transition">
-                    <i class="fas fa-chart-line w-4 text-center text-slate-500"></i> Evolución Longitudinal
-                </button>
-
-                <button onclick="navSwitch('audit')" id="nav-audit" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2.5 transition">
-                    <i class="fas fa-shield-cat w-4 text-center text-slate-500"></i> Auditoría del Sistema
+                <button onclick="navSwitch('contratos')" id="nav-contratos" class="w-full text-left px-3.5 py-3 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2.5 transition">
+                    <i class="fas fa-file-contract w-4 text-center text-slate-500 text-sm"></i> 4. Contratación de Aprendices
                 </button>
             </div>
 
@@ -181,7 +153,7 @@
             <div class="flex items-center text-xs text-slate-500 gap-2 bg-white px-4 py-2.5 rounded-xl border border-sena-border shadow-sm">
                 <i class="fas fa-house text-sena-dark"></i>
                 <span>/</span>
-                <span id="breadcrumbCurrent" class="font-bold text-sena-dark">Resumen General</span>
+                <span id="breadcrumbCurrent" class="font-bold text-sena-dark">Tabulación & Diagnóstico Socioeconómico</span>
             </div>
 
             <!-- Dynamic Filter Bar Component -->
@@ -270,50 +242,8 @@
                 </div>
             </div>
             
-            <!-- SECTION 1: RESUMEN GENERAL -->
-            <section id="sec-resumen" class="space-y-6">
-                <!-- KPI Cards Redesigned (No Icons) -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                    <!-- KPI 1: Aprendices Registrados -->
-                    <div class="bg-white p-6 rounded-3xl shadow-sm hover:shadow-md transition-all duration-300">
-                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Aprendices Registrados</span>
-                        <h3 id="kpiAprendices" class="text-3xl font-black text-slate-800 tracking-tight">0</h3>
-                    </div>
-
-                    <!-- KPI 2: Encuestas Activas -->
-                    <div class="bg-white p-6 rounded-3xl shadow-sm hover:shadow-md transition-all duration-300">
-                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Encuestas Activas</span>
-                        <h3 id="kpiEncuestas" class="text-3xl font-black text-slate-800 tracking-tight">0</h3>
-                    </div>
-
-                    <!-- KPI 3: Riesgo Grave / Crítico -->
-                    <div class="bg-white p-6 rounded-3xl shadow-sm hover:shadow-md transition-all duration-300">
-                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Riesgo Grave / Crítico</span>
-                        <h3 id="kpiAfectados" class="text-3xl font-black text-slate-800 tracking-tight">0</h3>
-                    </div>
-
-                    <!-- KPI 4: Contratos Vigentes -->
-                    <div class="bg-white p-6 rounded-3xl shadow-sm hover:shadow-md transition-all duration-300">
-                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Contratos Vigentes</span>
-                        <h3 id="kpiContratos" class="text-3xl font-black text-slate-800 tracking-tight">0</h3>
-                    </div>
-                </div>
-
-                <!-- Resumen por Variable Chart -->
-                <div class="bg-white p-6 rounded-3xl shadow-md space-y-4">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-sm font-black text-sena-dark flex items-center gap-2">
-                            <i class="fas fa-chart-bar text-sena-dark"></i> Distribución de Afectación por Variable
-                        </h3>
-                    </div>
-                    <div class="relative h-64 w-full">
-                        <canvas id="chartEstadoActual"></canvas>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SECTION TABULACIÓN & DIAGNÓSTICO -->
-            <section id="sec-tabulacion" class="hidden space-y-6">
+            <!-- MÓDULO 1: TABULACIÓN & DIAGNÓSTICO -->
+            <section id="sec-tabulacion" class="space-y-6">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-3xl shadow-sm border border-sena-border">
                     <div>
                         <h3 class="text-lg font-black text-sena-dark flex items-center gap-2">
@@ -396,58 +326,189 @@
                 </div>
             </section>
 
-            <!-- SECTION 2: APRENDICES & MATRÍCULAS -->
-            <section id="sec-aprendices" class="hidden space-y-6">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <!-- MÓDULO 2: BENEFICIOS INSTITUCIONALES -->
+            <section id="sec-beneficios" class="hidden space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-3xl shadow-sm border border-sena-border">
                     <div>
-                        <h3 class="text-lg font-black text-sena-dark">Directorio de Aprendices SENA</h3>
-                        <p class="text-xs text-slate-500">Gestión de datos personales, residencia y matrículas académicas.</p>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="exportToCSV('aprendices_sena.csv', window.currentAprendicesList || [])" class="px-3 py-2 bg-slate-800 text-white font-bold text-xs rounded-xl hover:bg-slate-900 transition flex items-center gap-1.5">
-                            <i class="fas fa-file-csv"></i> Exportar CSV
-                        </button>
-                        <button onclick="openModalAprendiz()" class="px-4 py-2 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary transition shadow flex items-center gap-2">
-                            <i class="fas fa-plus"></i> Nuevo Aprendiz
-                        </button>
+                        <h3 class="text-lg font-black text-sena-dark flex items-center gap-2">
+                            <i class="fas fa-hand-holding-heart text-sena-primary"></i> Análisis de Beneficios Institucionales
+                        </h3>
+                        <p class="text-xs text-slate-500">Indicadores estadísticos de adjudicación de apoyos de bienestar, cobertura y programas de auxilio.</p>
                     </div>
                 </div>
 
-                <div class="bg-white p-6 rounded-3xl shadow-md space-y-4">
-                    <div class="flex flex-col sm:flex-row gap-3">
-                        <div class="relative flex-1">
-                            <i class="fas fa-search absolute left-3.5 top-3 text-slate-400 text-xs"></i>
-                            <input type="text" id="searchAprendices" oninput="debounceLoadAprendices()" placeholder="Buscar por nombre, documento, correo, dirección o ciudad..." class="w-full text-xs pl-9 pr-3 py-2.5 border border-sena-border rounded-xl focus:outline-none focus:ring-2 focus:ring-sena-primary">
+                <!-- KPI Cards Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-sena-border">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Total Otorgamientos</span>
+                        <h3 id="benKpiOtorgamientos" class="text-3xl font-black text-slate-800">0</h3>
+                        <p class="text-[11px] text-slate-500 mt-1">Apoyos entregados</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-sena-border">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Beneficiarios Únicos</span>
+                        <h3 id="benKpiUnicos" class="text-3xl font-black text-sena-dark">0</h3>
+                        <p class="text-[11px] text-slate-500 mt-1">Aprendices alcanzados</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-sena-border">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Tasa de Cobertura</span>
+                        <h3 id="benKpiCobertura" class="text-3xl font-black text-emerald-600">0.0%</h3>
+                        <p class="text-[11px] text-slate-500 mt-1">Sobre aprendices en la jurisdicción</p>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-3xl shadow-md space-y-3">
+                        <h4 class="text-xs font-black text-sena-dark uppercase tracking-wider flex items-center gap-2">
+                            <i class="fas fa-chart-bar text-sena-primary"></i> Otorgamientos por Tipo de Beneficio
+                        </h4>
+                        <div class="relative h-64 w-full">
+                            <canvas id="chartBeneficiosTipo"></canvas>
                         </div>
                     </div>
 
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-xs text-left text-slate-600">
-                            <thead class="bg-sena-bg text-sena-dark font-extrabold uppercase text-[11px]">
-                                <tr>
-                                    <th class="p-3.5">Aprendiz</th>
-                                    <th class="p-3.5">Documento</th>
-                                    <th class="p-3.5">Correo / Celular</th>
-                                    <th class="p-3.5">Residencia</th>
-                                    <th class="p-3.5">Matrículas</th>
-                                    <th class="p-3.5 text-right">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tblAprendices" class="divide-y divide-slate-100">
-                                <tr><td colspan="6" class="p-4 text-center">Cargando aprendices...</td></tr>
-                            </tbody>
-                        </table>
+                    <div class="bg-white p-6 rounded-3xl shadow-md space-y-3">
+                        <h4 class="text-xs font-black text-sena-dark uppercase tracking-wider flex items-center gap-2">
+                            <i class="fas fa-chart-pie text-sena-primary"></i> Cobertura por Nivel de Riesgo
+                        </h4>
+                        <div class="relative h-64 w-full flex items-center justify-center">
+                            <canvas id="chartBeneficiosRiesgo"></canvas>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            <!-- SECTION 3: FICHAS FORMATIVAS -->
-            <section id="sec-fichas" class="hidden space-y-6">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <!-- MÓDULO 3: CASOS DE ATENCIÓN & ALERTAS -->
+            <section id="sec-casos" class="hidden space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-3xl shadow-sm border border-sena-border">
                     <div>
-                        <h3 class="text-lg font-black text-sena-dark">Catálogo de Fichas Formativas</h3>
-                        <p class="text-xs text-slate-500">Fichas de caracterización activas con ubicación territorial.</p>
+                        <h3 class="text-lg font-black text-sena-dark flex items-center gap-2">
+                            <i class="fas fa-headset text-sena-primary"></i> Casos de Atención & Alertas Tempranas
+                        </h3>
+                        <p class="text-xs text-slate-500">Métricas de seguimiento psicosocial, alertas de deserción y tasa de resolución institucional.</p>
                     </div>
+                </div>
+
+                <!-- KPI Cards Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-sena-border">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Total Casos Registrados</span>
+                        <h3 id="casosKpiTotal" class="text-3xl font-black text-slate-800">0</h3>
+                        <p class="text-[11px] text-slate-500 mt-1">Histórico general</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-sena-border">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Casos Activos</span>
+                        <h3 id="casosKpiActivos" class="text-3xl font-black text-amber-600">0</h3>
+                        <p class="text-[11px] text-slate-500 mt-1">Abiertos o En Proceso</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-sena-border">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Tasa de Resolución</span>
+                        <h3 id="casosKpiResolucion" class="text-3xl font-black text-emerald-600">0.0%</h3>
+                        <p class="text-[11px] text-slate-500 mt-1">Casos cerrados exitosamente</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-sena-border">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Alertas Críticas</span>
+                        <h3 id="casosKpiCriticos" class="text-3xl font-black text-red-600">0</h3>
+                        <p class="text-[11px] text-slate-500 mt-1">Prioridad Alta / Crítica activa</p>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-3xl shadow-md space-y-3">
+                        <h4 class="text-xs font-black text-sena-dark uppercase tracking-wider flex items-center gap-2">
+                            <i class="fas fa-chart-pie text-sena-primary"></i> Casos por Estado de Atención
+                        </h4>
+                        <div class="relative h-64 w-full flex items-center justify-center">
+                            <canvas id="chartCasosEstado"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl shadow-md space-y-3">
+                        <h4 class="text-xs font-black text-sena-dark uppercase tracking-wider flex items-center gap-2">
+                            <i class="fas fa-chart-bar text-sena-primary"></i> Casos por Nivel de Prioridad
+                        </h4>
+                        <div class="relative h-64 w-full">
+                            <canvas id="chartCasosPrioridad"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MÓDULO 4: CONTRATACIÓN DE APRENDICES -->
+            <section id="sec-contratos" class="hidden space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-3xl shadow-sm border border-sena-border">
+                    <div>
+                        <h3 class="text-lg font-black text-sena-dark flex items-center gap-2">
+                            <i class="fas fa-file-contract text-sena-primary"></i> Análisis de Contratación de Aprendices
+                        </h3>
+                        <p class="text-xs text-slate-500">Métricas de patrocinio empresarial, vinculación laboral y relación de contratos formativos.</p>
+                    </div>
+                </div>
+
+                <!-- KPI Cards Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-sena-border">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Total Aprendices</span>
+                        <h3 id="conKpiTotal" class="text-3xl font-black text-slate-800">0</h3>
+                        <p class="text-[11px] text-slate-500 mt-1">En la jurisdicción</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-sena-border">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Aprendices Contratados</span>
+                        <h3 id="conKpiContratados" class="text-3xl font-black text-sena-dark">0</h3>
+                        <p class="text-[11px] text-slate-500 mt-1">Con patrocinio o contrato</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-sena-border">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Tasa de Patrocinio</span>
+                        <h3 id="conKpiPatrocinio" class="text-3xl font-black text-emerald-600">0.0%</h3>
+                        <p class="text-[11px] text-slate-500 mt-1">Vinculación laboral activa</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-sena-border">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Por Vencer (< 30 días)</span>
+                        <h3 id="conKpiVencer" class="text-3xl font-black text-amber-600">0</h3>
+                        <p class="text-[11px] text-slate-500 mt-1">Próximos a finalizar</p>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-3xl shadow-md space-y-3">
+                        <h4 class="text-xs font-black text-sena-dark uppercase tracking-wider flex items-center gap-2">
+                            <i class="fas fa-chart-pie text-sena-primary"></i> Estado de Patrocinio
+                        </h4>
+                        <div class="relative h-64 w-full flex items-center justify-center">
+                            <canvas id="chartContratacionEstado"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl shadow-md space-y-3">
+                        <h4 class="text-xs font-black text-sena-dark uppercase tracking-wider flex items-center gap-2">
+                            <i class="fas fa-chart-bar text-sena-primary"></i> Modalidad de Contrato
+                        </h4>
+                        <div class="relative h-64 w-full">
+                            <canvas id="chartContratacionTipo"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Empresas Table -->
+                <div class="bg-white p-6 rounded-3xl shadow-md space-y-4">
+                    <h4 class="text-xs font-black text-sena-dark uppercase tracking-wider flex items-center gap-2 border-b border-sena-border pb-3">
+                        <i class="fas fa-building text-sena-primary"></i> Top Empresas Patrocinadoras
+                    </h4>
+                    <div id="topEmpresasContainer">
+                        <div class="text-center py-6 text-slate-400 text-xs">Cargando empresas patrocinadoras...</div>
+                    </div>
+                </div>
+            </section>
                     <button onclick="openModalFicha()" class="px-4 py-2 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary transition shadow flex items-center gap-2">
                         <i class="fas fa-plus"></i> Nueva Ficha
                     </button>
