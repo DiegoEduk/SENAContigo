@@ -102,10 +102,10 @@
     <!-- Main Workspace (Solo visible tras autenticación) -->
     <div id="aprendizWorkspace" class="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex-grow w-full space-y-6 hidden">
         
-        <!-- Navigation Bar (Desktop Tabs + Custom Mobile Dropdown) -->
+        <!-- Navigation Bar (Desktop Tabs + Custom Mobile/Tablet Dropdown) -->
         <nav class="bg-white p-2.5 sm:p-3 rounded-2xl shadow-sm relative">
-            <!-- Custom Mobile Dropdown Selector (visible en móviles < sm) -->
-            <div class="sm:hidden relative">
+            <!-- Custom Mobile/Tablet Dropdown Selector (visible en móviles y tabletas < lg) -->
+            <div class="lg:hidden relative">
                 <button type="button" onclick="toggleMobileNavDropdown()" id="mobileNavDropdownTrigger" 
                         class="w-full flex items-center justify-between p-3.5 bg-sena-primary text-sena-dark font-black text-xs rounded-xl shadow-sm border border-sena-primary/40 transition active:scale-[0.99]">
                     <span id="mobileNavLabel" class="flex items-center gap-2">
@@ -135,8 +135,8 @@
                 </div>
             </div>
 
-            <!-- Desktop Tabs Bar (visible en pantallas sm o mayores) -->
-            <div class="hidden sm:flex flex-wrap gap-2">
+            <!-- Desktop Tabs Bar (visible en pantallas de escritorio >= lg) -->
+            <div class="hidden lg:flex flex-wrap gap-2">
                 <button onclick="switchTab('perfil')" id="tab-perfil" class="px-4 py-2.5 rounded-xl text-xs font-black bg-sena-primary text-sena-dark flex items-center gap-2 transition">
                     <i class="fas fa-user-gear"></i> Mi Perfil Personal
                 </button>
