@@ -38,8 +38,8 @@ const Toast = {
     let iconClass = 'fa-circle-info text-blue-500';
 
     if (type === 'success') {
-      bgClass = 'bg-emerald-950/90 border-[#27F531]/40 text-white';
-      iconClass = 'fa-circle-check text-[#27F531]';
+      bgClass = 'bg-[#133005]/95 border-[#39A900]/50 text-white';
+      iconClass = 'fa-circle-check text-[#39A900]';
     } else if (type === 'error') {
       bgClass = 'bg-red-950/90 border-red-500/40 text-white';
       iconClass = 'fa-circle-xmark text-red-400';

@@ -32,8 +32,25 @@ class ResponsesService:
             if u_res.scalar_one_or_none():
                 valid_user_id = user_id
 
+        from datetime import timedelta
+        from app.core.time import get_colombia_now
+        now = get_colombia_now()
+        recent_cutoff = now - timedelta(seconds=5)
+
         created_responses = []
         for item in batch_in.respuestas:
+            # Protección contra duplicados rápidos en un lapso de 5 segundos
+            stmt_dup = select(Respuesta).where(
+                Respuesta.aprendiz_id == batch_in.aprendiz_id,
+                Respuesta.variable_id == item.variable_id,
+                Respuesta.opcion_id == item.opcion_id,
+                Respuesta.valor_texto == item.valor_texto,
+                Respuesta.fecha_respuesta >= recent_cutoff
+            )
+            dup_res = await session.execute(stmt_dup)
+            if dup_res.scalar_one_or_none():
+                continue
+
             version_id = item.variable_version_id
             if not version_id:
                 from app.modules.variables.models import VariableVersion
@@ -44,7 +61,6 @@ class ResponsesService:
                 )
                 version_id = ver_res.scalar_one_or_none() or 1
 
-            # Immutability Guarantee: Every submission inserts a NEW record
             resp = Respuesta(
                 aprendiz_id=batch_in.aprendiz_id,
                 variable_id=item.variable_id,

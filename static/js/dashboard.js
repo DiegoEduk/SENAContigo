@@ -353,7 +353,7 @@ async function loadAprendicesData() {
           <div class="text-slate-400 text-[10px]">${ap.ciudad || ''} ${ap.departamento ? '- ' + ap.departamento : ''}</div>
         </td>
         <td class="p-3">
-          <span class="badge-state bg-emerald-100 text-emerald-800">${ap.matriculas ? ap.matriculas.length : 0} Ficha(s)</span>
+          <span class="badge-state bg-[#EBF8E1] text-[#2E8800] border border-[#39A900]/30">${ap.matriculas ? ap.matriculas.length : 0} Ficha(s)</span>
         </td>
         <td class="p-3 text-right">
           <button onclick="openModalMatricula(${ap.id})" class="px-2.5 py-1 bg-sena-primary text-sena-dark font-black text-[11px] rounded-lg hover:bg-sena-secondary transition">
@@ -425,7 +425,7 @@ async function loadContratos() {
     tbl.innerHTML = contratos.map(c => {
       let stateBadgeClass = 'bg-slate-200 text-slate-800';
       if (c.estado_contrato === 'EN PATROCINIO') stateBadgeClass = 'bg-indigo-100 text-indigo-900 border border-indigo-300';
-      if (c.estado_contrato === 'EN ETAPA PRACTICA') stateBadgeClass = 'bg-emerald-100 text-emerald-900 border border-emerald-300';
+      if (c.estado_contrato === 'EN ETAPA PRACTICA') stateBadgeClass = 'bg-[#EBF8E1] text-[#2E8800] border border-[#39A900]/30';
       if (c.estado_contrato === 'ACTIVO') stateBadgeClass = 'bg-blue-100 text-blue-900';
       if (c.estado_contrato === 'FINALIZADO') stateBadgeClass = 'bg-slate-800 text-white';
       if (c.estado_contrato === 'CANCELADO') stateBadgeClass = 'bg-red-100 text-red-900';
@@ -484,7 +484,7 @@ async function loadBeneficiosData() {
     container.innerHTML = beneficios.map(b => `
       <div class="bg-white p-5 rounded-2xl border border-sena-border shadow-sm space-y-2 relative">
         <div class="flex justify-between items-start">
-          <span class="text-[10px] font-black uppercase text-emerald-800 bg-[#8FFA94] px-2 py-0.5 rounded-full">${b.codigo}</span>
+          <span class="text-[10px] font-black uppercase text-[#00324D] bg-[#8FFA94] px-2 py-0.5 rounded-full">${b.codigo}</span>
           <span class="text-[10px] font-bold text-slate-400">${b.tipo_beneficio}</span>
         </div>
         <h4 class="font-black text-sena-dark text-sm">${b.nombre}</h4>

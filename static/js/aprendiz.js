@@ -286,11 +286,11 @@ function renderCompletedSurveyBanner(container) {
 
   container.innerHTML = `
     <div class="p-8 bg-white rounded-3xl border border-sena-border shadow-sm text-center space-y-5">
-      <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-3xl mx-auto border border-emerald-300">
+      <div class="w-16 h-16 bg-[#EBF8E1] text-[#39A900] rounded-full flex items-center justify-center text-3xl mx-auto border border-[#39A900]/30">
         <i class="fas fa-circle-check"></i>
       </div>
       <div class="space-y-2">
-        <span class="text-[10px] font-black uppercase text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-200 tracking-wider">Encuesta Diligenciada</span>
+        <span class="text-[10px] font-black uppercase text-[#2E8800] bg-[#EBF8E1] px-3 py-1 rounded-full border border-[#39A900]/30 tracking-wider">Encuesta Diligenciada</span>
         <h3 class="text-xl font-black text-sena-dark mt-2">${activeSurvey.nombre || activeSurvey.titulo}</h3>
         <p class="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
           Ya has registrado previamente tus respuestas para esta encuesta. Tu información socioeconómica se encuentra almacenada y disponible en tu historial.
@@ -474,7 +474,7 @@ async function loadMyContract() {
     }
 
     container.innerHTML = contratos.map(c => {
-      let badgeStyle = 'bg-emerald-100 text-emerald-900 border border-emerald-300';
+      let badgeStyle = 'bg-[#EBF8E1] text-[#2E8800] border border-[#39A900]/30';
       if (c.estado_contrato === 'EN PATROCINIO') badgeStyle = 'bg-indigo-100 text-indigo-900 border border-indigo-300';
 
       return `
@@ -610,8 +610,8 @@ function renderHistoryWizardUnanswered(container) {
         ${q.opciones.map(opt => {
           const isSelected = selectedVal === opt.id;
           return `
-            <label onclick="autoSaveHistoryWizardOption(${q.variable_id}, ${opt.id})" class="flex items-center p-3.5 rounded-xl border ${isSelected ? 'border-[#27F531] bg-[#8FFA94]/20 font-bold' : 'border-sena-border hover:bg-slate-50'} cursor-pointer transition">
-              <input type="radio" name="hw_opt_${q.variable_id}" value="${opt.id}" ${isSelected ? 'checked' : ''} class="text-[#27F531] focus:ring-[#27F531]">
+            <label class="flex items-center p-3.5 rounded-xl border ${isSelected ? 'border-[#27F531] bg-[#8FFA94]/20 font-bold' : 'border-sena-border hover:bg-slate-50'} cursor-pointer transition">
+              <input type="radio" name="hw_opt_${q.variable_id}" value="${opt.id}" ${isSelected ? 'checked' : ''} onchange="autoSaveHistoryWizardOption(${q.variable_id}, ${opt.id})" class="text-[#27F531] focus:ring-[#27F531]">
               <span class="ml-3 text-sm text-sena-dark font-medium">${opt.texto}</span>
             </label>
           `;
@@ -653,7 +653,7 @@ function renderHistoryWizardUnanswered(container) {
 
       <!-- Indicador de Autoguardado -->
       <div id="autoSaveStatusIndicator" class="text-[11px] font-extrabold text-slate-400 flex items-center gap-1.5 pt-1">
-        ${selectedVal ? '<span class="text-emerald-600 flex items-center gap-1"><i class="fas fa-circle-check"></i> Respuesta guardada automáticamente</span>' : '<span>Selecciona una opción para guardar inmediatamente</span>'}
+        ${selectedVal ? '<span class="text-[#2E8800] flex items-center gap-1"><i class="fas fa-circle-check text-[#39A900]"></i> Respuesta guardada automáticamente</span>' : '<span>Selecciona una opción para guardar inmediatamente</span>'}
       </div>
 
       <!-- Botones de Navegación -->
@@ -676,10 +676,18 @@ function renderHistoryWizardUnanswered(container) {
   `;
 }
 
+let isSavingAutoStep = false;
+
 async function autoSaveHistoryWizardOption(varId, optId) {
-  historyWizardAnswers[varId] = optId;
+  if (isSavingAutoStep) return;
+
   const q = allHistoryQuestions.find(p => p.variable_id === varId);
   if (!q) return;
+
+  if (historyWizardAnswers[varId] === optId && q.pendiente === false) return;
+
+  isSavingAutoStep = true;
+  historyWizardAnswers[varId] = optId;
 
   const payloadItem = {
     variable_id: varId,
@@ -697,18 +705,21 @@ async function autoSaveHistoryWizardOption(varId, optId) {
 
     await API.submitRespuestas(q.encuesta_id || 1, [payloadItem], q.corte_id || null);
 
-    if (indicator) indicator.innerHTML = `<span class="text-emerald-600 flex items-center gap-1"><i class="fas fa-circle-check"></i> Respuesta guardada automáticamente</span>`;
+    if (indicator) indicator.innerHTML = `<span class="text-[#2E8800] flex items-center gap-1"><i class="fas fa-circle-check text-[#39A900]"></i> Respuesta guardada automáticamente</span>`;
 
     q.pendiente = false;
-    if (!q.respuestas) q.respuestas = [];
-    q.respuestas.push({
+    const optObj = q.opciones ? q.opciones.find(o => o.id === optId) : null;
+    const respText = optObj ? optObj.texto : 'Respuesta guardada';
+    q.respuestas = [{
       id: Date.now(),
       fecha_respuesta: new Date().toISOString(),
-      respuesta_texto: (q.opciones.find(o => o.id === optId) || {}).texto || 'Respuesta guardada',
+      respuesta_texto: respText,
       origen: 'web'
-    });
+    }];
   } catch (err) {
     Toast.error(err.message || 'Error al guardar respuesta automática', 'Error');
+  } finally {
+    isSavingAutoStep = false;
   }
 }
 
@@ -731,7 +742,7 @@ async function autoSaveHistoryWizardText(varId, textVal) {
 
     await API.submitRespuestas(q.encuesta_id || 1, [payloadItem], q.corte_id || null);
 
-    if (indicator) indicator.innerHTML = `<span class="text-emerald-600 flex items-center gap-1"><i class="fas fa-circle-check"></i> Respuesta guardada automáticamente</span>`;
+    if (indicator) indicator.innerHTML = `<span class="text-[#2E8800] flex items-center gap-1"><i class="fas fa-circle-check text-[#39A900]"></i> Respuesta guardada automáticamente</span>`;
 
     q.pendiente = false;
     if (!q.respuestas) q.respuestas = [];
@@ -807,14 +818,14 @@ function renderHistoryTimelineCards(container) {
         const isLatest = rIdx === 0;
 
         return `
-          <div class="p-3.5 rounded-xl border ${isLatest ? 'bg-emerald-50/70 border-emerald-300' : 'bg-[#F8F9FA] border-slate-200'} flex items-center justify-between gap-3 transition">
+          <div class="p-3.5 rounded-xl border ${isLatest ? 'bg-[#EBF8E1]/80 border-[#39A900]/40' : 'bg-[#F8F9FA] border-slate-200'} flex items-center justify-between gap-3 transition">
             <div class="space-y-1">
               <div class="flex items-center gap-2">
-                ${isLatest ? '<span class="text-[9px] font-black uppercase bg-emerald-600 text-white px-2 py-0.5 rounded-full">Última medición</span>' : '<span class="text-[9px] font-extrabold uppercase bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">Medición anterior</span>'}
+                ${isLatest ? '<span class="text-[9px] font-black uppercase bg-[#39A900] text-white px-2 py-0.5 rounded-full">Última medición</span>' : '<span class="text-[9px] font-extrabold uppercase bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">Medición anterior</span>'}
                 <span class="text-[10px] font-bold text-slate-500"><i class="far fa-clock mr-1"></i>${fechaFormateada}</span>
               </div>
-              <p class="text-xs font-black ${isLatest ? 'text-emerald-950' : 'text-slate-700'} mt-1 flex items-center gap-1.5">
-                <i class="fas ${isLatest ? 'fa-circle-check text-emerald-600' : 'fa-history text-slate-400'} text-xs"></i> ${resp.respuesta_texto || 'Respuesta registrada'}
+              <p class="text-xs font-black ${isLatest ? 'text-[#00324D]' : 'text-slate-700'} mt-1 flex items-center gap-1.5">
+                <i class="fas ${isLatest ? 'fa-circle-check text-[#39A900]' : 'fa-history text-slate-400'} text-xs"></i> ${resp.respuesta_texto || 'Respuesta registrada'}
               </p>
             </div>
           </div>
@@ -843,7 +854,14 @@ function renderHistoryTimelineCards(container) {
         <!-- Question Text -->
         <div class="space-y-1">
           <span class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block">Pregunta Realizada</span>
-          <p class="text-xs sm:text-sm font-bold text-sena-dark leading-snug">${pregunta}</p>
+          <p class="text-xs sm:text-sm font-bold text-sena-dark leading-snug">
+            ${pregunta}
+            ${isPendiente || respuestasList.length === 0 ? `
+              <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-black uppercase bg-red-600 text-white rounded-full ml-1.5 align-middle shadow-sm">
+                Pendiente
+              </span>
+            ` : ''}
+          </p>
         </div>
 
         <!-- Answers List / Status -->
@@ -880,7 +898,7 @@ function openSingleQuestionModal(variableId) {
     container.innerHTML = `
       <div class="space-y-2">
         ${targetSingleQuestion.opciones.map(opt => `
-          <label onclick="singleQuestionAnswerVal = ${opt.id}" class="flex items-center p-3.5 rounded-xl border border-sena-border hover:bg-emerald-50/50 hover:border-emerald-300 cursor-pointer transition">
+          <label onclick="singleQuestionAnswerVal = ${opt.id}" class="flex items-center p-3.5 rounded-xl border border-sena-border hover:bg-[#EBF8E1]/50 hover:border-[#39A900]/50 cursor-pointer transition">
             <input type="radio" name="sqOption" value="${opt.id}" class="text-[#27F531] focus:ring-[#27F531]">
             <span class="ml-3 text-xs sm:text-sm text-sena-dark font-semibold">${opt.texto}</span>
           </label>
