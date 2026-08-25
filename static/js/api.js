@@ -425,8 +425,42 @@ const API = {
     return this.request('/portal/mi-historial');
   },
 
+  getMisCasos() {
+    return this.request('/portal/casos');
+  },
+
+  getCasoDetalleAprendiz(id) {
+    return this.request(`/portal/casos/${id}`);
+  },
+
+  registrarCasoAprendiz(data) {
+    return this.request('/portal/casos', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  },
+
+  updateCasoAprendiz(id, data) {
+    return this.request(`/portal/casos/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  },
+
+  agregarNecesidadesCasoAprendiz(id, necesidades_ids) {
+    return this.request(`/portal/casos/${id}/necesidades`, {
+      method: 'POST',
+      body: JSON.stringify({ necesidades_ids })
+    });
+  },
+
+  getNecesidadesCatalogo() {
+    return this.request('/necesidades');
+  },
+
 
   // Cases & Rules
+
   getCasos(params = {}) {
     const q = new URLSearchParams(params).toString();
     return this.request(`/casos${q ? '?' + q : ''}`);

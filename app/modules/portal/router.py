@@ -10,7 +10,11 @@ from app.modules.apprentices.schemas import AprendizRead
 from app.modules.benefits.schemas import AprendizBeneficioResponse
 from app.modules.contracts.schemas import ContratoCreate, ContratoRead, ContratoUpdate
 from app.modules.contracts.services import ContractsService
-from app.modules.portal.schemas import PerfilAprendizUpdate, PortalBeneficioCreate, PortalContratoCreate, PortalContratoUpdate
+from app.modules.cases.schemas import CasoRead
+from app.modules.portal.schemas import (
+    PerfilAprendizUpdate, PortalBeneficioCreate, PortalContratoCreate, PortalContratoUpdate,
+    PortalCasoCreate, PortalCasoUpdate, PortalCasoAgregarNecesidades
+)
 from app.modules.portal.services import PortalService
 from app.modules.responses.schemas import BatchRespuestaCreate, RespuestaHistorialRead, RespuestaRead
 from app.modules.responses.services import ResponsesService
@@ -23,6 +27,7 @@ def _resolve_aprendiz_id(current_user: TokenData) -> int:
     if not aprendiz_id:
         raise UnauthorizedException("No se encontró la identidad de aprendiz asociada a la sesión.")
     return aprendiz_id
+
 
 
 # 1. Perfil del Aprendiz
@@ -200,3 +205,61 @@ async def get_mi_historial(
     """Obtener el historial longitudinal de respuestas del aprendiz en el tiempo."""
     aprendiz_id = _resolve_aprendiz_id(current_user)
     return await ResponsesService.get_aprendiz_history_grouped(db, aprendiz_id)
+
+
+# 5. Casos de Atención y Seguimiento del Aprendiz
+@router.get("/casos", response_model=List[CasoRead])
+async def get_my_cases(
+    db: AsyncSession = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user_token)
+):
+    """Consultar los casos registrados del aprendiz."""
+    aprendiz_id = _resolve_aprendiz_id(current_user)
+    return await PortalService.get_casos(db, aprendiz_id)
+
+
+@router.get("/casos/{caso_id}", response_model=CasoRead)
+async def get_my_case_detail(
+    caso_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user_token)
+):
+    """Consultar el detalle completo de un caso del aprendiz (con necesidades, acciones y seguimientos)."""
+    aprendiz_id = _resolve_aprendiz_id(current_user)
+    return await PortalService.get_caso_by_id(db, aprendiz_id, caso_id)
+
+
+@router.post("/casos", response_model=CasoRead, status_code=status.HTTP_201_CREATED)
+async def registrar_my_case(
+    caso_in: PortalCasoCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user_token)
+):
+    """Registrar un nuevo caso de atención propio."""
+    aprendiz_id = _resolve_aprendiz_id(current_user)
+    return await PortalService.registrar_caso(db, aprendiz_id, caso_in)
+
+
+@router.put("/casos/{caso_id}", response_model=CasoRead)
+async def update_my_case(
+    caso_id: int,
+    caso_in: PortalCasoUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user_token)
+):
+    """Actualizar la información básica de un caso propio."""
+    aprendiz_id = _resolve_aprendiz_id(current_user)
+    return await PortalService.update_caso(db, aprendiz_id, caso_id, caso_in)
+
+
+@router.post("/casos/{caso_id}/necesidades", response_model=CasoRead)
+async def agregar_necesidades_my_case(
+    caso_id: int,
+    nec_in: PortalCasoAgregarNecesidades,
+    db: AsyncSession = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user_token)
+):
+    """Asociar necesidades adicionales del catálogo a un caso propio."""
+    aprendiz_id = _resolve_aprendiz_id(current_user)
+    return await PortalService.agregar_necesidades_caso(db, aprendiz_id, caso_id, nec_in.necesidades_ids)
+

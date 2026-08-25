@@ -168,7 +168,8 @@ function switchTab(tabName) {
     perfil: { label: 'Mi Perfil Personal', icon: 'fa-user-gear' },
     historial: { label: 'Información Socioeconómica', icon: 'fa-chart-pie' },
     contrato: { label: 'Mi Contrato de Aprendizaje', icon: 'fa-file-contract' },
-    beneficios: { label: 'Mis Apoyos SENA', icon: 'fa-hand-holding-heart' }
+    beneficios: { label: 'Mis Apoyos SENA', icon: 'fa-hand-holding-heart' },
+    casos: { label: 'Casos y seguimiento', icon: 'fa-folder-open' }
   };
 
   const meta = tabMeta[tabName] || tabMeta.perfil;
@@ -223,6 +224,9 @@ function loadTabContent() {
       break;
     case 'beneficios':
       loadMyBenefits();
+      break;
+    case 'casos':
+      loadMyCases();
       break;
   }
 }
@@ -1148,3 +1152,395 @@ function selectCity(cityName) {
   if (inputCity) inputCity.value = cityName;
   closeColombiaDropdown('city');
 }
+
+// TAB 6: CASOS Y SEGUIMIENTO DEL APRENDIZ
+let myCasesCache = [];
+let catalogNeedsCache = [];
+let currentDetailCase = null;
+
+async function loadMyCases() {
+  const container = document.getElementById('myCasesList');
+  if (!container) return;
+  container.innerHTML = `<p class="text-center text-slate-400 py-6">Cargando tus casos de atención...</p>`;
+
+  try {
+    const [casos, necesidades] = await Promise.all([
+      API.getMisCasos(),
+      API.getNecesidadesCatalogo()
+    ]);
+    myCasesCache = casos || [];
+    catalogNeedsCache = necesidades || [];
+
+    if (!myCasesCache || !myCasesCache.length) {
+      container.innerHTML = `
+        <div class="p-8 text-center bg-[#F3F2F2] rounded-2xl border border-sena-border space-y-3">
+          <div class="w-14 h-14 bg-slate-200 text-slate-500 rounded-full flex items-center justify-center text-xl mx-auto">
+            <i class="fas fa-folder-open"></i>
+          </div>
+          <h4 class="font-black text-sena-dark text-base">No registras ningún caso de atención</h4>
+          <p class="text-xs text-slate-500 max-w-md mx-auto">Si requieres orientación, apoyo económico, tecnológico o psicosocial por parte del SENA, puedes registrar un nuevo caso aquí.</p>
+          <button onclick="openCreateCaseModal()" class="px-5 py-2.5 bg-sena-primary text-sena-dark font-black text-xs uppercase tracking-wider rounded-xl hover:bg-sena-secondary transition shadow-md inline-flex items-center gap-2 mt-2">
+            <i class="fas fa-plus"></i> Registrar Mi Primer Caso
+          </button>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = myCasesCache.map(c => {
+      const estadoBadge = getEstadoCasoBadgeHtml(c.estado);
+      const prioridadBadge = getPrioridadCasoBadgeHtml(c.prioridad);
+      const necListHtml = (c.necesidades_asociadas && c.necesidades_asociadas.length)
+        ? c.necesidades_asociadas.map(cn => `<span class="bg-slate-100 text-slate-700 border border-slate-200 font-extrabold px-2.5 py-1 rounded-full text-[10px]"><i class="fas fa-tag text-[#39A900] text-[9px] mr-1"></i>${cn.necesidad ? cn.necesidad.nombre : 'Necesidad'}</span>`).join('')
+        : `<span class="text-slate-400 text-[11px] italic">Sin necesidades asociadas aún</span>`;
+
+      const cantAcciones = (c.acciones && c.acciones.length) || 0;
+      const cantSeguimientos = (c.seguimientos && c.seguimientos.length) || 0;
+
+      return `
+        <div class="bg-white p-5 sm:p-6 rounded-2xl border border-sena-border shadow-sm space-y-4 hover:shadow-md transition">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-sena-border pb-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-black uppercase bg-slate-200 text-slate-700 px-2.5 py-0.5 rounded-full">Caso #${c.id}</span>
+                <span class="text-[10px] font-bold text-slate-400">${formatFechaColombia(c.fecha_creacion)}</span>
+              </div>
+              <h4 class="text-base font-black text-sena-dark mt-1">${c.tipo}</h4>
+            </div>
+            <div class="flex items-center gap-2">
+              ${prioridadBadge}
+              ${estadoBadge}
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Necesidades del Caso</span>
+            <div class="flex flex-wrap gap-1.5">${necListHtml}</div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-sena-border text-xs">
+            <div class="flex items-center gap-4 text-slate-500 font-medium">
+              <span><i class="fas fa-list-check text-slate-400 mr-1"></i> ${cantAcciones} acción(es)</span>
+              <span><i class="fas fa-comments text-slate-400 mr-1"></i> ${cantSeguimientos} seguimiento(s)</span>
+              <span><i class="fas fa-user-gear text-slate-400 mr-1"></i> ${c.responsable ? (c.responsable.nombres + ' ' + c.responsable.apellidos) : 'Sin responsable asignado'}</span>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <button onclick="openEditCaseModal(${c.id})" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-sena-dark font-bold text-xs rounded-xl transition flex items-center gap-1">
+                <i class="fas fa-pen-to-square text-xs"></i> Editar
+              </button>
+              <button onclick="openAddNeedsModal(${c.id})" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-sena-dark font-bold text-xs rounded-xl transition flex items-center gap-1">
+                <i class="fas fa-plus text-xs"></i> Necesidades
+              </button>
+              <button onclick="openCaseDetailModal(${c.id})" class="px-4 py-1.5 bg-sena-primary hover:bg-sena-secondary text-sena-dark font-black text-xs rounded-xl transition shadow-sm flex items-center gap-1.5">
+                <i class="fas fa-eye"></i> Ver Seguimiento
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    container.innerHTML = `<p class="text-center text-red-500 py-6">Error cargando casos: ${err.message}</p>`;
+  }
+}
+
+function getEstadoCasoBadgeHtml(estado) {
+  const est = (estado || '').toUpperCase();
+  let bgClass = 'bg-slate-100 text-slate-700 border-slate-300';
+  if (est === 'NUEVO') bgClass = 'bg-blue-100 text-blue-900 border-blue-300';
+  else if (est === 'ASIGNADO') bgClass = 'bg-indigo-100 text-indigo-900 border-indigo-300';
+  else if (est === 'EN_ATENCION') bgClass = 'bg-amber-100 text-amber-900 border-amber-300';
+  else if (est === 'RESUELTO' || est === 'CERRADO') bgClass = 'bg-[#EBF8E1] text-[#2E8800] border-[#39A900]/40';
+  else if (est === 'CANCELADO') bgClass = 'bg-red-100 text-red-900 border-red-300';
+
+  return `<span class="badge-state ${bgClass}">${est.replace('_', ' ')}</span>`;
+}
+
+function getPrioridadCasoBadgeHtml(prioridad) {
+  const pri = (prioridad || '').toUpperCase();
+  let bgClass = 'bg-slate-100 text-slate-600';
+  if (pri === 'CRITICA') bgClass = 'bg-red-600 text-white font-black';
+  else if (pri === 'ALTA') bgClass = 'bg-amber-500 text-white font-bold';
+  else if (pri === 'MEDIA') bgClass = 'bg-blue-500 text-white font-bold';
+  else if (pri === 'BAJA') bgClass = 'bg-slate-300 text-slate-700';
+
+  return `<span class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase ${bgClass}">PRIORIDAD ${pri}</span>`;
+}
+
+function openCreateCaseModal() {
+  const modal = document.getElementById('modalCreateCase');
+  const needsContainer = document.getElementById('createCaseNeedsContainer');
+  if (modal) modal.classList.remove('hidden');
+
+  if (needsContainer) {
+    if (!catalogNeedsCache || !catalogNeedsCache.length) {
+      needsContainer.innerHTML = `<p class="text-slate-400 italic">No hay necesidades disponibles en el catálogo.</p>`;
+    } else {
+      needsContainer.innerHTML = catalogNeedsCache.map(n => `
+        <label class="flex items-start p-2 bg-white rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+          <input type="checkbox" name="createCaseNeeds" value="${n.id}" class="mt-0.5 text-sena-primary focus:ring-sena-primary rounded">
+          <div class="ml-2.5">
+            <span class="font-bold text-sena-dark block">${n.nombre} <span class="text-[10px] font-normal text-slate-400">(${n.codigo})</span></span>
+            ${n.descripcion ? `<p class="text-[11px] text-slate-500">${n.descripcion}</p>` : ''}
+          </div>
+        </label>
+      `).join('');
+    }
+  }
+}
+
+function closeCreateCaseModal() {
+  const modal = document.getElementById('modalCreateCase');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function handleCreateCase(e) {
+  e.preventDefault();
+  const tipo = document.getElementById('createCaseTipo').value;
+  const prioridad = document.getElementById('createCasePrioridad').value;
+  const checkboxes = document.querySelectorAll('input[name="createCaseNeeds"]:checked');
+  const necesidades_ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+  if (!tipo) {
+    Toast.warning('Por favor seleccione el tipo de caso.');
+    return;
+  }
+
+  try {
+    Loading.show('Registrando nuevo caso...');
+    await API.registrarCasoAprendiz({ tipo, prioridad, necesidades_ids });
+    Loading.hide();
+    closeCreateCaseModal();
+    Toast.success('Caso de atención registrado exitosamente.', 'Caso Creado');
+    loadMyCases();
+  } catch (err) {
+    Loading.hide();
+    Toast.error(err.message, 'Fallo al registrar caso');
+  }
+}
+
+function openEditCaseModal(casoId) {
+  const caso = myCasesCache.find(c => c.id === casoId);
+  if (!caso) return;
+
+  document.getElementById('editCaseId').value = caso.id;
+  document.getElementById('editCaseTipo').value = caso.tipo || '';
+  document.getElementById('editCasePrioridad').value = caso.prioridad || 'MEDIA';
+
+  const modal = document.getElementById('modalEditCase');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeEditCaseModal() {
+  const modal = document.getElementById('modalEditCase');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function handleEditCase(e) {
+  e.preventDefault();
+  const casoId = document.getElementById('editCaseId').value;
+  const tipo = document.getElementById('editCaseTipo').value.trim();
+  const prioridad = document.getElementById('editCasePrioridad').value;
+
+  try {
+    Loading.show('Actualizando datos del caso...');
+    await API.updateCasoAprendiz(casoId, { tipo, prioridad });
+    Loading.hide();
+    closeEditCaseModal();
+    Toast.success('Información del caso actualizada.', 'Caso Actualizado');
+    loadMyCases();
+  } catch (err) {
+    Loading.hide();
+    Toast.error(err.message, 'Fallo al editar caso');
+  }
+}
+
+function openAddNeedsModal(casoId) {
+  const caso = myCasesCache.find(c => c.id === casoId);
+  if (!caso) return;
+
+  document.getElementById('addNeedsCaseId').value = caso.id;
+  const container = document.getElementById('addNeedsListContainer');
+  const asociadasIds = new Set((caso.necesidades_asociadas || []).map(cn => cn.necesidad_id));
+
+  const disponibles = catalogNeedsCache.filter(n => !asociadasIds.has(n.id));
+
+  if (!disponibles.length) {
+    container.innerHTML = `<p class="text-center text-slate-500 py-4">Todas las necesidades del catálogo ya están asociadas a este caso.</p>`;
+  } else {
+    container.innerHTML = disponibles.map(n => `
+      <label class="flex items-start p-2 bg-white rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+        <input type="checkbox" name="addCaseNeeds" value="${n.id}" class="mt-0.5 text-sena-primary focus:ring-sena-primary rounded">
+        <div class="ml-2.5">
+          <span class="font-bold text-sena-dark block">${n.nombre} <span class="text-[10px] font-normal text-slate-400">(${n.codigo})</span></span>
+          ${n.descripcion ? `<p class="text-[11px] text-slate-500">${n.descripcion}</p>` : ''}
+        </div>
+      </label>
+    `).join('');
+  }
+
+  const modal = document.getElementById('modalAddNeedsCase');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeAddNeedsModal() {
+  const modal = document.getElementById('modalAddNeedsCase');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function handleAddNeedsToCase(e) {
+  e.preventDefault();
+  const casoId = document.getElementById('addNeedsCaseId').value;
+  const checkboxes = document.querySelectorAll('input[name="addCaseNeeds"]:checked');
+  const necesidades_ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+  if (!necesidades_ids.length) {
+    Toast.warning('Por favor seleccione al menos una necesidad del catálogo.');
+    return;
+  }
+
+  try {
+    Loading.show('Vinculando necesidades al caso...');
+    await API.agregarNecesidadesCasoAprendiz(casoId, necesidades_ids);
+    Loading.hide();
+    closeAddNeedsModal();
+    Toast.success('Necesidades asociadas exitosamente.', 'Necesidades Vinculadas');
+    loadMyCases();
+    if (currentDetailCase && currentDetailCase.id == casoId) {
+      openCaseDetailModal(casoId);
+    }
+  } catch (err) {
+    Loading.hide();
+    Toast.error(err.message, 'Fallo al vincular necesidades');
+  }
+}
+
+function openAddNeedsModalFromDetail() {
+  if (currentDetailCase) {
+    openAddNeedsModal(currentDetailCase.id);
+  }
+}
+
+async function openCaseDetailModal(casoId) {
+  try {
+    Loading.show('Cargando detalle del caso...');
+    const caso = await API.getCasoDetalleAprendiz(casoId);
+    Loading.hide();
+    currentDetailCase = caso;
+
+    document.getElementById('caseDetailHeaderNumber').innerText = `Caso #${caso.id} | Origen: ${caso.origen}`;
+    document.getElementById('caseDetailTitle').innerText = caso.tipo;
+
+    // 1. Timeline de Estado y Evolución
+    const stateContainer = document.getElementById('caseDetailStateTimeline');
+    const estadoBadge = getEstadoCasoBadgeHtml(caso.estado);
+    const prioridadBadge = getPrioridadCasoBadgeHtml(caso.prioridad);
+
+    stateContainer.innerHTML = `
+      <div class="flex items-center gap-3 w-full border-b border-slate-200 pb-2">
+        <span class="font-extrabold text-slate-500 uppercase text-[10px]">Estado Actual:</span>
+        ${estadoBadge}
+        <span class="font-extrabold text-slate-500 uppercase text-[10px] ml-2">Prioridad:</span>
+        ${prioridadBadge}
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full pt-1 text-[11px]">
+        <div>
+          <span class="text-slate-400 font-bold block uppercase text-[9px]">Fecha Creación</span>
+          <span class="font-bold text-sena-dark">${formatFechaColombia(caso.fecha_creacion)}</span>
+        </div>
+        <div>
+          <span class="text-slate-400 font-bold block uppercase text-[9px]">Responsable Asignado</span>
+          <span class="font-bold text-sena-dark">${caso.responsable ? (caso.responsable.nombres + ' ' + caso.responsable.apellidos) : 'Pendiente por asignar'}</span>
+        </div>
+        <div>
+          <span class="text-slate-400 font-bold block uppercase text-[9px]">Fecha Cierre</span>
+          <span class="font-bold text-sena-dark">${caso.fecha_cierre ? formatFechaColombia(caso.fecha_cierre) : 'Caso Abierto / En Proceso'}</span>
+        </div>
+      </div>
+    `;
+
+    // 2. Necesidades
+    const needsContainer = document.getElementById('caseDetailNeedsList');
+    if (!caso.necesidades_asociadas || !caso.necesidades_asociadas.length) {
+      needsContainer.innerHTML = `<p class="text-slate-400 italic text-xs">No hay necesidades asociadas a este caso.</p>`;
+    } else {
+      needsContainer.innerHTML = caso.necesidades_asociadas.map(cn => {
+        const nec = cn.necesidad;
+        if (!nec) return '';
+        return `
+          <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-start gap-2.5 max-w-sm w-full">
+            <div class="p-2 bg-[#EBF8E1] text-[#39A900] rounded-lg">
+              <i class="fas fa-hand-holding-heart text-sm"></i>
+            </div>
+            <div>
+              <span class="font-black text-sena-dark text-xs block">${nec.nombre}</span>
+              <span class="text-[10px] text-slate-400 font-bold block uppercase">Categoría: ${nec.categoria_relacionada || 'GENERAL'}</span>
+              ${nec.descripcion ? `<p class="text-[11px] text-slate-500 mt-1">${nec.descripcion}</p>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 3. Acciones
+    const actionsContainer = document.getElementById('caseDetailActionsList');
+    if (!caso.acciones || !caso.acciones.length) {
+      actionsContainer.innerHTML = `<p class="text-slate-400 italic text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">No se han registrado acciones aún para este caso.</p>`;
+    } else {
+      actionsContainer.innerHTML = caso.acciones.map(a => {
+        let estStyle = 'bg-amber-100 text-amber-800';
+        if (a.estado === 'EJECUTADA') estStyle = 'bg-[#EBF8E1] text-[#2E8800]';
+        else if (a.estado === 'CANCELADA') estStyle = 'bg-red-100 text-red-800';
+
+        return `
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-2 text-xs">
+            <div class="flex justify-between items-center">
+              <span class="font-black text-sena-dark">${a.descripcion}</span>
+              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${estStyle}">${a.estado}</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-lg">
+              <div><strong>Responsable:</strong> ${a.responsable ? (a.responsable.nombres + ' ' + a.responsable.apellidos) : 'Institucional'}</div>
+              <div><strong>Compromiso:</strong> ${a.fecha_compromiso || 'Sin fecha'} | <strong>Ejecución:</strong> ${a.fecha_ejecucion || 'Pendiente'}</div>
+            </div>
+            ${a.observaciones ? `<p class="text-slate-600 italic">" ${a.observaciones} "</p>` : ''}
+            ${a.evidencia_url ? `<a href="${a.evidencia_url}" target="_blank" class="text-[#39A900] font-bold text-[11px] underline inline-flex items-center gap-1"><i class="fas fa-paperclip"></i> Ver Evidencia Adjunta</a>` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 4. Bitácora de Seguimientos
+    const followupsContainer = document.getElementById('caseDetailFollowupsList');
+    if (!caso.seguimientos || !caso.seguimientos.length) {
+      followupsContainer.innerHTML = `<p class="text-slate-400 italic text-xs">No se registran notas de seguimiento aún.</p>`;
+    } else {
+      followupsContainer.innerHTML = caso.seguimientos.map(s => {
+        const u = s.usuario;
+        return `
+          <div class="relative pl-3 space-y-1">
+            <div class="absolute -left-[21px] top-1.5 w-3 h-3 rounded-full bg-sena-primary border-2 border-white shadow-sm"></div>
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="font-bold text-sena-dark">${u ? (u.nombres + ' ' + u.apellidos) : 'Funcionario SENA'}</span>
+              <span class="text-slate-400 font-semibold">${formatFechaColombia(s.created_at)}</span>
+            </div>
+            <p class="text-xs text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-200/80 leading-relaxed">${s.observacion}</p>
+            ${s.estado_caso_resultante ? `<span class="inline-block text-[9px] font-black uppercase text-indigo-800 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full">Cambió estado a: ${s.estado_caso_resultante}</span>` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    const modal = document.getElementById('modalCaseDetail');
+    if (modal) modal.classList.remove('hidden');
+  } catch (err) {
+    Loading.hide();
+    Toast.error(err.message, 'Fallo al cargar detalle del caso');
+  }
+}
+
+function closeCaseDetailModal() {
+  const modal = document.getElementById('modalCaseDetail');
+  if (modal) modal.classList.add('hidden');
+  currentDetailCase = null;
+}
+

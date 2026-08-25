@@ -36,3 +36,19 @@ class PortalContratoUpdate(BaseModel):
     fecha_fin_contrato: Optional[date] = None
     estado_contrato: Optional[str] = None
     observaciones: Optional[str] = None
+
+
+class PortalCasoCreate(BaseModel):
+    tipo: str
+    prioridad: Optional[str] = "MEDIA"
+    necesidades_ids: List[int] = []
+
+
+class PortalCasoUpdate(BaseModel):
+    tipo: Optional[str] = None
+    prioridad: Optional[str] = None
+
+
+class PortalCasoAgregarNecesidades(BaseModel):
+    necesidades_ids: List[int]
+

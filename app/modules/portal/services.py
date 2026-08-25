@@ -7,8 +7,14 @@ from app.core.exceptions import ForbiddenException, NotFoundException, Unauthori
 from app.modules.academic.models import Ficha
 from app.modules.apprentices.models import Aprendiz, Matricula
 from app.modules.benefits.models import AprendizBeneficio, Beneficio
+from app.modules.cases.models import Caso, CasoNecesidad
 from app.modules.contracts.models import ContratoAprendizaje
-from app.modules.portal.schemas import PerfilAprendizUpdate, PortalBeneficioCreate, PortalContratoCreate, PortalContratoUpdate
+
+from app.modules.portal.schemas import (
+    PerfilAprendizUpdate, PortalBeneficioCreate, PortalContratoCreate, PortalContratoUpdate,
+    PortalCasoCreate, PortalCasoUpdate
+)
+
 from app.modules.responses.models import Respuesta
 from app.modules.responses.schemas import BatchRespuestaCreate
 from app.modules.responses.services import ResponsesService
@@ -224,4 +230,106 @@ class PortalService:
             })
 
         return resultado
+
+    @staticmethod
+    async def get_casos(session: AsyncSession, aprendiz_id: int) -> List[Caso]:
+        from app.modules.cases.models import Caso, CasoNecesidad
+        from app.modules.actions.models import AccionCaso
+        from app.modules.followups.models import SeguimientoCaso
+
+        stmt = (
+            select(Caso)
+            .where(Caso.aprendiz_id == aprendiz_id)
+            .options(
+                selectinload(Caso.aprendiz).selectinload(Aprendiz.matriculas).selectinload(Matricula.ficha),
+                selectinload(Caso.responsable),
+                selectinload(Caso.necesidades_asociadas).selectinload(CasoNecesidad.necesidad),
+                selectinload(Caso.acciones).selectinload(AccionCaso.responsable),
+                selectinload(Caso.seguimientos).selectinload(SeguimientoCaso.usuario)
+            )
+            .order_by(desc(Caso.fecha_creacion))
+        )
+        res = await session.execute(stmt)
+        return list(res.scalars().all())
+
+    @staticmethod
+    async def get_caso_by_id(session: AsyncSession, aprendiz_id: int, caso_id: int) -> Caso:
+        from app.modules.cases.models import Caso, CasoNecesidad
+        from app.modules.actions.models import AccionCaso
+        from app.modules.followups.models import SeguimientoCaso
+
+        stmt = (
+            select(Caso)
+            .where(Caso.id == caso_id, Caso.aprendiz_id == aprendiz_id)
+            .options(
+                selectinload(Caso.aprendiz).selectinload(Aprendiz.matriculas).selectinload(Matricula.ficha),
+                selectinload(Caso.responsable),
+                selectinload(Caso.necesidades_asociadas).selectinload(CasoNecesidad.necesidad),
+                selectinload(Caso.acciones).selectinload(AccionCaso.responsable),
+                selectinload(Caso.seguimientos).selectinload(SeguimientoCaso.usuario)
+            )
+        )
+
+        res = await session.execute(stmt)
+        caso = res.scalar_one_or_none()
+        if not caso:
+            raise NotFoundException("Caso", caso_id)
+        return caso
+
+    @staticmethod
+    async def registrar_caso(session: AsyncSession, aprendiz_id: int, caso_in: PortalCasoCreate) -> Caso:
+        from app.modules.cases.models import Caso, CasoNecesidad
+        caso = Caso(
+            aprendiz_id=aprendiz_id,
+            tipo=caso_in.tipo,
+            prioridad=caso_in.prioridad or "MEDIA",
+            estado="NUEVO",
+            origen="MANUAL_APRENDIZ"
+        )
+        session.add(caso)
+        await session.flush()
+
+        for nec_id in (caso_in.necesidades_ids or []):
+            cn = CasoNecesidad(caso_id=caso.id, necesidad_id=nec_id)
+            session.add(cn)
+
+        await session.commit()
+        return await PortalService.get_caso_by_id(session, aprendiz_id, caso.id)
+
+    @staticmethod
+    async def update_caso(
+        session: AsyncSession,
+        aprendiz_id: int,
+        caso_id: int,
+        caso_in: PortalCasoUpdate
+    ) -> Caso:
+        caso = await PortalService.get_caso_by_id(session, aprendiz_id, caso_id)
+        update_data = caso_in.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            if value is not None:
+                setattr(caso, field, value)
+        await session.commit()
+        return await PortalService.get_caso_by_id(session, aprendiz_id, caso_id)
+
+    @staticmethod
+    async def agregar_necesidades_caso(
+        session: AsyncSession,
+        aprendiz_id: int,
+        caso_id: int,
+        necesidades_ids: List[int]
+    ) -> Caso:
+        from app.modules.cases.models import CasoNecesidad
+        caso = await PortalService.get_caso_by_id(session, aprendiz_id, caso_id)
+        
+        existentes_ids = {cn.necesidad_id for cn in caso.necesidades_asociadas}
+        for nec_id in necesidades_ids:
+            if nec_id not in existentes_ids:
+                cn = CasoNecesidad(caso_id=caso.id, necesidad_id=nec_id)
+                session.add(cn)
+
+        await session.commit()
+        session.expire_all()
+        return await PortalService.get_caso_by_id(session, aprendiz_id, caso_id)
+
+
 
