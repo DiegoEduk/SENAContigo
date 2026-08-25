@@ -99,8 +99,13 @@ if os.path.exists("static"):
     app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Web Frontend Routes
+@app.get("/favicon.ico", include_in_schema=False)
+async def serve_favicon():
+    return FileResponse("static/logosena.png")
+
 @app.get("/", include_in_schema=False)
 async def serve_index():
+
     return FileResponse("templates/index.html")
 
 @app.get("/dashboard", include_in_schema=False)

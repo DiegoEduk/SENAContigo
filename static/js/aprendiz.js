@@ -192,15 +192,16 @@ function switchTab(tabName) {
 
   const buttons = document.querySelectorAll('[id^="tab-"]');
   buttons.forEach(btn => {
-    btn.classList.remove('bg-[#27F531]', 'text-[#252525]', 'font-black');
-    btn.classList.add('text-slate-600', 'hover:bg-[#F3F2F2]');
+    btn.classList.remove('bg-sena-primary', 'bg-[#27F531]', 'text-sena-dark', 'text-[#252525]', 'font-black');
+    btn.classList.add('text-slate-600', 'font-bold', 'hover:bg-sena-bg');
   });
 
   const activeBtn = document.getElementById(`tab-${tabName}`);
   if (activeBtn) {
-    activeBtn.classList.remove('text-slate-600', 'hover:bg-[#F3F2F2]');
-    activeBtn.classList.add('bg-[#27F531]', 'text-[#252525]', 'font-black');
+    activeBtn.classList.remove('text-slate-600', 'hover:bg-sena-bg');
+    activeBtn.classList.add('bg-sena-primary', 'text-sena-dark', 'font-black');
   }
+
 
   const sections = document.querySelectorAll('section[id^="sec-"]');
   sections.forEach(s => s.classList.add('hidden'));
