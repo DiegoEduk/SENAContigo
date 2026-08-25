@@ -59,8 +59,8 @@ api_router.include_router(segmentos_router)
 api_router.include_router(reglas_router)
 api_router.include_router(necesidades_router)
 api_router.include_router(casos_router)
-api_router.include_router(acciones_router)
 api_router.include_router(seguimientos_router)
+
 
 # Analítica, Notificaciones y Auditoría
 api_router.include_router(analytics_router)

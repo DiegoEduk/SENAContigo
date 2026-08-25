@@ -5,8 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import NotFoundException
-from app.modules.cases.models import Caso, CasoNecesidad
+from app.modules.cases.models import Caso
 from app.modules.cases.schemas import CasoCreate, CasoUpdate
+from app.modules.followups.models import SeguimientoCaso
+from app.modules.apprentices.models import Aprendiz, Matricula
 
 
 class CasesService:
@@ -21,9 +23,10 @@ class CasesService:
         stmt = (
             select(Caso)
             .options(
-                selectinload(Caso.aprendiz),
+                selectinload(Caso.aprendiz).selectinload(Aprendiz.matriculas).selectinload(Matricula.ficha),
                 selectinload(Caso.responsable),
-                selectinload(Caso.necesidades_asociadas).selectinload(CasoNecesidad.necesidad)
+                selectinload(Caso.tipo_caso),
+                selectinload(Caso.seguimientos).selectinload(SeguimientoCaso.usuario)
             )
             .order_by(Caso.fecha_creacion.desc())
         )
@@ -45,11 +48,10 @@ class CasesService:
             select(Caso)
             .where(Caso.id == caso_id)
             .options(
-                selectinload(Caso.aprendiz),
+                selectinload(Caso.aprendiz).selectinload(Aprendiz.matriculas).selectinload(Matricula.ficha),
                 selectinload(Caso.responsable),
-                selectinload(Caso.necesidades_asociadas).selectinload(CasoNecesidad.necesidad),
-                selectinload(Caso.acciones),
-                selectinload(Caso.seguimientos)
+                selectinload(Caso.tipo_caso),
+                selectinload(Caso.seguimientos).selectinload(SeguimientoCaso.usuario)
             )
         )
         res = await session.execute(stmt)
@@ -62,7 +64,8 @@ class CasesService:
     async def create_caso(session: AsyncSession, caso_in: CasoCreate) -> Caso:
         caso = Caso(
             aprendiz_id=caso_in.aprendiz_id,
-            tipo=caso_in.tipo,
+            tipo_caso_id=caso_in.tipo_caso_id,
+            descripcion=caso_in.descripcion,
             prioridad=caso_in.prioridad,
             estado=caso_in.estado,
             responsable_id=caso_in.responsable_id,
@@ -70,13 +73,11 @@ class CasesService:
         )
         session.add(caso)
         await session.flush()
-
-        for nec_id in caso_in.necesidades_ids:
-            cn = CasoNecesidad(caso_id=caso.id, necesidad_id=nec_id)
-            session.add(cn)
-
+        caso_id = caso.id
         await session.commit()
-        return await CasesService.get_caso_by_id(session, caso.id)
+        session.expire_all()
+        return await CasesService.get_caso_by_id(session, caso_id)
+
 
     @staticmethod
     async def update_caso(session: AsyncSession, caso_id: int, caso_in: CasoUpdate) -> Caso:
@@ -89,4 +90,6 @@ class CasesService:
             caso.fecha_cierre = datetime.now(timezone.utc)
 
         await session.commit()
+        session.expire_all()
         return await CasesService.get_caso_by_id(session, caso_id)
+

@@ -10,7 +10,8 @@ from app.modules.identity.models import Rol, Usuario
 from app.modules.organization.models import CentroFormacion, Regional
 from app.modules.academic.models import Ficha, ProgramaFormacion
 from app.modules.variables.models import CategoriaVariable
-from app.modules.needs.models import Necesidad
+from app.modules.needs.models import TipoCaso
+
 from app.modules.apprentices.models import Aprendiz, Matricula
 from app.modules.contracts.models import ContratoAprendizaje
 from app.modules.cases.models import Caso
@@ -319,20 +320,26 @@ async def seed_data():
                 if not res_cat.scalar_one_or_none():
                     session.add(CategoriaVariable(codigo=cat_code, nombre=cat_name, descripcion=cat_desc, activa=True))
 
-            # 6. Crear Catálogo de Necesidades Iniciales
-            necesidades_data = [
-                ("ALOJAMIENTO", "Alojamiento Temporal", "Necesidad de reubicación o alojamiento de emergencia", "VIVIENDA"),
-                ("CONECTIVIDAD", "Internet y Equipo Computacional", "Necesidad de plan de datos o préstamo de computador", "CONECTIVIDAD"),
-                ("ALIMENTARIO", "Apoyo Alimentario", "Bono o paquete alimentario de emergencia", "ALIMENTACION"),
-                ("ECONOMICO", "Apoyo Económico de Emergencia", "Auxilio económico temporal", "ECONOMIA"),
-                ("PSICOLOGICO", "Acompañamiento Psicosocial", "Atención por bienestar al aprendiz", "FAMILIA"),
-                ("FORMATIVO", "Riesgo de Deserción / Continuidad Formativa", "Plan de mejoramiento o reprogramación de guía", "EMPLEO")
+            # 6. Crear Catálogo de Tipos de Caso Iniciales
+            tipos_caso_data = [
+                ("APOYO_PSICOSOCIAL", "Acompañamiento y orientación psicosocial", "Orientación ante situaciones personales, familiares o emocionales que afecten al aprendiz.", "FAMILIA"),
+                ("APOYO_ALIMENTACION", "Apoyo de alimentación", "Apoyo para aprendices con dificultades para cubrir sus necesidades alimentarias.", "ALIMENTACION"),
+                ("APOYO_TRANSPORTE", "Apoyo de transporte", "Apoyo para facilitar el desplazamiento del aprendiz a sus actividades formativas.", "TRANSPORTE"),
+                ("APOYO_CONECTIVIDAD", "Plan de datos y conectividad", "Apoyo para facilitar el acceso a Internet y la conectividad requerida para la formación.", "CONECTIVIDAD"),
+                ("APOYO_EQUIPO_COMPUTO", "Acceso a equipo de cómputo", "Gestión de acceso a equipos necesarios para las actividades de formación.", "CONECTIVIDAD"),
+                ("APOYO_INCLUSION", "Atención diferencial e inclusión", "Apoyo para superar barreras que afecten la participación en la formación.", "INCLUSION"),
+                ("APOYO_ACADEMICO", "Acompañamiento académico", "Orientación ante dificultades que afecten el desempeño o avance académico.", "ACADEMICA"),
+                ("APOYO_ETAPA_PRODUCTIVA", "Gestión de etapa productiva", "Orientación para facilitar la vinculación a una alternativa de etapa productiva.", "EMPLEO"),
+                ("APOYO_PERMANENCIA", "Seguimiento para permanencia", "Seguimiento a factores que puedan afectar la continuidad del aprendiz.", "ACADEMICA"),
+                ("APOYO_HABITACIONAL", "Apoyo para situación habitacional", "Orientación y gestión ante dificultades de vivienda o alojamiento.", "VIVIENDA")
             ]
 
-            for nec_code, nec_name, nec_desc, nec_cat in necesidades_data:
-                res_nec = await session.execute(select(Necesidad).where(Necesidad.codigo == nec_code))
-                if not res_nec.scalar_one_or_none():
-                    session.add(Necesidad(codigo=nec_code, nombre=nec_name, descripcion=nec_desc, categoria_relacionada=nec_cat, activa=True))
+            for tc_code, tc_name, tc_desc, tc_cat in tipos_caso_data:
+                res_tc = await session.execute(select(TipoCaso).where(TipoCaso.codigo == tc_code))
+                if not res_tc.scalar_one_or_none():
+                    session.add(TipoCaso(codigo=tc_code, nombre=tc_name, descripcion=tc_desc, categoria_relacionada=tc_cat, activa=True))
+
+
 
             # 7. Crear Catálogo de Beneficios Institucionales SENA por Defecto
             beneficios_data = [

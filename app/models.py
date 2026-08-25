@@ -12,7 +12,7 @@ import app.modules.surveys.models  # noqa: F401
 import app.modules.responses.models  # noqa: F401
 import app.modules.needs.models  # noqa: F401
 import app.modules.cases.models  # noqa: F401
-import app.modules.actions.models  # noqa: F401
+
 import app.modules.followups.models  # noqa: F401
 import app.modules.benefits.models  # noqa: F401
 import app.modules.rules.models  # noqa: F401

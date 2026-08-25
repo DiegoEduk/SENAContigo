@@ -373,7 +373,7 @@
                     <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
                         <i class="fas fa-folder-plus text-sena-dark"></i> Registrar Nuevo Caso de Atención
                     </h3>
-                    <p class="text-xs text-slate-500">Describe el tipo de caso e indica las necesidades iniciales del catálogo.</p>
+                    <p class="text-xs text-slate-500">Selecciona el tipo de caso e ingresa la descripción detallada de tu situación.</p>
                 </div>
                 <button onclick="closeCreateCaseModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition flex items-center justify-center text-sm">
                     <i class="fas fa-xmark"></i>
@@ -382,17 +382,15 @@
 
             <form onsubmit="handleCreateCase(event)" class="space-y-4">
                 <div>
-                    <label for="createCaseTipo" class="block text-xs font-bold text-sena-dark mb-1">Tipo / Situación del Caso <span class="text-red-500">*</span></label>
-                    <select id="createCaseTipo" required class="w-full text-xs p-3 border border-sena-border rounded-xl focus:ring-2 focus:ring-sena-primary bg-white">
-                        <option value="">-- Seleccionar Tipo de Caso --</option>
-                        <option value="SITUACIÓN HABITACIONAL">SITUACIÓN HABITACIONAL Y VIVIENDA</option>
-                        <option value="RIESGO CONTINUIDAD">RIESGO DE DESERCIÓN / CONTINUIDAD FORMATIVA</option>
-                        <option value="APOYO ALIMENTARIO">APOYO ALIMENTARIO Y NUTRICIÓN</option>
-                        <option value="CONECTIVIDAD Y TECNOLOGÍA">CONECTIVIDAD Y EQUIPO COMPUTACIONAL</option>
-                        <option value="ASISTENCIA PSICOSOCIAL">ACOMPAÑAMIENTO Y ORIENTACIÓN PSICOSOCIAL</option>
-                        <option value="SITUACIÓN ECONÓMICA">SOLICITUD DE APOYO ECONÓMICO / VULNERABILIDAD</option>
-                        <option value="OTRO">OTRA SOLICITUD DE BIENESTAR</option>
+                    <label for="createCaseTipoCasoId" class="block text-xs font-bold text-sena-dark mb-1">Tipo de Caso / Necesidad <span class="text-red-500">*</span></label>
+                    <select id="createCaseTipoCasoId" required class="w-full text-xs p-3 border border-sena-border rounded-xl focus:ring-2 focus:ring-sena-primary bg-white">
+                        <!-- Dynamic load from DB -->
                     </select>
+                </div>
+
+                <div>
+                    <label for="createCaseDescripcion" class="block text-xs font-bold text-sena-dark mb-1">Descripción de la Situación <span class="text-red-500">*</span></label>
+                    <textarea id="createCaseDescripcion" required rows="3" placeholder="Describe con tus propias palabras la situación que estás presentando o la ayuda requerida..." class="w-full text-xs p-3 border border-sena-border rounded-xl focus:ring-2 focus:ring-sena-primary"></textarea>
                 </div>
 
                 <div>
@@ -403,14 +401,6 @@
                         <option value="ALTA">ALTA</option>
                         <option value="CRITICA">CRÍTICA</option>
                     </select>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-sena-dark mb-1">Necesidades Iniciales del Catálogo (Opcional)</label>
-                    <p class="text-[11px] text-slate-400 mb-2">Selecciona las carencias o apoyos específicos requeridos para este caso:</p>
-                    <div id="createCaseNeedsContainer" class="max-h-48 overflow-y-auto p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
-                        <!-- Dynamic checkboxes -->
-                    </div>
                 </div>
 
                 <div class="pt-3 border-t border-sena-border flex justify-end gap-3">
@@ -443,8 +433,15 @@
             <form onsubmit="handleEditCase(event)" class="space-y-4">
                 <input type="hidden" id="editCaseId">
                 <div>
-                    <label for="editCaseTipo" class="block text-xs font-bold text-sena-dark mb-1">Tipo de Caso <span class="text-red-500">*</span></label>
-                    <input type="text" id="editCaseTipo" required class="w-full text-xs p-3 border border-sena-border rounded-xl focus:ring-2 focus:ring-sena-primary">
+                    <label for="editCaseTipoCasoId" class="block text-xs font-bold text-sena-dark mb-1">Tipo de Caso <span class="text-red-500">*</span></label>
+                    <select id="editCaseTipoCasoId" required class="w-full text-xs p-3 border border-sena-border rounded-xl focus:ring-2 focus:ring-sena-primary bg-white">
+                        <!-- Dynamic options -->
+                    </select>
+                </div>
+
+                <div>
+                    <label for="editCaseDescripcion" class="block text-xs font-bold text-sena-dark mb-1">Descripción de la Situación</label>
+                    <textarea id="editCaseDescripcion" rows="3" class="w-full text-xs p-3 border border-sena-border rounded-xl focus:ring-2 focus:ring-sena-primary"></textarea>
                 </div>
 
                 <div>
@@ -469,40 +466,7 @@
         </div>
     </div>
 
-    <!-- MODAL: AGREGAR NECESIDADES AL CASO -->
-    <div id="modalAddNeedsCase" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 sm:p-8 space-y-5 transform transition-all border border-sena-border">
-            <div class="flex justify-between items-start border-b border-sena-border pb-4">
-                <div>
-                    <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
-                        <i class="fas fa-layer-group text-sena-dark"></i> Agregar Necesidades del Catálogo
-                    </h3>
-                    <p class="text-xs text-slate-500">Selecciona las necesidades adicionales a vincular al caso.</p>
-                </div>
-                <button onclick="closeAddNeedsModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition flex items-center justify-center text-sm">
-                    <i class="fas fa-xmark"></i>
-                </button>
-            </div>
-
-            <form onsubmit="handleAddNeedsToCase(event)" class="space-y-4">
-                <input type="hidden" id="addNeedsCaseId">
-                <div id="addNeedsListContainer" class="max-h-60 overflow-y-auto p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
-                    <!-- Dynamic checkable list -->
-                </div>
-
-                <div class="pt-3 border-t border-sena-border flex justify-end gap-3">
-                    <button type="button" onclick="closeAddNeedsModal()" class="px-5 py-2.5 bg-slate-200 text-sena-dark font-bold text-xs rounded-xl hover:bg-slate-300 transition">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="px-6 py-2.5 bg-sena-primary text-sena-dark font-black text-xs uppercase tracking-wider rounded-xl hover:bg-sena-secondary transition shadow-md flex items-center gap-2">
-                        <i class="fas fa-plus-circle"></i> Vincular Necesidades
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL: DETALLE COMPLETO DEL CASO (EVOLUCIÓN, NECESIDADES, ACCIONES Y SEGUIMIENTOS) -->
+    <!-- MODAL: DETALLE COMPLETO DEL CASO (EVOLUCIÓN Y SEGUIMIENTOS) -->
     <div id="modalCaseDetail" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl shadow-2xl max-w-3xl w-full p-6 sm:p-8 space-y-6 transform transition-all border border-sena-border max-h-[90vh] flex flex-col">
             <!-- Header del Modal -->
@@ -510,7 +474,7 @@
                 <div>
                     <span id="caseDetailHeaderNumber" class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Caso #0</span>
                     <h3 id="caseDetailTitle" class="text-lg font-black text-sena-dark">Tipo del Caso</h3>
-                    <p class="text-xs text-slate-500">Trazabilidad inmutable de atención, necesidades, plan de acción y bitácora de seguimiento.</p>
+                    <p class="text-xs text-slate-500">Trazabilidad inmutable de atención, evolución e historial de seguimiento registrado por los funcionarios.</p>
                 </div>
                 <button onclick="closeCaseDetailModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition flex items-center justify-center text-sm">
                     <i class="fas fa-xmark"></i>
@@ -529,32 +493,17 @@
                     </div>
                 </div>
 
-                <!-- 2. Necesidades Asociadas -->
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center">
-                        <h4 class="text-xs font-black text-sena-dark uppercase tracking-wider flex items-center gap-1.5">
-                            <i class="fas fa-hand-holding-hand text-sena-dark"></i> Necesidades Identificadas / Asociadas
-                        </h4>
-                        <button onclick="openAddNeedsModalFromDetail()" class="text-xs text-sena-dark bg-sena-primary hover:bg-sena-secondary font-bold px-3 py-1 rounded-lg transition flex items-center gap-1">
-                            <i class="fas fa-plus text-[10px]"></i> Agregar Necesidades
-                        </button>
-                    </div>
-                    <div id="caseDetailNeedsList" class="flex flex-wrap gap-2 text-xs">
-                        <!-- Dynamic needs pills -->
-                    </div>
-                </div>
-
-                <!-- 3. Plan de Acciones -->
-                <div class="space-y-3">
+                <!-- 2. Descripción del Caso -->
+                <div class="space-y-2">
                     <h4 class="text-xs font-black text-sena-dark uppercase tracking-wider flex items-center gap-1.5">
-                        <i class="fas fa-list-check text-sena-dark"></i> Plan de Acciones Ejecutadas / Programadas
+                        <i class="fas fa-align-left text-sena-dark"></i> Descripción de la Situación
                     </h4>
-                    <div id="caseDetailActionsList" class="space-y-2">
-                        <!-- Dynamic actions -->
+                    <div id="caseDetailDescripcion" class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs text-slate-700 leading-relaxed italic">
+                        <!-- Dynamic description -->
                     </div>
                 </div>
 
-                <!-- 4. Bitácora de Seguimientos -->
+                <!-- 3. Bitácora de Seguimientos -->
                 <div class="space-y-3">
                     <h4 class="text-xs font-black text-sena-dark uppercase tracking-wider flex items-center gap-1.5">
                         <i class="fas fa-comments text-sena-dark"></i> Bitácora de Seguimientos Registrados
@@ -573,6 +522,7 @@
             </div>
         </div>
     </div>
+
 
 
     </div>

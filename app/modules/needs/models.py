@@ -6,8 +6,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.core.database import Base
 
 
-class Necesidad(Base):
-    __tablename__ = "necesidades"
+class TipoCaso(Base):
+    __tablename__ = "tipos_caso"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     codigo: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
@@ -16,3 +16,8 @@ class Necesidad(Base):
     categoria_relacionada: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     activa: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+# Alias para retrocompatibilidad
+Necesidad = TipoCaso
+

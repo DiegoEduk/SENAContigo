@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
 
-class NecesidadBase(BaseModel):
+class TipoCasoBase(BaseModel):
     codigo: str
     nombre: str
     descripcion: Optional[str] = None
@@ -11,11 +11,18 @@ class NecesidadBase(BaseModel):
     activa: bool = True
 
 
-class NecesidadCreate(NecesidadBase):
+class TipoCasoCreate(TipoCasoBase):
     pass
 
 
-class NecesidadRead(NecesidadBase):
+class TipoCasoRead(TipoCasoBase):
     id: int
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
+
+
+# Aliases
+NecesidadBase = TipoCasoBase
+NecesidadCreate = TipoCasoCreate
+NecesidadRead = TipoCasoRead
+

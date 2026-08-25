@@ -47,7 +47,7 @@ class RulesService:
             a = ReglaAccion(
                 regla_id=regla.id,
                 tipo_accion=acc.tipo_accion,
-                necesidad_id=acc.necesidad_id,
+                tipo_caso_id=getattr(acc, 'tipo_caso_id', None) or getattr(acc, 'necesidad_id', None),
                 prioridad_caso=acc.prioridad_caso,
                 titulo_caso=acc.titulo_caso,
                 mensaje_notificacion=acc.mensaje_notificacion
@@ -75,9 +75,9 @@ class RulesService:
 
     @staticmethod
     async def evaluate_rules_for_aprendiz(session: AsyncSession, aprendiz_id: int):
-        """Evaluate active rules for an aprendiz based on their latest responses and auto-create Cases/Needs."""
+        """Evaluate active rules for an aprendiz based on their latest responses and auto-create Cases."""
         from app.modules.responses.models import Respuesta
-        from app.modules.cases.models import Caso, CasoNecesidad
+        from app.modules.cases.models import Caso
         from app.modules.notifications.models import Notificacion
 
         # Get active rules
@@ -120,24 +120,21 @@ class RulesService:
                         existing_case = await session.execute(
                             select(Caso).where(
                                 (Caso.aprendiz_id == aprendiz_id) &
-                                (Caso.tipo == titulo) &
+                                (Caso.tipo_caso_id == acc.tipo_caso_id) &
                                 (Caso.estado.in_(["NUEVO", "ASIGNADO", "EN_ATENCION"]))
                             )
                         )
                         if not existing_case.scalar_one_or_none():
                             caso = Caso(
                                 aprendiz_id=aprendiz_id,
-                                tipo=titulo,
+                                tipo_caso_id=acc.tipo_caso_id,
+                                descripcion=titulo,
                                 prioridad=acc.prioridad_caso or "CRITICA",
                                 estado="NUEVO",
                                 origen="MOTOR_DE_REGLAS"
                             )
                             session.add(caso)
-                            await session.flush()
 
-                            if acc.necesidad_id:
-                                cn = CasoNecesidad(caso_id=caso.id, necesidad_id=acc.necesidad_id)
-                                session.add(cn)
 
                     elif acc.tipo_accion == "CREAR_NOTIFICACION":
                         notif = Notificacion(

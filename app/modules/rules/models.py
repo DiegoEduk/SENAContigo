@@ -40,11 +40,12 @@ class ReglaAccion(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     regla_id: Mapped[int] = mapped_column(ForeignKey("reglas.id", ondelete="CASCADE"), nullable=False)
-    tipo_accion: Mapped[str] = mapped_column(String(50), nullable=False)  # CREAR_CASO, CREAR_NECESIDAD, CREAR_NOTIFICACION
-    necesidad_id: Mapped[Optional[int]] = mapped_column(ForeignKey("necesidades.id", ondelete="SET NULL"), nullable=True)
+    tipo_accion: Mapped[str] = mapped_column(String(50), nullable=False)  # CREAR_CASO, CREAR_NOTIFICACION
+    tipo_caso_id: Mapped[Optional[int]] = mapped_column(ForeignKey("tipos_caso.id", ondelete="SET NULL"), nullable=True)
     prioridad_caso: Mapped[str] = mapped_column(String(50), default="MEDIA")  # ALTA, CRITICA, MEDIA, BAJA
     titulo_caso: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)
     mensaje_notificacion: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     regla: Mapped["Regla"] = relationship("Regla", back_populates="acciones")
-    necesidad: Mapped[Optional["Necesidad"]] = relationship("Necesidad")
+    tipo_caso: Mapped[Optional["TipoCaso"]] = relationship("TipoCaso")
+

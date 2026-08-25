@@ -11,9 +11,11 @@ from app.modules.benefits.schemas import AprendizBeneficioResponse
 from app.modules.contracts.schemas import ContratoCreate, ContratoRead, ContratoUpdate
 from app.modules.contracts.services import ContractsService
 from app.modules.cases.schemas import CasoRead
+from app.modules.needs.schemas import TipoCasoRead
+from app.modules.needs.services import CaseTypesService
 from app.modules.portal.schemas import (
     PerfilAprendizUpdate, PortalBeneficioCreate, PortalContratoCreate, PortalContratoUpdate,
-    PortalCasoCreate, PortalCasoUpdate, PortalCasoAgregarNecesidades
+    PortalCasoCreate, PortalCasoUpdate
 )
 from app.modules.portal.services import PortalService
 from app.modules.responses.schemas import BatchRespuestaCreate, RespuestaHistorialRead, RespuestaRead
@@ -252,14 +254,12 @@ async def update_my_case(
     return await PortalService.update_caso(db, aprendiz_id, caso_id, caso_in)
 
 
-@router.post("/casos/{caso_id}/necesidades", response_model=CasoRead)
-async def agregar_necesidades_my_case(
-    caso_id: int,
-    nec_in: PortalCasoAgregarNecesidades,
+@router.get("/tipos-caso", response_model=List[TipoCasoRead])
+async def get_portal_tipos_caso(
     db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user_token)
 ):
-    """Asociar necesidades adicionales del catálogo a un caso propio."""
-    aprendiz_id = _resolve_aprendiz_id(current_user)
-    return await PortalService.agregar_necesidades_caso(db, aprendiz_id, caso_id, nec_in.necesidades_ids)
+    """Consultar catálogo de tipos de caso activos."""
+    return await CaseTypesService.list_tipos_caso(db)
+
 

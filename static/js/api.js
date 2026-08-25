@@ -447,19 +447,17 @@ const API = {
     });
   },
 
-  agregarNecesidadesCasoAprendiz(id, necesidades_ids) {
-    return this.request(`/portal/casos/${id}/necesidades`, {
-      method: 'POST',
-      body: JSON.stringify({ necesidades_ids })
-    });
+  getTiposCaso() {
+    return this.request('/portal/tipos-caso');
   },
 
   getNecesidadesCatalogo() {
-    return this.request('/necesidades');
+    return this.request('/portal/tipos-caso');
   },
 
 
   // Cases & Rules
+
 
   getCasos(params = {}) {
     const q = new URLSearchParams(params).toString();

@@ -1155,7 +1155,7 @@ function selectCity(cityName) {
 
 // TAB 6: CASOS Y SEGUIMIENTO DEL APRENDIZ
 let myCasesCache = [];
-let catalogNeedsCache = [];
+let catalogTiposCasoCache = [];
 let currentDetailCase = null;
 
 async function loadMyCases() {
@@ -1164,12 +1164,12 @@ async function loadMyCases() {
   container.innerHTML = `<p class="text-center text-slate-400 py-6">Cargando tus casos de atención...</p>`;
 
   try {
-    const [casos, necesidades] = await Promise.all([
+    const [casos, tiposCaso] = await Promise.all([
       API.getMisCasos(),
-      API.getNecesidadesCatalogo()
+      API.getTiposCaso()
     ]);
     myCasesCache = casos || [];
-    catalogNeedsCache = necesidades || [];
+    catalogTiposCasoCache = tiposCaso || [];
 
     if (!myCasesCache || !myCasesCache.length) {
       container.innerHTML = `
@@ -1190,11 +1190,7 @@ async function loadMyCases() {
     container.innerHTML = myCasesCache.map(c => {
       const estadoBadge = getEstadoCasoBadgeHtml(c.estado);
       const prioridadBadge = getPrioridadCasoBadgeHtml(c.prioridad);
-      const necListHtml = (c.necesidades_asociadas && c.necesidades_asociadas.length)
-        ? c.necesidades_asociadas.map(cn => `<span class="bg-slate-100 text-slate-700 border border-slate-200 font-extrabold px-2.5 py-1 rounded-full text-[10px]"><i class="fas fa-tag text-[#39A900] text-[9px] mr-1"></i>${cn.necesidad ? cn.necesidad.nombre : 'Necesidad'}</span>`).join('')
-        : `<span class="text-slate-400 text-[11px] italic">Sin necesidades asociadas aún</span>`;
-
-      const cantAcciones = (c.acciones && c.acciones.length) || 0;
+      const tipoNombre = c.tipo_caso ? c.tipo_caso.nombre : 'Tipo de Caso No Especificado';
       const cantSeguimientos = (c.seguimientos && c.seguimientos.length) || 0;
 
       return `
@@ -1205,7 +1201,7 @@ async function loadMyCases() {
                 <span class="text-[10px] font-black uppercase bg-slate-200 text-slate-700 px-2.5 py-0.5 rounded-full">Caso #${c.id}</span>
                 <span class="text-[10px] font-bold text-slate-400">${formatFechaColombia(c.fecha_creacion)}</span>
               </div>
-              <h4 class="text-base font-black text-sena-dark mt-1">${c.tipo}</h4>
+              <h4 class="text-base font-black text-sena-dark mt-1">${tipoNombre}</h4>
             </div>
             <div class="flex items-center gap-2">
               ${prioridadBadge}
@@ -1213,26 +1209,24 @@ async function loadMyCases() {
             </div>
           </div>
 
-          <div class="space-y-2">
-            <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Necesidades del Caso</span>
-            <div class="flex flex-wrap gap-1.5">${necListHtml}</div>
-          </div>
+          ${c.descripcion ? `
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs text-slate-700">
+              <span class="font-bold text-sena-dark text-[11px] block mb-0.5">Descripción de la Situación:</span>
+              <p class="italic leading-relaxed">"${c.descripcion}"</p>
+            </div>
+          ` : ''}
 
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-sena-border text-xs">
             <div class="flex items-center gap-4 text-slate-500 font-medium">
-              <span><i class="fas fa-list-check text-slate-400 mr-1"></i> ${cantAcciones} acción(es)</span>
-              <span><i class="fas fa-comments text-slate-400 mr-1"></i> ${cantSeguimientos} seguimiento(s)</span>
+              <span><i class="fas fa-comments text-slate-400 mr-1"></i> ${cantSeguimientos} seguimiento(s) en la bitácora</span>
               <span><i class="fas fa-user-gear text-slate-400 mr-1"></i> ${c.responsable ? (c.responsable.nombres + ' ' + c.responsable.apellidos) : 'Sin responsable asignado'}</span>
             </div>
             <div class="flex items-center gap-2 shrink-0">
               <button onclick="openEditCaseModal(${c.id})" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-sena-dark font-bold text-xs rounded-xl transition flex items-center gap-1">
                 <i class="fas fa-pen-to-square text-xs"></i> Editar
               </button>
-              <button onclick="openAddNeedsModal(${c.id})" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-sena-dark font-bold text-xs rounded-xl transition flex items-center gap-1">
-                <i class="fas fa-plus text-xs"></i> Necesidades
-              </button>
               <button onclick="openCaseDetailModal(${c.id})" class="px-4 py-1.5 bg-sena-primary hover:bg-sena-secondary text-sena-dark font-black text-xs rounded-xl transition shadow-sm flex items-center gap-1.5">
-                <i class="fas fa-eye"></i> Ver Seguimiento
+                <i class="fas fa-eye"></i> Ver Bitácora y Evolución
               </button>
             </div>
           </div>
@@ -1269,21 +1263,15 @@ function getPrioridadCasoBadgeHtml(prioridad) {
 
 function openCreateCaseModal() {
   const modal = document.getElementById('modalCreateCase');
-  const needsContainer = document.getElementById('createCaseNeedsContainer');
+  const selectTipoCaso = document.getElementById('createCaseTipoCasoId');
   if (modal) modal.classList.remove('hidden');
 
-  if (needsContainer) {
-    if (!catalogNeedsCache || !catalogNeedsCache.length) {
-      needsContainer.innerHTML = `<p class="text-slate-400 italic">No hay necesidades disponibles en el catálogo.</p>`;
+  if (selectTipoCaso) {
+    if (!catalogTiposCasoCache || !catalogTiposCasoCache.length) {
+      selectTipoCaso.innerHTML = `<option value="">-- Sin tipos de caso disponibles --</option>`;
     } else {
-      needsContainer.innerHTML = catalogNeedsCache.map(n => `
-        <label class="flex items-start p-2 bg-white rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
-          <input type="checkbox" name="createCaseNeeds" value="${n.id}" class="mt-0.5 text-sena-primary focus:ring-sena-primary rounded">
-          <div class="ml-2.5">
-            <span class="font-bold text-sena-dark block">${n.nombre} <span class="text-[10px] font-normal text-slate-400">(${n.codigo})</span></span>
-            ${n.descripcion ? `<p class="text-[11px] text-slate-500">${n.descripcion}</p>` : ''}
-          </div>
-        </label>
+      selectTipoCaso.innerHTML = `<option value="">-- Seleccionar Tipo de Caso / Necesidad --</option>` + catalogTiposCasoCache.map(tc => `
+        <option value="${tc.id}">${tc.nombre} (${tc.codigo})</option>
       `).join('');
     }
   }
@@ -1296,19 +1284,24 @@ function closeCreateCaseModal() {
 
 async function handleCreateCase(e) {
   e.preventDefault();
-  const tipo = document.getElementById('createCaseTipo').value;
+  const tipo_caso_id_str = document.getElementById('createCaseTipoCasoId').value;
+  const descripcion = document.getElementById('createCaseDescripcion').value.trim();
   const prioridad = document.getElementById('createCasePrioridad').value;
-  const checkboxes = document.querySelectorAll('input[name="createCaseNeeds"]:checked');
-  const necesidades_ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
 
-  if (!tipo) {
+  if (!tipo_caso_id_str) {
     Toast.warning('Por favor seleccione el tipo de caso.');
     return;
   }
+  if (!descripcion) {
+    Toast.warning('Por favor describa brevemente su situación.');
+    return;
+  }
+
+  const tipo_caso_id = parseInt(tipo_caso_id_str);
 
   try {
     Loading.show('Registrando nuevo caso...');
-    await API.registrarCasoAprendiz({ tipo, prioridad, necesidades_ids });
+    await API.registrarCasoAprendiz({ tipo_caso_id, descripcion, prioridad });
     Loading.hide();
     closeCreateCaseModal();
     Toast.success('Caso de atención registrado exitosamente.', 'Caso Creado');
@@ -1324,7 +1317,13 @@ function openEditCaseModal(casoId) {
   if (!caso) return;
 
   document.getElementById('editCaseId').value = caso.id;
-  document.getElementById('editCaseTipo').value = caso.tipo || '';
+  const selectTipoCaso = document.getElementById('editCaseTipoCasoId');
+  if (selectTipoCaso) {
+    selectTipoCaso.innerHTML = catalogTiposCasoCache.map(tc => `
+      <option value="${tc.id}" ${tc.id === caso.tipo_caso_id ? 'selected' : ''}>${tc.nombre}</option>
+    `).join('');
+  }
+  document.getElementById('editCaseDescripcion').value = caso.descripcion || '';
   document.getElementById('editCasePrioridad').value = caso.prioridad || 'MEDIA';
 
   const modal = document.getElementById('modalEditCase');
@@ -1339,12 +1338,13 @@ function closeEditCaseModal() {
 async function handleEditCase(e) {
   e.preventDefault();
   const casoId = document.getElementById('editCaseId').value;
-  const tipo = document.getElementById('editCaseTipo').value.trim();
+  const tipo_caso_id = parseInt(document.getElementById('editCaseTipoCasoId').value);
+  const descripcion = document.getElementById('editCaseDescripcion').value.trim();
   const prioridad = document.getElementById('editCasePrioridad').value;
 
   try {
     Loading.show('Actualizando datos del caso...');
-    await API.updateCasoAprendiz(casoId, { tipo, prioridad });
+    await API.updateCasoAprendiz(casoId, { tipo_caso_id, descripcion, prioridad });
     Loading.hide();
     closeEditCaseModal();
     Toast.success('Información del caso actualizada.', 'Caso Actualizado');
@@ -1352,72 +1352,6 @@ async function handleEditCase(e) {
   } catch (err) {
     Loading.hide();
     Toast.error(err.message, 'Fallo al editar caso');
-  }
-}
-
-function openAddNeedsModal(casoId) {
-  const caso = myCasesCache.find(c => c.id === casoId);
-  if (!caso) return;
-
-  document.getElementById('addNeedsCaseId').value = caso.id;
-  const container = document.getElementById('addNeedsListContainer');
-  const asociadasIds = new Set((caso.necesidades_asociadas || []).map(cn => cn.necesidad_id));
-
-  const disponibles = catalogNeedsCache.filter(n => !asociadasIds.has(n.id));
-
-  if (!disponibles.length) {
-    container.innerHTML = `<p class="text-center text-slate-500 py-4">Todas las necesidades del catálogo ya están asociadas a este caso.</p>`;
-  } else {
-    container.innerHTML = disponibles.map(n => `
-      <label class="flex items-start p-2 bg-white rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
-        <input type="checkbox" name="addCaseNeeds" value="${n.id}" class="mt-0.5 text-sena-primary focus:ring-sena-primary rounded">
-        <div class="ml-2.5">
-          <span class="font-bold text-sena-dark block">${n.nombre} <span class="text-[10px] font-normal text-slate-400">(${n.codigo})</span></span>
-          ${n.descripcion ? `<p class="text-[11px] text-slate-500">${n.descripcion}</p>` : ''}
-        </div>
-      </label>
-    `).join('');
-  }
-
-  const modal = document.getElementById('modalAddNeedsCase');
-  if (modal) modal.classList.remove('hidden');
-}
-
-function closeAddNeedsModal() {
-  const modal = document.getElementById('modalAddNeedsCase');
-  if (modal) modal.classList.add('hidden');
-}
-
-async function handleAddNeedsToCase(e) {
-  e.preventDefault();
-  const casoId = document.getElementById('addNeedsCaseId').value;
-  const checkboxes = document.querySelectorAll('input[name="addCaseNeeds"]:checked');
-  const necesidades_ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
-
-  if (!necesidades_ids.length) {
-    Toast.warning('Por favor seleccione al menos una necesidad del catálogo.');
-    return;
-  }
-
-  try {
-    Loading.show('Vinculando necesidades al caso...');
-    await API.agregarNecesidadesCasoAprendiz(casoId, necesidades_ids);
-    Loading.hide();
-    closeAddNeedsModal();
-    Toast.success('Necesidades asociadas exitosamente.', 'Necesidades Vinculadas');
-    loadMyCases();
-    if (currentDetailCase && currentDetailCase.id == casoId) {
-      openCaseDetailModal(casoId);
-    }
-  } catch (err) {
-    Loading.hide();
-    Toast.error(err.message, 'Fallo al vincular necesidades');
-  }
-}
-
-function openAddNeedsModalFromDetail() {
-  if (currentDetailCase) {
-    openAddNeedsModal(currentDetailCase.id);
   }
 }
 
@@ -1429,7 +1363,7 @@ async function openCaseDetailModal(casoId) {
     currentDetailCase = caso;
 
     document.getElementById('caseDetailHeaderNumber').innerText = `Caso #${caso.id} | Origen: ${caso.origen}`;
-    document.getElementById('caseDetailTitle').innerText = caso.tipo;
+    document.getElementById('caseDetailTitle').innerText = caso.tipo_caso ? caso.tipo_caso.nombre : 'Tipo de Caso No Especificado';
 
     // 1. Timeline de Estado y Evolución
     const stateContainer = document.getElementById('caseDetailStateTimeline');
@@ -1459,57 +1393,13 @@ async function openCaseDetailModal(casoId) {
       </div>
     `;
 
-    // 2. Necesidades
-    const needsContainer = document.getElementById('caseDetailNeedsList');
-    if (!caso.necesidades_asociadas || !caso.necesidades_asociadas.length) {
-      needsContainer.innerHTML = `<p class="text-slate-400 italic text-xs">No hay necesidades asociadas a este caso.</p>`;
-    } else {
-      needsContainer.innerHTML = caso.necesidades_asociadas.map(cn => {
-        const nec = cn.necesidad;
-        if (!nec) return '';
-        return `
-          <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex items-start gap-2.5 max-w-sm w-full">
-            <div class="p-2 bg-[#EBF8E1] text-[#39A900] rounded-lg">
-              <i class="fas fa-hand-holding-heart text-sm"></i>
-            </div>
-            <div>
-              <span class="font-black text-sena-dark text-xs block">${nec.nombre}</span>
-              <span class="text-[10px] text-slate-400 font-bold block uppercase">Categoría: ${nec.categoria_relacionada || 'GENERAL'}</span>
-              ${nec.descripcion ? `<p class="text-[11px] text-slate-500 mt-1">${nec.descripcion}</p>` : ''}
-            </div>
-          </div>
-        `;
-      }).join('');
+    // 2. Descripción del Caso
+    const descContainer = document.getElementById('caseDetailDescripcion');
+    if (descContainer) {
+      descContainer.innerText = caso.descripcion || 'Sin descripción detallada ingresada por el aprendiz.';
     }
 
-    // 3. Acciones
-    const actionsContainer = document.getElementById('caseDetailActionsList');
-    if (!caso.acciones || !caso.acciones.length) {
-      actionsContainer.innerHTML = `<p class="text-slate-400 italic text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">No se han registrado acciones aún para este caso.</p>`;
-    } else {
-      actionsContainer.innerHTML = caso.acciones.map(a => {
-        let estStyle = 'bg-amber-100 text-amber-800';
-        if (a.estado === 'EJECUTADA') estStyle = 'bg-[#EBF8E1] text-[#2E8800]';
-        else if (a.estado === 'CANCELADA') estStyle = 'bg-red-100 text-red-800';
-
-        return `
-          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-2 text-xs">
-            <div class="flex justify-between items-center">
-              <span class="font-black text-sena-dark">${a.descripcion}</span>
-              <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${estStyle}">${a.estado}</span>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-lg">
-              <div><strong>Responsable:</strong> ${a.responsable ? (a.responsable.nombres + ' ' + a.responsable.apellidos) : 'Institucional'}</div>
-              <div><strong>Compromiso:</strong> ${a.fecha_compromiso || 'Sin fecha'} | <strong>Ejecución:</strong> ${a.fecha_ejecucion || 'Pendiente'}</div>
-            </div>
-            ${a.observaciones ? `<p class="text-slate-600 italic">" ${a.observaciones} "</p>` : ''}
-            ${a.evidencia_url ? `<a href="${a.evidencia_url}" target="_blank" class="text-[#39A900] font-bold text-[11px] underline inline-flex items-center gap-1"><i class="fas fa-paperclip"></i> Ver Evidencia Adjunta</a>` : ''}
-          </div>
-        `;
-      }).join('');
-    }
-
-    // 4. Bitácora de Seguimientos
+    // 3. Bitácora de Seguimientos
     const followupsContainer = document.getElementById('caseDetailFollowupsList');
     if (!caso.seguimientos || !caso.seguimientos.length) {
       followupsContainer.innerHTML = `<p class="text-slate-400 italic text-xs">No se registran notas de seguimiento aún.</p>`;
@@ -1543,4 +1433,5 @@ function closeCaseDetailModal() {
   if (modal) modal.classList.add('hidden');
   currentDetailCase = null;
 }
+
 

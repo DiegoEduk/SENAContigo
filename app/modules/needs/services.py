@@ -3,35 +3,44 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import DuplicateResourceException, NotFoundException
-from app.modules.needs.models import Necesidad
-from app.modules.needs.schemas import NecesidadCreate
+from app.modules.needs.models import TipoCaso
+from app.modules.needs.schemas import TipoCasoCreate
 
 
-class NeedsService:
+class CaseTypesService:
     @staticmethod
-    async def list_necesidades(session: AsyncSession) -> List[Necesidad]:
-        stmt = select(Necesidad).where(Necesidad.activa.is_(True))
+    async def list_tipos_caso(session: AsyncSession) -> List[TipoCaso]:
+        stmt = select(TipoCaso).where(TipoCaso.activa.is_(True))
         res = await session.execute(stmt)
         return list(res.scalars().all())
 
     @staticmethod
-    async def create_necesidad(session: AsyncSession, nec_in: NecesidadCreate) -> Necesidad:
-        stmt = select(Necesidad).where(Necesidad.codigo == nec_in.codigo)
+    async def create_tipo_caso(session: AsyncSession, tc_in: TipoCasoCreate) -> TipoCaso:
+        stmt = select(TipoCaso).where(TipoCaso.codigo == tc_in.codigo)
         res = await session.execute(stmt)
         if res.scalar_one_or_none():
-            raise DuplicateResourceException(f"Ya existe una necesidad con código '{nec_in.codigo}'")
+            raise DuplicateResourceException(f"Ya existe un tipo de caso con código '{tc_in.codigo}'")
 
-        nec = Necesidad(**nec_in.model_dump())
-        session.add(nec)
+        tc = TipoCaso(**tc_in.model_dump())
+        session.add(tc)
         await session.commit()
-        await session.refresh(nec)
-        return nec
+        await session.refresh(tc)
+        return tc
 
     @staticmethod
-    async def get_necesidad_by_id(session: AsyncSession, necesidad_id: int) -> Necesidad:
-        stmt = select(Necesidad).where(Necesidad.id == necesidad_id)
+    async def get_tipo_caso_by_id(session: AsyncSession, tipo_caso_id: int) -> TipoCaso:
+        stmt = select(TipoCaso).where(TipoCaso.id == tipo_caso_id)
         res = await session.execute(stmt)
-        nec = res.scalar_one_or_none()
-        if not nec:
-            raise NotFoundException("Necesidad", necesidad_id)
-        return nec
+        tc = res.scalar_one_or_none()
+        if not tc:
+            raise NotFoundException("Tipo de Caso", tipo_caso_id)
+        return tc
+
+    # Alias para retrocompatibilidad
+    list_necesidades = list_tipos_caso
+    create_necesidad = create_tipo_caso
+    get_necesidad_by_id = get_tipo_caso_by_id
+
+
+NeedsService = CaseTypesService
+

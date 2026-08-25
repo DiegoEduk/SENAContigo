@@ -39,16 +39,14 @@ class PortalContratoUpdate(BaseModel):
 
 
 class PortalCasoCreate(BaseModel):
-    tipo: str
+    tipo_caso_id: int
+    descripcion: Optional[str] = None
     prioridad: Optional[str] = "MEDIA"
-    necesidades_ids: List[int] = []
 
 
 class PortalCasoUpdate(BaseModel):
-    tipo: Optional[str] = None
+    tipo_caso_id: Optional[int] = None
+    descripcion: Optional[str] = None
     prioridad: Optional[str] = None
 
-
-class PortalCasoAgregarNecesidades(BaseModel):
-    necesidades_ids: List[int]
 

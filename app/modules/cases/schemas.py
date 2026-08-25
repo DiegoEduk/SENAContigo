@@ -3,18 +3,14 @@ from typing import List, Optional
 from pydantic import BaseModel, ConfigDict
 from app.modules.apprentices.schemas import AprendizRead
 from app.modules.identity.schemas import UsuarioRead
-from app.modules.needs.schemas import NecesidadRead
-
-
-class CasoNecesidadRead(BaseModel):
-    necesidad_id: int
-    necesidad: Optional[NecesidadRead] = None
-    model_config = ConfigDict(from_attributes=True)
+from app.modules.needs.schemas import TipoCasoRead
+from app.modules.followups.schemas import SeguimientoCasoRead
 
 
 class CasoBase(BaseModel):
     aprendiz_id: int
-    tipo: str
+    tipo_caso_id: Optional[int] = None
+    descripcion: Optional[str] = None
     prioridad: str = "MEDIA"
     estado: str = "NUEVO"
     responsable_id: Optional[int] = None
@@ -22,10 +18,12 @@ class CasoBase(BaseModel):
 
 
 class CasoCreate(CasoBase):
-    necesidades_ids: List[int] = []
+    pass
 
 
 class CasoUpdate(BaseModel):
+    tipo_caso_id: Optional[int] = None
+    descripcion: Optional[str] = None
     prioridad: Optional[str] = None
     estado: Optional[str] = None
     responsable_id: Optional[int] = None
@@ -37,5 +35,7 @@ class CasoRead(CasoBase):
     fecha_cierre: Optional[datetime] = None
     aprendiz: Optional[AprendizRead] = None
     responsable: Optional[UsuarioRead] = None
-    necesidades_asociadas: List[CasoNecesidadRead] = []
+    tipo_caso: Optional[TipoCasoRead] = None
+    seguimientos: List[SeguimientoCasoRead] = []
     model_config = ConfigDict(from_attributes=True)
+

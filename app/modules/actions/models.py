@@ -22,5 +22,6 @@ class AccionCaso(Base):
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    caso: Mapped["Caso"] = relationship("Caso", back_populates="acciones")
+    caso: Mapped["Caso"] = relationship("Caso")
     responsable: Mapped[Optional["Usuario"]] = relationship("Usuario")
+

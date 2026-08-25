@@ -5,26 +5,27 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.dependencies import get_current_user_token, require_roles
 from app.core.security import TokenData
-from app.modules.needs.schemas import NecesidadCreate, NecesidadRead
-from app.modules.needs.services import NeedsService
+from app.modules.needs.schemas import TipoCasoCreate, TipoCasoRead
+from app.modules.needs.services import CaseTypesService
 
-router = APIRouter(prefix="/necesidades", tags=["Catálogo de Necesidades"])
+router = APIRouter(prefix="/tipos-caso", tags=["Catálogo de Tipos de Caso"])
 
 
-@router.get("", response_model=List[NecesidadRead])
-async def list_necesidades(
+@router.get("", response_model=List[TipoCasoRead])
+async def list_tipos_caso(
     db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user_token)
 ):
-    """Listar el catálogo de necesidades identificables."""
-    return await NeedsService.list_necesidades(db)
+    """Listar el catálogo de tipos de caso."""
+    return await CaseTypesService.list_tipos_caso(db)
 
 
-@router.post("", response_model=NecesidadRead, status_code=status.HTTP_201_CREATED)
-async def create_necesidad(
-    nec_in: NecesidadCreate,
+@router.post("", response_model=TipoCasoRead, status_code=status.HTTP_201_CREATED)
+async def create_tipo_caso(
+    tc_in: TipoCasoCreate,
     db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(require_roles(["superadmin", "direccion"]))
 ):
-    """Crear una nueva necesidad en el catálogo."""
-    return await NeedsService.create_necesidad(db, nec_in)
+    """Crear un nuevo tipo de caso en el catálogo."""
+    return await CaseTypesService.create_tipo_caso(db, tc_in)
+
