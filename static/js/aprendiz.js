@@ -880,7 +880,7 @@ function renderHistoryTimelineCards(container) {
       listHtml = `
         <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-xs font-medium flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <span>Sin respuestas registradas en esta medición.</span>
-          <button onclick="openSingleQuestionModal(${h.variable_id})" class="px-3.5 py-1.5 bg-sena-dark text-white font-bold text-xs rounded-xl hover:bg-slate-800 transition shadow-sm flex items-center gap-1.5 self-end sm:self-auto">
+          <button onclick="openSingleQuestionModal(${h.variable_id})" class="px-3.5 py-1.5 bg-sena-dark text-white font-bold text-xs rounded-xl hover:bg-slate-800 transition shadow-sm flex items-center gap-1.5 self-end sm:self-auto shrink-0">
             <i class="fas fa-pen-to-square text-[#27F531]"></i> Responder ahora
           </button>
         </div>
@@ -891,7 +891,7 @@ function renderHistoryTimelineCards(container) {
         const isLatest = rIdx === 0;
 
         return `
-          <div class="p-3.5 rounded-xl border ${isLatest ? 'bg-[#EBF8E1]/80 border-[#39A900]/40' : 'bg-[#F8F9FA] border-slate-200'} flex items-center justify-between gap-3 transition">
+          <div class="p-3.5 rounded-xl border ${isLatest ? 'bg-[#EBF8E1]/80 border-[#39A900]/40' : 'bg-[#F8F9FA] border-slate-200'} flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition">
             <div class="space-y-1">
               <div class="flex items-center gap-2">
                 ${isLatest ? '<span class="text-[9px] font-black uppercase bg-[#39A900] text-white px-2 py-0.5 rounded-full">Última medición</span>' : '<span class="text-[9px] font-extrabold uppercase bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">Medición anterior</span>'}
@@ -901,6 +901,11 @@ function renderHistoryTimelineCards(container) {
                 <i class="fas ${isLatest ? 'fa-circle-check text-[#39A900]' : 'fa-history text-slate-400'} text-xs"></i> ${resp.respuesta_texto || 'Respuesta registrada'}
               </p>
             </div>
+            ${isLatest ? `
+              <button onclick="openSingleQuestionModal(${h.variable_id})" class="px-3.5 py-1.5 bg-sena-dark text-white font-extrabold text-xs rounded-xl hover:bg-slate-800 transition flex items-center gap-1.5 shadow-sm self-end sm:self-auto shrink-0">
+                <i class="fas fa-[#27F531] fa-plus"></i> Registrar nueva respuesta
+              </button>
+            ` : ''}
           </div>
         `;
       }).join('');
@@ -917,10 +922,6 @@ function renderHistoryTimelineCards(container) {
 
           <div class="flex items-center gap-3 flex-wrap">
             <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider">${respuestasList.length} ${respuestasList.length === 1 ? 'medición' : 'mediciones'}</span>
-
-            <button onclick="openSingleQuestionModal(${h.variable_id})" class="px-3.5 py-1.5 bg-sena-dark text-white font-extrabold text-xs rounded-xl hover:bg-slate-800 transition flex items-center gap-1.5 shadow-sm">
-              <i class="fas fa-[#27F531] fa-plus"></i> Registrar nueva respuesta
-            </button>
           </div>
         </div>
 
