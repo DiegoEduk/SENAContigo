@@ -53,6 +53,7 @@ function showWorkspaceView() {
   if (workEl) workEl.classList.remove('hidden');
   if (headEl) headEl.classList.remove('hidden');
   setupUserInterface();
+  setupDynamicFilters();
   loadCurrentTab();
 }
 
@@ -889,7 +890,8 @@ let chartTabCategorias = null;
 async function loadTabulationData() {
   try {
     Loading.show('Cargando tabulación socioeconómica...');
-    const data = await API.getAnalyticsTabulation();
+    const filterParams = getActiveFilterParams();
+    const data = await API.getAnalyticsTabulation(filterParams);
     Loading.hide();
 
     // Render KPIs
@@ -1053,7 +1055,8 @@ function renderTabulationCategories(categorias) {
 async function handleExportTabulationPDF() {
   try {
     Loading.show('Generando informe en formato PDF...');
-    await API.downloadTabulationPDF();
+    const filterParams = getActiveFilterParams();
+    await API.downloadTabulationPDF(filterParams);
     Loading.hide();
     Toast.success('Informe PDF descargado exitosamente.', 'Descarga Completa');
   } catch (err) {
@@ -1062,4 +1065,122 @@ async function handleExportTabulationPDF() {
     Toast.error(err.message || 'No se pudo generar el informe PDF.');
   }
 }
+
+// CONTROLADOR DE FILTROS DINÁMICOS BASADO EN PERMISOS
+let allowedFiltersConfig = null;
+let currentFilterOptions = null;
+
+async function setupDynamicFilters() {
+  try {
+    const config = await API.getAllowedFilters();
+    allowedFiltersConfig = config;
+
+    const filterBar = document.getElementById('dynamicFilterBar');
+    if (!filterBar) return;
+
+    const allowed = config.allowed_filters || [];
+    const mapCols = {
+      regional_id: 'filterColRegional',
+      centro_id: 'filterColCentro',
+      programa_codigo: 'filterColPrograma',
+      ficha_id: 'filterColFicha',
+      nivel_riesgo: 'filterColRiesgo',
+      categoria_id: 'filterColCategoria'
+    };
+
+    let hasAnyFilter = false;
+    Object.keys(mapCols).forEach(key => {
+      const colEl = document.getElementById(mapCols[key]);
+      if (colEl) {
+        if (allowed.includes(key)) {
+          colEl.classList.remove('hidden');
+          hasAnyFilter = true;
+        } else {
+          colEl.classList.add('hidden');
+        }
+      }
+    });
+
+    if (hasAnyFilter) {
+      filterBar.classList.remove('hidden');
+    } else {
+      filterBar.classList.add('hidden');
+    }
+
+    await refreshFilterOptions();
+  } catch (err) {
+    console.error('Error inicializando filtros dinámicos:', err);
+  }
+}
+
+async function refreshFilterOptions() {
+  const regId = document.getElementById('filterRegional')?.value || allowedFiltersConfig?.locked_values?.regional_id || '';
+  const cId = document.getElementById('filterCentro')?.value || allowedFiltersConfig?.locked_values?.centro_id || '';
+  const progCod = document.getElementById('filterPrograma')?.value || '';
+
+  const options = await API.getFilterOptions({
+    regional_id: regId,
+    centro_id: cId,
+    programa_codigo: progCod
+  });
+
+  currentFilterOptions = options;
+
+  populateSelect('filterRegional', options.regionales || [], 'Todas las Regionales');
+  populateSelect('filterCentro', options.centros || [], 'Todos los Centros');
+  populateSelect('filterPrograma', options.programas || [], 'Todos los Programas');
+  populateSelect('filterFicha', options.fichas || [], 'Todas las Fichas');
+  populateSelect('filterRiesgo', options.niveles_riesgo || [], 'Todos los Niveles');
+  populateSelect('filterCategoria', options.categorias || [], 'Todas las Categorías');
+}
+
+function populateSelect(selectId, items, defaultLabel) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  const currentVal = select.value;
+  let html = `<option value="">${defaultLabel}</option>`;
+  items.forEach(it => {
+    html += `<option value="${it.id}">${it.label}</option>`;
+  });
+  select.innerHTML = html;
+  if (currentVal && items.some(i => i.id === currentVal)) {
+    select.value = currentVal;
+  }
+}
+
+async function handleFilterChange(changedFilter) {
+  if (['regional', 'centro', 'programa'].includes(changedFilter)) {
+    await refreshFilterOptions();
+  }
+  loadCurrentTab();
+}
+
+function resetDynamicFilters() {
+  ['filterRegional', 'filterCentro', 'filterPrograma', 'filterFicha', 'filterRiesgo', 'filterCategoria'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  refreshFilterOptions();
+  loadCurrentTab();
+}
+
+function getActiveFilterParams() {
+  const params = {};
+  const reg = document.getElementById('filterRegional')?.value;
+  const c = document.getElementById('filterCentro')?.value;
+  const prog = document.getElementById('filterPrograma')?.value;
+  const f = document.getElementById('filterFicha')?.value;
+  const r = document.getElementById('filterRiesgo')?.value;
+  const cat = document.getElementById('filterCategoria')?.value;
+
+  if (reg) params.regional_id = reg;
+  if (c) params.centro_id = c;
+  if (prog) params.programa_codigo = prog;
+  if (f) params.ficha_id = f;
+  if (r) params.nivel_riesgo = r;
+  if (cat) params.categoria_id = cat;
+
+  return params;
+}
+
 

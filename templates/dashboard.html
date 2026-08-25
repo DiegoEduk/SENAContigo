@@ -183,6 +183,68 @@
                 <span>/</span>
                 <span id="breadcrumbCurrent" class="font-bold text-sena-dark">Resumen General</span>
             </div>
+
+            <!-- Dynamic Filter Bar Component -->
+            <div id="dynamicFilterBar" class="bg-white p-5 rounded-3xl shadow-sm border border-sena-border hidden space-y-3">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <h4 class="text-xs font-black text-sena-dark uppercase tracking-wider flex items-center gap-2">
+                        <i class="fas fa-sliders text-sena-primary"></i> Filtros de Jurisdicción & Consulta
+                    </h4>
+                    <button onclick="resetDynamicFilters()" class="text-[11px] font-bold text-slate-500 hover:text-sena-dark transition flex items-center gap-1">
+                        <i class="fas fa-rotate-left text-[10px]"></i> Limpiar Filtros
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
+                    <!-- Filter 1: Regional -->
+                    <div id="filterColRegional" class="space-y-1 hidden">
+                        <label class="block font-bold text-slate-600">Regional</label>
+                        <select id="filterRegional" onchange="handleFilterChange('regional')" class="w-full text-xs p-2 bg-slate-50 border border-sena-border rounded-xl font-medium focus:ring-2 focus:ring-sena-primary">
+                            <option value="">Todas las Regionales</option>
+                        </select>
+                    </div>
+
+                    <!-- Filter 2: Centro de Formación -->
+                    <div id="filterColCentro" class="space-y-1 hidden">
+                        <label class="block font-bold text-slate-600">Centro</label>
+                        <select id="filterCentro" onchange="handleFilterChange('centro')" class="w-full text-xs p-2 bg-slate-50 border border-sena-border rounded-xl font-medium focus:ring-2 focus:ring-sena-primary">
+                            <option value="">Todos los Centros</option>
+                        </select>
+                    </div>
+
+                    <!-- Filter 3: Programa de Formación -->
+                    <div id="filterColPrograma" class="space-y-1 hidden">
+                        <label class="block font-bold text-slate-600">Programa de Formación</label>
+                        <select id="filterPrograma" onchange="handleFilterChange('programa')" class="w-full text-xs p-2 bg-slate-50 border border-sena-border rounded-xl font-medium focus:ring-2 focus:ring-sena-primary">
+                            <option value="">Todos los Programas</option>
+                        </select>
+                    </div>
+
+                    <!-- Filter 4: Ficha de Caracterización -->
+                    <div id="filterColFicha" class="space-y-1 hidden">
+                        <label class="block font-bold text-slate-600">Ficha</label>
+                        <select id="filterFicha" onchange="handleFilterChange('ficha')" class="w-full text-xs p-2 bg-slate-50 border border-sena-border rounded-xl font-medium focus:ring-2 focus:ring-sena-primary">
+                            <option value="">Todas las Fichas</option>
+                        </select>
+                    </div>
+
+                    <!-- Filter 5: Nivel de Riesgo IGVS -->
+                    <div id="filterColRiesgo" class="space-y-1 hidden">
+                        <label class="block font-bold text-slate-600">Nivel de Riesgo</label>
+                        <select id="filterRiesgo" onchange="handleFilterChange('riesgo')" class="w-full text-xs p-2 bg-slate-50 border border-sena-border rounded-xl font-medium focus:ring-2 focus:ring-sena-primary">
+                            <option value="">Todos los Niveles</option>
+                        </select>
+                    </div>
+
+                    <!-- Filter 6: Categoría de Encuesta -->
+                    <div id="filterColCategoria" class="space-y-1 hidden">
+                        <label class="block font-bold text-slate-600">Categoría Encuesta</label>
+                        <select id="filterCategoria" onchange="handleFilterChange('categoria')" class="w-full text-xs p-2 bg-slate-50 border border-sena-border rounded-xl font-medium focus:ring-2 focus:ring-sena-primary">
+                            <option value="">Todas las Categorías</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
             
             <!-- SECTION 1: RESUMEN GENERAL -->
             <section id="sec-resumen" class="space-y-6">

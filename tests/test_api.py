@@ -69,3 +69,41 @@ async def test_export_tabulation_pdf(client):
     assert len(res.content) > 0
     assert res.content.startswith(b"%PDF")
 
+
+@pytest.mark.asyncio
+async def test_allowed_filters(client):
+    login_res = await client.post(
+        "/api/v1/auth/login",
+        json={"correo": "admin@senacontigo.edu.co", "password": "Admin123456*"}
+    )
+    token = login_res.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    res = await client.get("/api/v1/analytics/allowed-filters", headers=headers)
+    assert res.status_code == 200
+    data = res.json()
+    assert "allowed_filters" in data
+    assert "user_role" in data
+    assert "regional_id" in data["allowed_filters"]
+    assert "programa_codigo" in data["allowed_filters"]
+
+
+@pytest.mark.asyncio
+async def test_filter_options(client):
+    login_res = await client.post(
+        "/api/v1/auth/login",
+        json={"correo": "admin@senacontigo.edu.co", "password": "Admin123456*"}
+    )
+    token = login_res.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    res = await client.get("/api/v1/analytics/filter-options", headers=headers)
+    assert res.status_code == 200
+    data = res.json()
+    assert "regionales" in data
+    assert "centros" in data
+    assert "programas" in data
+    assert "fichas" in data
+    assert "niveles_riesgo" in data
+
+

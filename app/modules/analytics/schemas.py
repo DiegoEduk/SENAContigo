@@ -67,3 +67,28 @@ class TabulacionResponse(BaseModel):
     ficha_id: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
 
+
+class FilterItem(BaseModel):
+    id: str
+    label: str
+    extra: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AllowedFiltersResponse(BaseModel):
+    allowed_filters: List[str] = []
+    locked_values: Dict[str, str] = {}
+    user_role: str
+    model_config = ConfigDict(from_attributes=True)
+
+
+class FilterOptionsResponse(BaseModel):
+    regionales: List[FilterItem] = []
+    centros: List[FilterItem] = []
+    programas: List[FilterItem] = []
+    fichas: List[FilterItem] = []
+    niveles_riesgo: List[FilterItem] = []
+    categorias: List[FilterItem] = []
+    model_config = ConfigDict(from_attributes=True)
+
+

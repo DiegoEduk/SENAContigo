@@ -9,6 +9,7 @@ from app.modules.contracts.models import ContratoAprendizaje
 from app.modules.cases.models import Caso
 from app.modules.responses.models import Respuesta
 from app.modules.variables.models import OpcionVariable
+from app.core.security import TokenData
 from app.modules.analytics.schemas import DashboardSummary
 
 
@@ -68,11 +69,128 @@ class AnalyticsService:
         )
 
     @staticmethod
+    def get_allowed_filters(user: TokenData):
+        from app.modules.analytics.schemas import AllowedFiltersResponse
+        rol = (user.rol or "").lower()
+        locked = {}
+        if user.regional_id:
+            locked["regional_id"] = user.regional_id
+        if user.centro_id:
+            locked["centro_id"] = user.centro_id
+
+        if rol == "superadmin":
+            allowed = ["regional_id", "centro_id", "programa_codigo", "ficha_id", "nivel_riesgo", "categoria_id"]
+            locked = {}
+        elif rol in ["direccion", "dirección"]:
+            allowed = ["centro_id", "programa_codigo", "ficha_id", "nivel_riesgo", "categoria_id"]
+        elif rol in ["coordinador", "coordinación"]:
+            allowed = ["programa_codigo", "ficha_id", "nivel_riesgo", "categoria_id"]
+        elif rol == "instructor":
+            allowed = ["ficha_id", "nivel_riesgo"]
+        elif rol == "lider_bienestar":
+            allowed = ["programa_codigo", "ficha_id", "nivel_riesgo", "categoria_id"]
+        elif rol == "lider_contratacion":
+            allowed = ["programa_codigo", "ficha_id"]
+        else:
+            allowed = ["programa_codigo", "ficha_id"]
+
+        return AllowedFiltersResponse(
+            allowed_filters=allowed,
+            locked_values=locked,
+            user_role=rol
+        )
+
+    @staticmethod
+    async def get_filter_options(
+        session: AsyncSession,
+        user: TokenData,
+        regional_id: Optional[str] = None,
+        centro_id: Optional[str] = None,
+        programa_codigo: Optional[str] = None
+    ):
+        from app.modules.organization.models import Regional, CentroFormacion
+        from app.modules.academic.models import ProgramaFormacion, Ficha
+        from app.modules.variables.models import CategoriaVariable
+        from app.modules.analytics.schemas import FilterOptionsResponse, FilterItem
+
+        # Enforce user scoping
+        if user.rol in ["direccion", "Dirección"] and user.regional_id:
+            regional_id = user.regional_id
+        elif user.rol in ["coordinador", "Coordinador", "instructor", "lider_bienestar", "lider_contratacion"] and user.centro_id:
+            centro_id = user.centro_id
+
+        # 1. Regionales
+        reg_stmt = select(Regional).where(Regional.activo == True).order_by(Regional.nombre)
+        if regional_id:
+            reg_stmt = reg_stmt.where(Regional.codigo_regional == regional_id)
+        reg_res = await session.execute(reg_stmt)
+        regionales = [FilterItem(id=r.codigo_regional, label=r.nombre) for r in reg_res.scalars().all()]
+
+        # 2. Centros
+        c_stmt = select(CentroFormacion).where(CentroFormacion.activo == True).order_by(CentroFormacion.nombre)
+        if regional_id:
+            c_stmt = c_stmt.where(CentroFormacion.regional_id == regional_id)
+        if centro_id:
+            c_stmt = c_stmt.where(CentroFormacion.codigo_centro == centro_id)
+        c_res = await session.execute(c_stmt)
+        centros = [FilterItem(id=c.codigo_centro, label=c.nombre) for c in c_res.scalars().all()]
+
+        # 3. Programas
+        p_stmt = select(ProgramaFormacion).where(ProgramaFormacion.activo == True).order_by(ProgramaFormacion.nombre)
+        if centro_id or regional_id:
+            p_stmt = p_stmt.join(Ficha, (ProgramaFormacion.codigo_programa == Ficha.programa_codigo) & (ProgramaFormacion.version == Ficha.programa_version))
+            if centro_id:
+                p_stmt = p_stmt.where(Ficha.centro_id == centro_id)
+            elif regional_id:
+                p_stmt = p_stmt.join(CentroFormacion, Ficha.centro_id == CentroFormacion.codigo_centro).where(CentroFormacion.regional_id == regional_id)
+            p_stmt = p_stmt.distinct()
+        p_res = await session.execute(p_stmt)
+        programas = [FilterItem(id=p.codigo_programa, label=f"{p.codigo_programa} - {p.nombre}") for p in p_res.scalars().all()]
+
+        # 4. Fichas
+        f_stmt = select(Ficha).order_by(Ficha.ficha_caracterizacion)
+        if centro_id:
+            f_stmt = f_stmt.where(Ficha.centro_id == centro_id)
+        elif regional_id:
+            f_stmt = f_stmt.join(CentroFormacion, Ficha.centro_id == CentroFormacion.codigo_centro).where(CentroFormacion.regional_id == regional_id)
+
+        if programa_codigo:
+            f_stmt = f_stmt.where(Ficha.programa_codigo == programa_codigo)
+
+        f_res = await session.execute(f_stmt)
+        fichas = [FilterItem(id=f.ficha_caracterizacion, label=f"Ficha {f.ficha_caracterizacion}") for f in f_res.scalars().all()]
+
+        # 5. Niveles de Riesgo
+        niveles_riesgo = [
+            FilterItem(id="Bajo", label="Verde - Bajo (<25%)"),
+            FilterItem(id="Medio", label="Amarillo - Medio (25-49%)"),
+            FilterItem(id="Alto", label="Naranja - Alto (50-74%)"),
+            FilterItem(id="Crítico", label="Rojo - Crítico (≥75%)")
+        ]
+
+        # 6. Categorías
+        cat_stmt = select(CategoriaVariable).where(CategoriaVariable.activa == True).order_by(CategoriaVariable.id)
+        cat_res = await session.execute(cat_stmt)
+        categorias = [FilterItem(id=str(c.id), label=c.nombre) for c in cat_res.scalars().all()]
+
+        return FilterOptionsResponse(
+            regionales=regionales,
+            centros=centros,
+            programas=programas,
+            fichas=fichas,
+            niveles_riesgo=niveles_riesgo,
+            categorias=categorias
+        )
+
+    @staticmethod
     async def get_tabulation(
         session: AsyncSession,
         regional_id: Optional[str] = None,
         centro_id: Optional[str] = None,
-        ficha_id: Optional[str] = None
+        ficha_id: Optional[str] = None,
+        programa_codigo: Optional[str] = None,
+        nivel_riesgo: Optional[str] = None,
+        categoria_id: Optional[int] = None
     ):
         from app.modules.variables.models import CategoriaVariable, Variable, VariableVersion, OpcionVariable
         from app.modules.apprentices.models import Matricula
@@ -85,8 +203,11 @@ class AnalyticsService:
         stmt_cats = (
             select(CategoriaVariable)
             .where(CategoriaVariable.activa == True)
-            .order_by(CategoriaVariable.id)
         )
+        if categoria_id:
+            stmt_cats = stmt_cats.where(CategoriaVariable.id == categoria_id)
+        stmt_cats = stmt_cats.order_by(CategoriaVariable.id)
+
         res_cats = await session.execute(stmt_cats)
         categorias_db = res_cats.scalars().all()
 
@@ -132,10 +253,12 @@ class AnalyticsService:
             .join(Aprendiz, Respuesta.aprendiz_id == Aprendiz.id)
         )
 
-        if regional_id or centro_id or ficha_id:
+        if regional_id or centro_id or ficha_id or programa_codigo:
             stmt_resp = stmt_resp.join(Matricula, Aprendiz.id == Matricula.aprendiz_id).join(Ficha, Matricula.ficha_id == Ficha.ficha_caracterizacion)
             if ficha_id:
                 stmt_resp = stmt_resp.where(Ficha.ficha_caracterizacion == ficha_id)
+            if programa_codigo:
+                stmt_resp = stmt_resp.where(Ficha.programa_codigo == programa_codigo)
             if centro_id:
                 stmt_resp = stmt_resp.where(Ficha.centro_id == centro_id)
             if regional_id:

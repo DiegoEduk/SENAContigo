@@ -7,11 +7,35 @@ from sqlalchemy import select
 from app.core.database import get_db
 from app.core.dependencies import get_current_user_token
 from app.core.security import TokenData
-from app.modules.analytics.schemas import DashboardSummary, TabulacionResponse
+from app.modules.analytics.schemas import (
+    DashboardSummary, TabulacionResponse, AllowedFiltersResponse, FilterOptionsResponse
+)
 from app.modules.analytics.services import AnalyticsService
 from app.core.pdf_generator import generate_tabulation_pdf
 
 router = APIRouter(prefix="/analytics", tags=["Dashboard y Analítica"])
+
+
+@router.get("/allowed-filters", response_model=AllowedFiltersResponse)
+async def get_allowed_filters(
+    current_user: TokenData = Depends(get_current_user_token)
+):
+    """Obtener la configuración de filtros autorizados según el rol del usuario."""
+    return AnalyticsService.get_allowed_filters(current_user)
+
+
+@router.get("/filter-options", response_model=FilterOptionsResponse)
+async def get_filter_options(
+    regional_id: Optional[str] = None,
+    centro_id: Optional[str] = None,
+    programa_codigo: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user_token)
+):
+    """Obtener las opciones dinámicas de selección de filtros en cascada para la UI."""
+    return await AnalyticsService.get_filter_options(
+        db, current_user, regional_id=regional_id, centro_id=centro_id, programa_codigo=programa_codigo
+    )
 
 
 @router.get("/dashboard", response_model=DashboardSummary)
@@ -26,7 +50,7 @@ async def get_dashboard_summary(
     # Enforce scoping if restricted
     if current_user.rol in ["direccion", "Dirección"] and current_user.regional_id:
         regional_id = current_user.regional_id
-    elif current_user.rol in ["coordinador", "Coordinador"] and current_user.centro_id:
+    elif current_user.rol in ["coordinador", "Coordinador", "instructor", "lider_bienestar", "lider_contratacion"] and current_user.centro_id:
         centro_id = current_user.centro_id
 
     return await AnalyticsService.get_dashboard_summary(
@@ -39,18 +63,27 @@ async def get_tabulation_data(
     regional_id: Optional[str] = None,
     centro_id: Optional[str] = None,
     ficha_id: Optional[str] = None,
+    programa_codigo: Optional[str] = None,
+    nivel_riesgo: Optional[str] = None,
+    categoria_id: Optional[int] = None,
     db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user_token)
 ):
-    """Obtener la tabulación detallada de las 20 preguntas y 7 categorías con frecuencia y niveles de afectación."""
+    """Obtener la tabulación detallada de las 20 preguntas y 7 categorías con filtros autorizados por rol."""
     # Enforce scoping según el rol
     if current_user.rol in ["direccion", "Dirección"] and current_user.regional_id:
         regional_id = current_user.regional_id
-    elif current_user.rol in ["coordinador", "Coordinador", "lider_bienestar", "lider_contratacion"] and current_user.centro_id:
+    elif current_user.rol in ["coordinador", "Coordinador", "instructor", "lider_bienestar", "lider_contratacion"] and current_user.centro_id:
         centro_id = current_user.centro_id
 
     return await AnalyticsService.get_tabulation(
-        db, regional_id=regional_id, centro_id=centro_id, ficha_id=ficha_id
+        db,
+        regional_id=regional_id,
+        centro_id=centro_id,
+        ficha_id=ficha_id,
+        programa_codigo=programa_codigo,
+        nivel_riesgo=nivel_riesgo,
+        categoria_id=categoria_id
     )
 
 
@@ -59,6 +92,9 @@ async def export_tabulation_pdf(
     regional_id: Optional[str] = None,
     centro_id: Optional[str] = None,
     ficha_id: Optional[str] = None,
+    programa_codigo: Optional[str] = None,
+    nivel_riesgo: Optional[str] = None,
+    categoria_id: Optional[int] = None,
     db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user_token)
 ):
@@ -66,11 +102,17 @@ async def export_tabulation_pdf(
     # Enforce scoping según el rol
     if current_user.rol in ["direccion", "Dirección"] and current_user.regional_id:
         regional_id = current_user.regional_id
-    elif current_user.rol in ["coordinador", "Coordinador", "lider_bienestar", "lider_contratacion"] and current_user.centro_id:
+    elif current_user.rol in ["coordinador", "Coordinador", "instructor", "lider_bienestar", "lider_contratacion"] and current_user.centro_id:
         centro_id = current_user.centro_id
 
     tabulation_obj = await AnalyticsService.get_tabulation(
-        db, regional_id=regional_id, centro_id=centro_id, ficha_id=ficha_id
+        db,
+        regional_id=regional_id,
+        centro_id=centro_id,
+        ficha_id=ficha_id,
+        programa_codigo=programa_codigo,
+        nivel_riesgo=nivel_riesgo,
+        categoria_id=categoria_id
     )
 
     tabulation_dict = tabulation_obj.model_dump()

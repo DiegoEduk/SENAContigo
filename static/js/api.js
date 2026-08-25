@@ -490,6 +490,15 @@ const API = {
   },
 
   // Analytics & Dashboard
+  getAllowedFilters() {
+    return this.request('/analytics/allowed-filters');
+  },
+
+  getFilterOptions(params = {}) {
+    const q = new URLSearchParams(params).toString();
+    return this.request(`/analytics/filter-options${q ? '?' + q : ''}`);
+  },
+
   getAnalyticsDashboard(params = {}) {
     const q = new URLSearchParams(params).toString();
     return this.request(`/analytics/dashboard${q ? '?' + q : ''}`);
