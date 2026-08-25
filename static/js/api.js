@@ -161,7 +161,7 @@ const API = {
       ...options.headers
     };
 
-    const url = `${this.baseUrl}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
+    const url = `${this.baseUrl}${endpoint}`;
 
     try {
       const response = await fetch(url, {
