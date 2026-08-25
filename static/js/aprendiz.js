@@ -120,6 +120,42 @@ function setupLearnerHeader() {
   if (mailEl) mailEl.innerText = currentUser.correo || '';
 }
 
+function toggleMobileNavDropdown() {
+  const menu = document.getElementById('mobileNavDropdownMenu');
+  const chevron = document.getElementById('mobileNavChevron');
+  if (!menu) return;
+
+  const isHidden = menu.classList.contains('hidden');
+  if (isHidden) {
+    menu.classList.remove('hidden');
+    if (chevron) chevron.classList.add('rotate-180');
+  } else {
+    menu.classList.add('hidden');
+    if (chevron) chevron.classList.remove('rotate-180');
+  }
+}
+
+function closeMobileNavDropdown() {
+  const menu = document.getElementById('mobileNavDropdownMenu');
+  const chevron = document.getElementById('mobileNavChevron');
+  if (menu) menu.classList.add('hidden');
+  if (chevron) chevron.classList.remove('rotate-180');
+}
+
+function selectMobileTab(tabName) {
+  closeMobileNavDropdown();
+  switchTab(tabName);
+}
+
+// Cerrar desplegable móvil al hacer clic en cualquier parte fuera del menú
+document.addEventListener('click', (e) => {
+  const trigger = document.getElementById('mobileNavDropdownTrigger');
+  const menu = document.getElementById('mobileNavDropdownMenu');
+  if (trigger && menu && !trigger.contains(e.target) && !menu.contains(e.target)) {
+    closeMobileNavDropdown();
+  }
+});
+
 function switchTab(tabName) {
   if (isDirtySurvey && !confirm('Tiene respuestas sin guardar en la encuesta actual. ¿Desea salir sin guardar?')) {
     return;
@@ -127,10 +163,30 @@ function switchTab(tabName) {
   isDirtySurvey = false;
   currentTab = tabName;
 
-  // Sincronizar selector móvil si está presente
-  const mobileSelect = document.getElementById('mobileTabSelect');
-  if (mobileSelect) {
-    mobileSelect.value = tabName;
+  // Actualizar etiqueta e ítems del desplegable móvil personalizado
+  const tabMeta = {
+    perfil: { label: 'Mi Perfil Personal', icon: 'fa-user-gear' },
+    historial: { label: 'Información Socioeconómica', icon: 'fa-chart-pie' },
+    contrato: { label: 'Mi Contrato de Aprendizaje', icon: 'fa-file-contract' },
+    beneficios: { label: 'Mis Apoyos SENA', icon: 'fa-hand-holding-heart' }
+  };
+
+  const meta = tabMeta[tabName] || tabMeta.perfil;
+  const mobLabel = document.getElementById('mobileNavLabel');
+  if (mobLabel) {
+    mobLabel.innerHTML = `<i class="fas ${meta.icon} text-sm"></i> ${meta.label}`;
+  }
+
+  const mobButtons = document.querySelectorAll('[id^="mob-tab-"]');
+  mobButtons.forEach(btn => {
+    btn.classList.remove('bg-sena-primary', 'text-sena-dark', 'font-black');
+    btn.classList.add('text-slate-700', 'font-bold', 'hover:bg-sena-bg');
+  });
+
+  const activeMobBtn = document.getElementById(`mob-tab-${tabName}`);
+  if (activeMobBtn) {
+    activeMobBtn.classList.remove('text-slate-700', 'font-bold', 'hover:bg-sena-bg');
+    activeMobBtn.classList.add('bg-sena-primary', 'text-sena-dark', 'font-black');
   }
 
   const buttons = document.querySelectorAll('[id^="tab-"]');
