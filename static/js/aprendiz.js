@@ -1271,42 +1271,92 @@ function getPrioridadCasoBadgeHtml(prioridad) {
   return `<span class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase ${bgClass}">PRIORIDAD ${pri}</span>`;
 }
 
-function openCreateCaseModal() {
-  const modal = document.getElementById('modalCreateCase');
-  const selectTipoCaso = document.getElementById('createCaseTipoCasoId');
-  const helpContainer = document.getElementById('createCaseTipoDescHelp');
+let selectedCustomTipoCasoId = null;
 
-  if (modal) modal.classList.remove('hidden');
-  if (helpContainer) helpContainer.classList.add('hidden');
+function toggleCustomTipoCasoDropdown() {
+  const list = document.getElementById('customTipoCasoList');
+  const chevron = document.getElementById('customTipoCasoChevron');
+  if (!list) return;
 
-  if (selectTipoCaso) {
-    if (!catalogTiposCasoCache || !catalogTiposCasoCache.length) {
-      selectTipoCaso.innerHTML = `<option value="">-- Sin tipos de caso disponibles --</option>`;
-    } else {
-      selectTipoCaso.innerHTML = `<option value="">-- Seleccionar Tipo de Caso / Necesidad --</option>` + catalogTiposCasoCache.map(tc => `
-        <option value="${tc.id}">${tc.nombre}${tc.descripcion ? ' — ' + tc.descripcion : ''}</option>
-      `).join('');
-    }
+  const isHidden = list.classList.contains('hidden');
+  if (isHidden) {
+    list.classList.remove('hidden');
+    if (chevron) chevron.classList.add('rotate-180');
+  } else {
+    list.classList.add('hidden');
+    if (chevron) chevron.classList.remove('rotate-180');
   }
 }
 
-function handleTipoCasoSelectChange(selectElem) {
-  const helpContainer = document.getElementById('createCaseTipoDescHelp');
-  if (!helpContainer) return;
+function closeCustomTipoCasoDropdown() {
+  const list = document.getElementById('customTipoCasoList');
+  const chevron = document.getElementById('customTipoCasoChevron');
+  if (list) list.classList.add('hidden');
+  if (chevron) chevron.classList.remove('rotate-180');
+}
 
-  const val = selectElem.value;
-  if (!val) {
-    helpContainer.classList.add('hidden');
+function renderCustomTipoCasoOptions() {
+  const list = document.getElementById('customTipoCasoList');
+  if (!list) return;
+
+  if (!catalogTiposCasoCache || !catalogTiposCasoCache.length) {
+    list.innerHTML = `<div class="p-4 text-center text-slate-400 text-xs italic">No hay tipos de caso disponibles</div>`;
     return;
   }
 
-  const tc = (catalogTiposCasoCache || []).find(t => t.id == val);
-  if (tc && tc.descripcion) {
-    helpContainer.innerHTML = `<i class="fas fa-circle-info text-[#39A900] mr-1"></i> <strong class="text-sena-dark font-black">${tc.nombre}:</strong> ${tc.descripcion}`;
-    helpContainer.classList.remove('hidden');
-  } else {
-    helpContainer.classList.add('hidden');
+  list.innerHTML = catalogTiposCasoCache.map(tc => {
+    const isSelected = selectedCustomTipoCasoId == tc.id;
+    return `
+      <div onclick="selectCustomTipoCaso(${tc.id})" 
+           class="p-3.5 hover:bg-[#EBF8E1]/80 hover:border-l-4 hover:border-l-[#39A900] cursor-pointer transition space-y-1 ${isSelected ? 'bg-[#EBF8E1] border-l-4 border-l-[#39A900]' : ''}">
+        <div class="flex items-center justify-between">
+          <span class="text-xs sm:text-sm font-black text-sena-dark flex items-center gap-2">
+            <i class="fas fa-tag text-[#39A900] text-xs"></i> ${tc.nombre}
+          </span>
+          ${isSelected ? '<i class="fas fa-circle-check text-[#39A900] text-sm"></i>' : ''}
+        </div>
+        <p class="text-xs text-slate-500 font-normal leading-snug">${tc.descripcion || 'Sin descripción adicional'}</p>
+      </div>
+    `;
+  }).join('');
+}
+
+function selectCustomTipoCaso(id) {
+  selectedCustomTipoCasoId = id;
+  const hiddenInput = document.getElementById('createCaseTipoCasoId');
+  const selectedText = document.getElementById('customTipoCasoSelectedText');
+  
+  if (hiddenInput) hiddenInput.value = id;
+
+  const tc = (catalogTiposCasoCache || []).find(t => t.id == id);
+  if (tc && selectedText) {
+    selectedText.innerHTML = `<strong class="text-sena-dark font-black">${tc.nombre}</strong>`;
+    selectedText.classList.remove('text-slate-400');
   }
+
+  closeCustomTipoCasoDropdown();
+  renderCustomTipoCasoOptions();
+}
+
+function resetCustomTipoCasoDropdown() {
+  selectedCustomTipoCasoId = null;
+  const hiddenInput = document.getElementById('createCaseTipoCasoId');
+  const selectedText = document.getElementById('customTipoCasoSelectedText');
+
+  if (hiddenInput) hiddenInput.value = '';
+  if (selectedText) {
+    selectedText.innerHTML = `-- Seleccionar Tipo de Caso / Necesidad --`;
+    selectedText.classList.add('text-slate-400');
+  }
+
+  closeCustomTipoCasoDropdown();
+  renderCustomTipoCasoOptions();
+}
+
+function openCreateCaseModal() {
+  const modal = document.getElementById('modalCreateCase');
+  if (modal) modal.classList.remove('hidden');
+  renderCustomTipoCasoOptions();
 }
 
 function closeCreateCaseModal() {
@@ -1316,12 +1366,11 @@ function closeCreateCaseModal() {
 
 async function handleCreateCase(e) {
   e.preventDefault();
-  const selectElem = document.getElementById('createCaseTipoCasoId');
+  const hiddenInput = document.getElementById('createCaseTipoCasoId');
   const descElem = document.getElementById('createCaseDescripcion');
   const prioElem = document.getElementById('createCasePrioridad');
-  const helpContainer = document.getElementById('createCaseTipoDescHelp');
 
-  const tipo_caso_id_str = selectElem.value;
+  const tipo_caso_id_str = hiddenInput ? hiddenInput.value : '';
   const descripcion = descElem.value.trim();
   const prioridad = prioElem.value;
 
@@ -1342,10 +1391,9 @@ async function handleCreateCase(e) {
     Loading.hide();
     
     // Limpiar automáticamente todos los campos del formulario tras registro exitoso
-    selectElem.value = '';
+    resetCustomTipoCasoDropdown();
     descElem.value = '';
     prioElem.value = 'MEDIA';
-    if (helpContainer) helpContainer.classList.add('hidden');
 
     closeCreateCaseModal();
     Toast.success('Caso de atención registrado exitosamente.', 'Caso Creado');
@@ -1355,6 +1403,15 @@ async function handleCreateCase(e) {
     Toast.error(err.message, 'Fallo al registrar caso');
   }
 }
+
+// Cerrar desplegable de tipo de caso al hacer clic afuera
+document.addEventListener('click', (e) => {
+  const wrapper = document.getElementById('customTipoCasoDropdownWrapper');
+  if (wrapper && !wrapper.contains(e.target)) {
+    closeCustomTipoCasoDropdown();
+  }
+});
+
 
 
 function openEditCaseModal(casoId) {
