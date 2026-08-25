@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 from pydantic import BaseModel, ConfigDict
 
 
@@ -62,9 +62,9 @@ class TabulacionResponse(BaseModel):
     kpis: KpiTabulacion
     categorias: List[TabulacionCategoria] = []
     distribucion_niveles_riesgo: Dict[str, int] = {}
-    regional_id: Optional[str] = None
-    centro_id: Optional[str] = None
-    ficha_id: Optional[str] = None
+    regional_id: Optional[Union[str, List[str]]] = None
+    centro_id: Optional[Union[str, List[str]]] = None
+    ficha_id: Optional[Union[str, List[str]]] = None
     model_config = ConfigDict(from_attributes=True)
 
 

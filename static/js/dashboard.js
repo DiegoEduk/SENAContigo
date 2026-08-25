@@ -1066,9 +1066,18 @@ async function handleExportTabulationPDF() {
   }
 }
 
-// CONTROLADOR DE FILTROS DINÁMICOS BASADO EN PERMISOS
+// CONTROLADOR DE FILTROS DINÁMICOS BASADO EN PERMISOS Y BÚSQUEDA (>4 CARACTERES)
 let allowedFiltersConfig = null;
-let currentFilterOptions = null;
+const selectedFilters = {
+  regional: [],
+  centro: [],
+  programa: [],
+  ficha: [],
+  riesgo: [],
+  categoria: []
+};
+
+const searchDebounceTimers = {};
 
 async function setupDynamicFilters() {
   try {
@@ -1107,80 +1116,193 @@ async function setupDynamicFilters() {
       filterBar.classList.add('hidden');
     }
 
-    await refreshFilterOptions();
+    // Cargar catálogo de categorías fijas
+    const options = await API.getFilterOptions({});
+    if (options && options.categorias) {
+      const catSelect = document.getElementById('selectCategoria');
+      if (catSelect) {
+        let html = '<option value="">Seleccionar categoría...</option>';
+        options.categorias.forEach(c => {
+          html += `<option value="${c.id}">${c.label}</option>`;
+        });
+        catSelect.innerHTML = html;
+      }
+    }
   } catch (err) {
     console.error('Error inicializando filtros dinámicos:', err);
   }
 }
 
-async function refreshFilterOptions() {
-  const regId = document.getElementById('filterRegional')?.value || allowedFiltersConfig?.locked_values?.regional_id || '';
-  const cId = document.getElementById('filterCentro')?.value || allowedFiltersConfig?.locked_values?.centro_id || '';
-  const progCod = document.getElementById('filterPrograma')?.value || '';
+function handleSearchInput(target, val) {
+  if (searchDebounceTimers[target]) {
+    clearTimeout(searchDebounceTimers[target]);
+  }
 
-  const options = await API.getFilterOptions({
-    regional_id: regId,
-    centro_id: cId,
-    programa_codigo: progCod
-  });
+  const query = (val || '').trim();
+  const dropdown = document.getElementById(`dropdown${capitalize(target)}`);
+  if (!dropdown) return;
 
-  currentFilterOptions = options;
+  if (query.length <= 4) {
+    dropdown.classList.add('hidden');
+    dropdown.innerHTML = '';
+    return;
+  }
 
-  populateSelect('filterRegional', options.regionales || [], 'Todas las Regionales');
-  populateSelect('filterCentro', options.centros || [], 'Todos los Centros');
-  populateSelect('filterPrograma', options.programas || [], 'Todos los Programas');
-  populateSelect('filterFicha', options.fichas || [], 'Todas las Fichas');
-  populateSelect('filterRiesgo', options.niveles_riesgo || [], 'Todos los Niveles');
-  populateSelect('filterCategoria', options.categorias || [], 'Todas las Categorías');
+  dropdown.classList.remove('hidden');
+  dropdown.innerHTML = `<div class="p-2.5 text-[11px] text-slate-400 text-center font-medium">Buscando "${query}"...</div>`;
+
+  searchDebounceTimers[target] = setTimeout(async () => {
+    try {
+      const activeParams = getActiveFilterParams();
+      activeParams.target = target;
+      activeParams.q = query;
+
+      const res = await API.getFilterOptions(activeParams);
+      const itemsMap = {
+        regional: res.regionales || [],
+        centro: res.centros || [],
+        programa: res.programas || [],
+        ficha: res.fichas || []
+      };
+
+      const options = itemsMap[target] || [];
+      renderDropdownSuggestions(target, options, query);
+    } catch (err) {
+      console.error(`Error buscando ${target}:`, err);
+      dropdown.innerHTML = `<div class="p-2.5 text-[11px] text-red-500 text-center font-medium">Error al consultar opciones.</div>`;
+    }
+  }, 350);
 }
 
-function populateSelect(selectId, items, defaultLabel) {
-  const select = document.getElementById(selectId);
-  if (!select) return;
-  const currentVal = select.value;
-  let html = `<option value="">${defaultLabel}</option>`;
-  items.forEach(it => {
-    html += `<option value="${it.id}">${it.label}</option>`;
+function renderDropdownSuggestions(target, options, query) {
+  const dropdown = document.getElementById(`dropdown${capitalize(target)}`);
+  if (!dropdown) return;
+
+  if (!options.length) {
+    dropdown.innerHTML = `<div class="p-2.5 text-[11px] text-slate-400 text-center font-medium">Sin coincidencias para "${query}"</div>`;
+    dropdown.classList.remove('hidden');
+    return;
+  }
+
+  const alreadySelected = (selectedFilters[target] || []).map(s => s.id);
+  const available = options.filter(op => !alreadySelected.includes(op.id));
+
+  if (!available.length) {
+    dropdown.innerHTML = `<div class="p-2.5 text-[11px] text-slate-400 text-center font-medium">Todas las opciones coincidentes ya fueron seleccionadas</div>`;
+    dropdown.classList.remove('hidden');
+    return;
+  }
+
+  let html = '';
+  available.forEach(op => {
+    const escapedLabel = escapeQuotes(op.label);
+    html += `
+      <div onclick="addSelectedFilter('${target}', '${op.id}', '${escapedLabel}')" class="p-2.5 hover:bg-sena-dark hover:text-white cursor-pointer transition text-xs font-semibold border-b border-slate-100 last:border-0 flex items-center justify-between">
+        <span>${op.label}</span>
+        <i class="fas fa-plus text-[10px] opacity-70"></i>
+      </div>
+    `;
   });
-  select.innerHTML = html;
-  if (currentVal && items.some(i => i.id === currentVal)) {
-    select.value = currentVal;
+
+  dropdown.innerHTML = html;
+  dropdown.classList.remove('hidden');
+}
+
+function addSelectedFilter(target, id, label) {
+  if (!selectedFilters[target].some(s => s.id === id)) {
+    selectedFilters[target].push({ id, label });
+    renderFilterChips(target);
+    const input = document.getElementById(`search${capitalize(target)}`);
+    if (input) input.value = '';
+    const dropdown = document.getElementById(`dropdown${capitalize(target)}`);
+    if (dropdown) dropdown.classList.add('hidden');
+    loadCurrentTab();
   }
 }
 
-async function handleFilterChange(changedFilter) {
-  if (['regional', 'centro', 'programa'].includes(changedFilter)) {
-    await refreshFilterOptions();
-  }
+function removeSelectedFilter(target, id) {
+  selectedFilters[target] = selectedFilters[target].filter(s => s.id !== id);
+  renderFilterChips(target);
   loadCurrentTab();
 }
 
-function resetDynamicFilters() {
-  ['filterRegional', 'filterCentro', 'filterPrograma', 'filterFicha', 'filterRiesgo', 'filterCategoria'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
+function renderFilterChips(target) {
+  const chipsContainer = document.getElementById(`chips${capitalize(target)}`);
+  if (!chipsContainer) return;
+
+  const items = selectedFilters[target] || [];
+  if (!items.length) {
+    chipsContainer.innerHTML = '';
+    return;
+  }
+
+  let html = '';
+  items.forEach(it => {
+    const escapedLabel = escapeQuotes(it.label);
+    html += `
+      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-sena-dark text-white rounded-lg text-[11px] font-bold shadow-xs">
+        ${it.label}
+        <button onclick="removeSelectedFilter('${target}', '${it.id}')" class="hover:text-amber-400 transition text-[10px]">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </span>
+    `;
   });
-  refreshFilterOptions();
+
+  chipsContainer.innerHTML = html;
+}
+
+function handleSelectAdd(target, selectEl) {
+  const val = selectEl.value;
+  if (!val) return;
+  const label = selectEl.options[selectEl.selectedIndex]?.text || val;
+  addSelectedFilter(target, val, label);
+  selectEl.value = '';
+}
+
+function resetDynamicFilters() {
+  Object.keys(selectedFilters).forEach(key => {
+    selectedFilters[key] = [];
+    renderFilterChips(key);
+    const input = document.getElementById(`search${capitalize(key)}`);
+    if (input) input.value = '';
+    const dropdown = document.getElementById(`dropdown${capitalize(key)}`);
+    if (dropdown) dropdown.classList.add('hidden');
+  });
   loadCurrentTab();
 }
 
 function getActiveFilterParams() {
   const params = {};
-  const reg = document.getElementById('filterRegional')?.value;
-  const c = document.getElementById('filterCentro')?.value;
-  const prog = document.getElementById('filterPrograma')?.value;
-  const f = document.getElementById('filterFicha')?.value;
-  const r = document.getElementById('filterRiesgo')?.value;
-  const cat = document.getElementById('filterCategoria')?.value;
-
-  if (reg) params.regional_id = reg;
-  if (c) params.centro_id = c;
-  if (prog) params.programa_codigo = prog;
-  if (f) params.ficha_id = f;
-  if (r) params.nivel_riesgo = r;
-  if (cat) params.categoria_id = cat;
+  if (selectedFilters.regional.length) params.regional_id = selectedFilters.regional.map(s => s.id);
+  if (selectedFilters.centro.length) params.centro_id = selectedFilters.centro.map(s => s.id);
+  if (selectedFilters.programa.length) params.programa_codigo = selectedFilters.programa.map(s => s.id);
+  if (selectedFilters.ficha.length) params.ficha_id = selectedFilters.ficha.map(s => s.id);
+  if (selectedFilters.riesgo.length) params.nivel_riesgo = selectedFilters.riesgo.map(s => s.id);
+  if (selectedFilters.categoria.length) params.categoria_id = selectedFilters.categoria.map(s => s.id);
 
   return params;
 }
+
+function capitalize(s) {
+  if (!s) return '';
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function escapeQuotes(s) {
+  if (!s) return '';
+  return s.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+document.addEventListener('click', (e) => {
+  ['regional', 'centro', 'programa', 'ficha'].forEach(target => {
+    const col = document.getElementById(`filterCol${capitalize(target)}`);
+    const dropdown = document.getElementById(`dropdown${capitalize(target)}`);
+    if (col && dropdown && !col.contains(e.target)) {
+      dropdown.classList.add('hidden');
+    }
+  });
+});
+
 
 

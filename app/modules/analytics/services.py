@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, List, Optional, Union
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -104,63 +104,116 @@ class AnalyticsService:
     async def get_filter_options(
         session: AsyncSession,
         user: TokenData,
-        regional_id: Optional[str] = None,
-        centro_id: Optional[str] = None,
-        programa_codigo: Optional[str] = None
+        regional_id: Optional[Any] = None,
+        centro_id: Optional[Any] = None,
+        programa_codigo: Optional[Any] = None,
+        q: Optional[str] = None,
+        target: Optional[str] = None
     ):
+        from sqlalchemy import or_
         from app.modules.organization.models import Regional, CentroFormacion
         from app.modules.academic.models import ProgramaFormacion, Ficha
         from app.modules.variables.models import CategoriaVariable
         from app.modules.analytics.schemas import FilterOptionsResponse, FilterItem
 
+        def to_list(val):
+            if val is None:
+                return []
+            if isinstance(val, (list, tuple)):
+                return [str(v) for v in val if str(v).strip()]
+            if isinstance(val, str):
+                return [v.strip() for v in val.split(",") if v.strip()]
+            return [str(val)]
+
+        reg_list = to_list(regional_id)
+        c_list = to_list(centro_id)
+        p_list = to_list(programa_codigo)
+
         # Enforce user scoping
         if user.rol in ["direccion", "Dirección"] and user.regional_id:
-            regional_id = user.regional_id
+            reg_list = [user.regional_id]
         elif user.rol in ["coordinador", "Coordinador", "instructor", "lider_bienestar", "lider_contratacion"] and user.centro_id:
-            centro_id = user.centro_id
+            c_list = [user.centro_id]
 
-        # 1. Regionales
-        reg_stmt = select(Regional).where(Regional.activo == True).order_by(Regional.nombre)
-        if regional_id:
-            reg_stmt = reg_stmt.where(Regional.codigo_regional == regional_id)
-        reg_res = await session.execute(reg_stmt)
-        regionales = [FilterItem(id=r.codigo_regional, label=r.nombre) for r in reg_res.scalars().all()]
+        query_str = (q or "").strip()
+        has_min_q = len(query_str) > 4
+        pattern = f"%{query_str.lower()}%" if has_min_q else None
+
+        regionales = []
+        centros = []
+        programas = []
+        fichas = []
+
+        # 1. Regionales (Solo buscar si target == 'regional' y query_str > 4, o si se especifican IDs)
+        if target == 'regional' or (has_min_q and not target):
+            if has_min_q:
+                reg_stmt = select(Regional).where(
+                    (Regional.activo == True) &
+                    (or_(
+                        func.lower(Regional.codigo_regional).like(pattern),
+                        func.lower(Regional.nombre).like(pattern)
+                    ))
+                ).order_by(Regional.nombre)
+                if reg_list:
+                    reg_stmt = reg_stmt.where(Regional.codigo_regional.in_(reg_list))
+                reg_res = await session.execute(reg_stmt)
+                regionales = [FilterItem(id=r.codigo_regional, label=r.nombre) for r in reg_res.scalars().all()]
 
         # 2. Centros
-        c_stmt = select(CentroFormacion).where(CentroFormacion.activo == True).order_by(CentroFormacion.nombre)
-        if regional_id:
-            c_stmt = c_stmt.where(CentroFormacion.regional_id == regional_id)
-        if centro_id:
-            c_stmt = c_stmt.where(CentroFormacion.codigo_centro == centro_id)
-        c_res = await session.execute(c_stmt)
-        centros = [FilterItem(id=c.codigo_centro, label=c.nombre) for c in c_res.scalars().all()]
+        if target == 'centro' or (has_min_q and not target):
+            if has_min_q:
+                c_stmt = select(CentroFormacion).where(
+                    (CentroFormacion.activo == True) &
+                    (or_(
+                        func.lower(CentroFormacion.codigo_centro).like(pattern),
+                        func.lower(CentroFormacion.nombre).like(pattern)
+                    ))
+                ).order_by(CentroFormacion.nombre)
+                if reg_list:
+                    c_stmt = c_stmt.where(CentroFormacion.regional_id.in_(reg_list))
+                if c_list:
+                    c_stmt = c_stmt.where(CentroFormacion.codigo_centro.in_(c_list))
+                c_res = await session.execute(c_stmt)
+                centros = [FilterItem(id=c.codigo_centro, label=c.nombre) for c in c_res.scalars().all()]
 
         # 3. Programas
-        p_stmt = select(ProgramaFormacion).where(ProgramaFormacion.activo == True).order_by(ProgramaFormacion.nombre)
-        if centro_id or regional_id:
-            p_stmt = p_stmt.join(Ficha, (ProgramaFormacion.codigo_programa == Ficha.programa_codigo) & (ProgramaFormacion.version == Ficha.programa_version))
-            if centro_id:
-                p_stmt = p_stmt.where(Ficha.centro_id == centro_id)
-            elif regional_id:
-                p_stmt = p_stmt.join(CentroFormacion, Ficha.centro_id == CentroFormacion.codigo_centro).where(CentroFormacion.regional_id == regional_id)
-            p_stmt = p_stmt.distinct()
-        p_res = await session.execute(p_stmt)
-        programas = [FilterItem(id=p.codigo_programa, label=f"{p.codigo_programa} - {p.nombre}") for p in p_res.scalars().all()]
+        if target == 'programa' or (has_min_q and not target):
+            if has_min_q:
+                p_stmt = select(ProgramaFormacion).where(
+                    (ProgramaFormacion.activo == True) &
+                    (or_(
+                        func.lower(ProgramaFormacion.codigo_programa).like(pattern),
+                        func.lower(ProgramaFormacion.nombre).like(pattern)
+                    ))
+                ).order_by(ProgramaFormacion.nombre)
+                if c_list or reg_list:
+                    p_stmt = p_stmt.join(Ficha, (ProgramaFormacion.codigo_programa == Ficha.programa_codigo) & (ProgramaFormacion.version == Ficha.programa_version))
+                    if c_list:
+                        p_stmt = p_stmt.where(Ficha.centro_id.in_(c_list))
+                    elif reg_list:
+                        p_stmt = p_stmt.join(CentroFormacion, Ficha.centro_id == CentroFormacion.codigo_centro).where(CentroFormacion.regional_id.in_(reg_list))
+                    p_stmt = p_stmt.distinct()
+                p_res = await session.execute(p_stmt)
+                programas = [FilterItem(id=p.codigo_programa, label=f"{p.codigo_programa} - {p.nombre}") for p in p_res.scalars().all()]
 
         # 4. Fichas
-        f_stmt = select(Ficha).order_by(Ficha.ficha_caracterizacion)
-        if centro_id:
-            f_stmt = f_stmt.where(Ficha.centro_id == centro_id)
-        elif regional_id:
-            f_stmt = f_stmt.join(CentroFormacion, Ficha.centro_id == CentroFormacion.codigo_centro).where(CentroFormacion.regional_id == regional_id)
+        if target == 'ficha' or (has_min_q and not target):
+            if has_min_q:
+                f_stmt = select(Ficha).where(
+                    func.lower(Ficha.ficha_caracterizacion).like(pattern)
+                ).order_by(Ficha.ficha_caracterizacion)
+                if c_list:
+                    f_stmt = f_stmt.where(Ficha.centro_id.in_(c_list))
+                elif reg_list:
+                    f_stmt = f_stmt.join(CentroFormacion, Ficha.centro_id == CentroFormacion.codigo_centro).where(CentroFormacion.regional_id.in_(reg_list))
 
-        if programa_codigo:
-            f_stmt = f_stmt.where(Ficha.programa_codigo == programa_codigo)
+                if p_list:
+                    f_stmt = f_stmt.where(Ficha.programa_codigo.in_(p_list))
 
-        f_res = await session.execute(f_stmt)
-        fichas = [FilterItem(id=f.ficha_caracterizacion, label=f"Ficha {f.ficha_caracterizacion}") for f in f_res.scalars().all()]
+                f_res = await session.execute(f_stmt)
+                fichas = [FilterItem(id=f.ficha_caracterizacion, label=f"Ficha {f.ficha_caracterizacion}") for f in f_res.scalars().all()]
 
-        # 5. Niveles de Riesgo
+        # 5. Niveles de Riesgo (Fijo)
         niveles_riesgo = [
             FilterItem(id="Bajo", label="Verde - Bajo (<25%)"),
             FilterItem(id="Medio", label="Amarillo - Medio (25-49%)"),
@@ -168,7 +221,7 @@ class AnalyticsService:
             FilterItem(id="Crítico", label="Rojo - Crítico (≥75%)")
         ]
 
-        # 6. Categorías
+        # 6. Categorías (Fijo)
         cat_stmt = select(CategoriaVariable).where(CategoriaVariable.activa == True).order_by(CategoriaVariable.id)
         cat_res = await session.execute(cat_stmt)
         categorias = [FilterItem(id=str(c.id), label=c.nombre) for c in cat_res.scalars().all()]
@@ -185,12 +238,12 @@ class AnalyticsService:
     @staticmethod
     async def get_tabulation(
         session: AsyncSession,
-        regional_id: Optional[str] = None,
-        centro_id: Optional[str] = None,
-        ficha_id: Optional[str] = None,
-        programa_codigo: Optional[str] = None,
-        nivel_riesgo: Optional[str] = None,
-        categoria_id: Optional[int] = None
+        regional_id: Optional[Any] = None,
+        centro_id: Optional[Any] = None,
+        ficha_id: Optional[Any] = None,
+        programa_codigo: Optional[Any] = None,
+        nivel_riesgo: Optional[Any] = None,
+        categoria_id: Optional[Any] = None
     ):
         from app.modules.variables.models import CategoriaVariable, Variable, VariableVersion, OpcionVariable
         from app.modules.apprentices.models import Matricula
@@ -199,13 +252,29 @@ class AnalyticsService:
             TabulacionResponse, TabulacionCategoria, PreguntaTabulada, OpcionTabulada, KpiTabulacion
         )
 
+        def to_list(val):
+            if val is None:
+                return []
+            if isinstance(val, (list, tuple)):
+                return [str(v) for v in val if str(v).strip()]
+            if isinstance(val, str):
+                return [v.strip() for v in val.split(",") if v.strip()]
+            return [str(val)]
+
+        reg_list = to_list(regional_id)
+        c_list = to_list(centro_id)
+        f_list = to_list(ficha_id)
+        p_list = to_list(programa_codigo)
+        r_list = to_list(nivel_riesgo)
+        cat_list = [int(x) for x in to_list(categoria_id) if x.isdigit()]
+
         # 1. Obtener todas las categorías, variables, versiones y opciones activas
         stmt_cats = (
             select(CategoriaVariable)
             .where(CategoriaVariable.activa == True)
         )
-        if categoria_id:
-            stmt_cats = stmt_cats.where(CategoriaVariable.id == categoria_id)
+        if cat_list:
+            stmt_cats = stmt_cats.where(CategoriaVariable.id.in_(cat_list))
         stmt_cats = stmt_cats.order_by(CategoriaVariable.id)
 
         res_cats = await session.execute(stmt_cats)
@@ -253,16 +322,16 @@ class AnalyticsService:
             .join(Aprendiz, Respuesta.aprendiz_id == Aprendiz.id)
         )
 
-        if regional_id or centro_id or ficha_id or programa_codigo:
+        if reg_list or c_list or f_list or p_list:
             stmt_resp = stmt_resp.join(Matricula, Aprendiz.id == Matricula.aprendiz_id).join(Ficha, Matricula.ficha_id == Ficha.ficha_caracterizacion)
-            if ficha_id:
-                stmt_resp = stmt_resp.where(Ficha.ficha_caracterizacion == ficha_id)
-            if programa_codigo:
-                stmt_resp = stmt_resp.where(Ficha.programa_codigo == programa_codigo)
-            if centro_id:
-                stmt_resp = stmt_resp.where(Ficha.centro_id == centro_id)
-            if regional_id:
-                stmt_resp = stmt_resp.join(CentroFormacion, Ficha.centro_id == CentroFormacion.codigo_centro).where(CentroFormacion.regional_id == regional_id)
+            if f_list:
+                stmt_resp = stmt_resp.where(Ficha.ficha_caracterizacion.in_(f_list))
+            if p_list:
+                stmt_resp = stmt_resp.where(Ficha.programa_codigo.in_(p_list))
+            if c_list:
+                stmt_resp = stmt_resp.where(Ficha.centro_id.in_(c_list))
+            if reg_list:
+                stmt_resp = stmt_resp.join(CentroFormacion, Ficha.centro_id == CentroFormacion.codigo_centro).where(CentroFormacion.regional_id.in_(reg_list))
 
         res_resp = await session.execute(stmt_resp)
         respuestas_rows = res_resp.all()

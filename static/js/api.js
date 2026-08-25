@@ -490,29 +490,48 @@ const API = {
   },
 
   // Analytics & Dashboard
+  buildQueryString(params = {}) {
+    const searchParams = new URLSearchParams();
+    Object.keys(params).forEach(key => {
+      const val = params[key];
+      if (val === null || val === undefined || val === '') return;
+      if (Array.isArray(val)) {
+        val.forEach(item => {
+          if (item !== null && item !== undefined && item !== '') {
+            searchParams.append(key, item);
+          }
+        });
+      } else {
+        searchParams.append(key, val);
+      }
+    });
+    const str = searchParams.toString();
+    return str ? `?${str}` : '';
+  },
+
   getAllowedFilters() {
     return this.request('/analytics/allowed-filters');
   },
 
   getFilterOptions(params = {}) {
-    const q = new URLSearchParams(params).toString();
-    return this.request(`/analytics/filter-options${q ? '?' + q : ''}`);
+    const q = this.buildQueryString(params);
+    return this.request(`/analytics/filter-options${q}`);
   },
 
   getAnalyticsDashboard(params = {}) {
-    const q = new URLSearchParams(params).toString();
-    return this.request(`/analytics/dashboard${q ? '?' + q : ''}`);
+    const q = this.buildQueryString(params);
+    return this.request(`/analytics/dashboard${q}`);
   },
 
   getAnalyticsTabulation(params = {}) {
-    const q = new URLSearchParams(params).toString();
-    return this.request(`/analytics/tabulation${q ? '?' + q : ''}`);
+    const q = this.buildQueryString(params);
+    return this.request(`/analytics/tabulation${q}`);
   },
 
   async downloadTabulationPDF(params = {}) {
-    const q = new URLSearchParams(params).toString();
+    const q = this.buildQueryString(params);
     const token = this.getToken();
-    const url = `${getApiBaseUrl()}/analytics/tabulation/export-pdf${q ? '?' + q : ''}`;
+    const url = `${getApiBaseUrl()}/analytics/tabulation/export-pdf${q}`;
     
     const res = await fetch(url, {
       method: 'GET',

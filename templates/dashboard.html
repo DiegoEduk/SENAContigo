@@ -185,64 +185,88 @@
             </div>
 
             <!-- Dynamic Filter Bar Component -->
-            <div id="dynamicFilterBar" class="bg-white p-5 rounded-3xl shadow-sm border border-sena-border hidden space-y-3">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                    <h4 class="text-xs font-black text-sena-dark uppercase tracking-wider flex items-center gap-2">
-                        <i class="fas fa-sliders text-sena-primary"></i> Filtros de Jurisdicción & Consulta
-                    </h4>
-                    <button onclick="resetDynamicFilters()" class="text-[11px] font-bold text-slate-500 hover:text-sena-dark transition flex items-center gap-1">
+            <div id="dynamicFilterBar" class="bg-white p-5 rounded-3xl shadow-sm border border-sena-border hidden space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-sena-border pb-3">
+                    <div>
+                        <h4 class="text-xs font-black text-sena-dark uppercase tracking-wider flex items-center gap-2">
+                            <i class="fas fa-sliders text-sena-primary"></i> Filtros de Jurisdicción & Consulta
+                        </h4>
+                        <p class="text-[11px] text-slate-500">Ingrese más de 4 caracteres en el buscador de cada filtro para consultar opciones dinámicamente.</p>
+                    </div>
+                    <button onclick="resetDynamicFilters()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold rounded-xl transition flex items-center gap-1.5">
                         <i class="fas fa-rotate-left text-[10px]"></i> Limpiar Filtros
                     </button>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
+                <!-- Grid Responsivo: 3 en PC (lg:grid-cols-3), 2 en Tablet (md:grid-cols-2), 1 en Móvil (grid-cols-1) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+                    
                     <!-- Filter 1: Regional -->
-                    <div id="filterColRegional" class="space-y-1 hidden">
-                        <label class="block font-bold text-slate-600">Regional</label>
-                        <select id="filterRegional" onchange="handleFilterChange('regional')" class="w-full text-xs p-2 bg-slate-50 border border-sena-border rounded-xl font-medium focus:ring-2 focus:ring-sena-primary">
-                            <option value="">Todas las Regionales</option>
-                        </select>
+                    <div id="filterColRegional" class="space-y-1.5 relative hidden">
+                        <label class="block font-bold text-slate-700">Regional (Código o Nombre)</label>
+                        <div id="chipsRegional" class="flex flex-wrap gap-1 empty:hidden"></div>
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3 top-3 text-slate-400 text-[11px]"></i>
+                            <input type="text" id="searchRegional" oninput="handleSearchInput('regional', this.value)" placeholder="Buscar regional (>4 caracteres)..." class="w-full text-xs pl-8 pr-3 py-2 bg-slate-50 border border-sena-border rounded-xl focus:outline-none focus:ring-2 focus:ring-sena-primary font-medium">
+                        </div>
+                        <div id="dropdownRegional" class="absolute left-0 right-0 top-full mt-1 bg-white border border-sena-border rounded-xl shadow-xl z-30 max-h-48 overflow-y-auto hidden"></div>
                     </div>
 
                     <!-- Filter 2: Centro de Formación -->
-                    <div id="filterColCentro" class="space-y-1 hidden">
-                        <label class="block font-bold text-slate-600">Centro</label>
-                        <select id="filterCentro" onchange="handleFilterChange('centro')" class="w-full text-xs p-2 bg-slate-50 border border-sena-border rounded-xl font-medium focus:ring-2 focus:ring-sena-primary">
-                            <option value="">Todos los Centros</option>
-                        </select>
+                    <div id="filterColCentro" class="space-y-1.5 relative hidden">
+                        <label class="block font-bold text-slate-700">Centro de Formación (Código o Nombre)</label>
+                        <div id="chipsCentro" class="flex flex-wrap gap-1 empty:hidden"></div>
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3 top-3 text-slate-400 text-[11px]"></i>
+                            <input type="text" id="searchCentro" oninput="handleSearchInput('centro', this.value)" placeholder="Buscar centro (>4 caracteres)..." class="w-full text-xs pl-8 pr-3 py-2 bg-slate-50 border border-sena-border rounded-xl focus:outline-none focus:ring-2 focus:ring-sena-primary font-medium">
+                        </div>
+                        <div id="dropdownCentro" class="absolute left-0 right-0 top-full mt-1 bg-white border border-sena-border rounded-xl shadow-xl z-30 max-h-48 overflow-y-auto hidden"></div>
                     </div>
 
                     <!-- Filter 3: Programa de Formación -->
-                    <div id="filterColPrograma" class="space-y-1 hidden">
-                        <label class="block font-bold text-slate-600">Programa de Formación</label>
-                        <select id="filterPrograma" onchange="handleFilterChange('programa')" class="w-full text-xs p-2 bg-slate-50 border border-sena-border rounded-xl font-medium focus:ring-2 focus:ring-sena-primary">
-                            <option value="">Todos los Programas</option>
-                        </select>
+                    <div id="filterColPrograma" class="space-y-1.5 relative hidden">
+                        <label class="block font-bold text-slate-700">Programa de Formación (Código o Nombre)</label>
+                        <div id="chipsPrograma" class="flex flex-wrap gap-1 empty:hidden"></div>
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3 top-3 text-slate-400 text-[11px]"></i>
+                            <input type="text" id="searchPrograma" oninput="handleSearchInput('programa', this.value)" placeholder="Buscar programa (>4 caracteres)..." class="w-full text-xs pl-8 pr-3 py-2 bg-slate-50 border border-sena-border rounded-xl focus:outline-none focus:ring-2 focus:ring-sena-primary font-medium">
+                        </div>
+                        <div id="dropdownPrograma" class="absolute left-0 right-0 top-full mt-1 bg-white border border-sena-border rounded-xl shadow-xl z-30 max-h-48 overflow-y-auto hidden"></div>
                     </div>
 
                     <!-- Filter 4: Ficha de Caracterización -->
-                    <div id="filterColFicha" class="space-y-1 hidden">
-                        <label class="block font-bold text-slate-600">Ficha</label>
-                        <select id="filterFicha" onchange="handleFilterChange('ficha')" class="w-full text-xs p-2 bg-slate-50 border border-sena-border rounded-xl font-medium focus:ring-2 focus:ring-sena-primary">
-                            <option value="">Todas las Fichas</option>
-                        </select>
+                    <div id="filterColFicha" class="space-y-1.5 relative hidden">
+                        <label class="block font-bold text-slate-700">Ficha (Número de Ficha)</label>
+                        <div id="chipsFicha" class="flex flex-wrap gap-1 empty:hidden"></div>
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3 top-3 text-slate-400 text-[11px]"></i>
+                            <input type="text" id="searchFicha" oninput="handleSearchInput('ficha', this.value)" placeholder="Buscar ficha (>4 caracteres)..." class="w-full text-xs pl-8 pr-3 py-2 bg-slate-50 border border-sena-border rounded-xl focus:outline-none focus:ring-2 focus:ring-sena-primary font-medium">
+                        </div>
+                        <div id="dropdownFicha" class="absolute left-0 right-0 top-full mt-1 bg-white border border-sena-border rounded-xl shadow-xl z-30 max-h-48 overflow-y-auto hidden"></div>
                     </div>
 
                     <!-- Filter 5: Nivel de Riesgo IGVS -->
-                    <div id="filterColRiesgo" class="space-y-1 hidden">
-                        <label class="block font-bold text-slate-600">Nivel de Riesgo</label>
-                        <select id="filterRiesgo" onchange="handleFilterChange('riesgo')" class="w-full text-xs p-2 bg-slate-50 border border-sena-border rounded-xl font-medium focus:ring-2 focus:ring-sena-primary">
-                            <option value="">Todos los Niveles</option>
+                    <div id="filterColRiesgo" class="space-y-1.5 relative hidden">
+                        <label class="block font-bold text-slate-700">Nivel de Riesgo (Selección Múltiple)</label>
+                        <div id="chipsRiesgo" class="flex flex-wrap gap-1 empty:hidden"></div>
+                        <select id="selectRiesgo" onchange="handleSelectAdd('riesgo', this)" class="w-full text-xs p-2 bg-slate-50 border border-sena-border rounded-xl font-medium focus:ring-2 focus:ring-sena-primary">
+                            <option value="">Seleccionar nivel...</option>
+                            <option value="Bajo">Verde - Bajo (<25%)</option>
+                            <option value="Medio">Amarillo - Medio (25-49%)</option>
+                            <option value="Alto">Naranja - Alto (50-74%)</option>
+                            <option value="Crítico">Rojo - Crítico (≥75%)</option>
                         </select>
                     </div>
 
                     <!-- Filter 6: Categoría de Encuesta -->
-                    <div id="filterColCategoria" class="space-y-1 hidden">
-                        <label class="block font-bold text-slate-600">Categoría Encuesta</label>
-                        <select id="filterCategoria" onchange="handleFilterChange('categoria')" class="w-full text-xs p-2 bg-slate-50 border border-sena-border rounded-xl font-medium focus:ring-2 focus:ring-sena-primary">
-                            <option value="">Todas las Categorías</option>
+                    <div id="filterColCategoria" class="space-y-1.5 relative hidden">
+                        <label class="block font-bold text-slate-700">Categoría Encuesta (Selección Múltiple)</label>
+                        <div id="chipsCategoria" class="flex flex-wrap gap-1 empty:hidden"></div>
+                        <select id="selectCategoria" onchange="handleSelectAdd('categoria', this)" class="w-full text-xs p-2 bg-slate-50 border border-sena-border rounded-xl font-medium focus:ring-2 focus:ring-sena-primary">
+                            <option value="">Seleccionar categoría...</option>
                         </select>
                     </div>
+
                 </div>
             </div>
             
