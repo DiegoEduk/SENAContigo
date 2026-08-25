@@ -2,7 +2,7 @@ from fastapi import APIRouter
 import app.models  # noqa: F401
 
 from app.modules.academic.router import fichas_router, programas_router
-from app.modules.actions.router import router as acciones_router
+
 from app.modules.analytics.router import router as analytics_router
 from app.modules.apprentices.router import aprendices_router, matriculas_router
 from app.modules.audit.router import router as audit_router

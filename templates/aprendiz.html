@@ -297,14 +297,20 @@
         <!-- TAB 2: INFORMACIÓN SOCIOECONÓMICA -->
         <section id="sec-historial" class="hidden space-y-6">
             <div class="bg-white p-6 rounded-3xl shadow-md space-y-4">
-                <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
-                    <i class="fas fa-chart-pie text-sena-dark"></i> Caracterización e Información Socioeconómica
-                </h3>
+                <div class="flex justify-between items-center border-b border-sena-border pb-3">
+                    <div>
+                        <h3 class="text-base font-black text-sena-dark flex items-center gap-2">
+                            <i class="fas fa-chart-pie text-sena-dark"></i> Caracterización e Información Socioeconómica
+                        </h3>
+                        <p class="text-xs text-slate-500">Historial y trazabilidad de tus respuestas en los instrumentos de caracterización socioeconómica y medición de bienestar.</p>
+                    </div>
+                </div>
                 <div id="myHistoryTimeline" class="space-y-3">
                     <!-- Dynamic Timeline -->
                 </div>
             </div>
         </section>
+
 
         <!-- TAB 3: MI CONTRATO DE APRENDIZAJE -->
         <section id="sec-contrato" class="hidden space-y-6">
@@ -383,10 +389,14 @@
             <form onsubmit="handleCreateCase(event)" class="space-y-4">
                 <div>
                     <label for="createCaseTipoCasoId" class="block text-xs font-bold text-sena-dark mb-1">Tipo de Caso / Necesidad <span class="text-red-500">*</span></label>
-                    <select id="createCaseTipoCasoId" required class="w-full text-xs p-3 border border-sena-border rounded-xl focus:ring-2 focus:ring-sena-primary bg-white">
+                    <select id="createCaseTipoCasoId" required onchange="handleTipoCasoSelectChange(this)" class="w-full text-xs p-3 border border-sena-border rounded-xl focus:ring-2 focus:ring-sena-primary bg-white">
                         <!-- Dynamic load from DB -->
                     </select>
+                    <div id="createCaseTipoDescHelp" class="hidden mt-2 text-xs bg-slate-50 border border-slate-200 text-slate-600 p-3 rounded-xl italic">
+                        <!-- Dynamic description callout -->
+                    </div>
                 </div>
+
 
                 <div>
                     <label for="createCaseDescripcion" class="block text-xs font-bold text-sena-dark mb-1">Descripción de la Situación <span class="text-red-500">*</span></label>

@@ -588,9 +588,18 @@ async function loadMyBenefits() {
     const beneficios = await API.getMisBeneficios();
 
     if (!beneficios || !beneficios.length) {
-      container.innerHTML = `<div class="col-span-2 p-6 text-center text-slate-400 bg-[#F3F2F2] rounded-2xl border border-sena-border">No tienes apoyos institucionales asignados aún.</div>`;
+      container.innerHTML = `
+        <div class="col-span-2 p-8 text-center bg-[#F3F2F2] rounded-2xl border border-sena-border space-y-3">
+          <div class="w-14 h-14 bg-slate-200 text-slate-500 rounded-full flex items-center justify-center text-xl mx-auto">
+            <i class="fas fa-folder-open"></i>
+          </div>
+          <h4 class="font-black text-sena-dark text-base">No tienes apoyos institucionales asignados aún</h4>
+          <p class="text-xs text-slate-500 max-w-md mx-auto">No se encuentra ningún apoyo o beneficio institucional asignado o vinculado actualmente a tu perfil.</p>
+        </div>
+      `;
       return;
     }
+
 
     container.innerHTML = beneficios.map(b => `
       <div class="bg-white p-5 rounded-2xl border border-sena-border shadow-sm space-y-2">
@@ -1264,16 +1273,38 @@ function getPrioridadCasoBadgeHtml(prioridad) {
 function openCreateCaseModal() {
   const modal = document.getElementById('modalCreateCase');
   const selectTipoCaso = document.getElementById('createCaseTipoCasoId');
+  const helpContainer = document.getElementById('createCaseTipoDescHelp');
+
   if (modal) modal.classList.remove('hidden');
+  if (helpContainer) helpContainer.classList.add('hidden');
 
   if (selectTipoCaso) {
     if (!catalogTiposCasoCache || !catalogTiposCasoCache.length) {
       selectTipoCaso.innerHTML = `<option value="">-- Sin tipos de caso disponibles --</option>`;
     } else {
       selectTipoCaso.innerHTML = `<option value="">-- Seleccionar Tipo de Caso / Necesidad --</option>` + catalogTiposCasoCache.map(tc => `
-        <option value="${tc.id}">${tc.nombre} (${tc.codigo})</option>
+        <option value="${tc.id}">${tc.nombre}${tc.descripcion ? ' — ' + tc.descripcion : ''}</option>
       `).join('');
     }
+  }
+}
+
+function handleTipoCasoSelectChange(selectElem) {
+  const helpContainer = document.getElementById('createCaseTipoDescHelp');
+  if (!helpContainer) return;
+
+  const val = selectElem.value;
+  if (!val) {
+    helpContainer.classList.add('hidden');
+    return;
+  }
+
+  const tc = (catalogTiposCasoCache || []).find(t => t.id == val);
+  if (tc && tc.descripcion) {
+    helpContainer.innerHTML = `<i class="fas fa-circle-info text-[#39A900] mr-1"></i> <strong class="text-sena-dark font-black">${tc.nombre}:</strong> ${tc.descripcion}`;
+    helpContainer.classList.remove('hidden');
+  } else {
+    helpContainer.classList.add('hidden');
   }
 }
 
@@ -1284,9 +1315,14 @@ function closeCreateCaseModal() {
 
 async function handleCreateCase(e) {
   e.preventDefault();
-  const tipo_caso_id_str = document.getElementById('createCaseTipoCasoId').value;
-  const descripcion = document.getElementById('createCaseDescripcion').value.trim();
-  const prioridad = document.getElementById('createCasePrioridad').value;
+  const selectElem = document.getElementById('createCaseTipoCasoId');
+  const descElem = document.getElementById('createCaseDescripcion');
+  const prioElem = document.getElementById('createCasePrioridad');
+  const helpContainer = document.getElementById('createCaseTipoDescHelp');
+
+  const tipo_caso_id_str = selectElem.value;
+  const descripcion = descElem.value.trim();
+  const prioridad = prioElem.value;
 
   if (!tipo_caso_id_str) {
     Toast.warning('Por favor seleccione el tipo de caso.');
@@ -1303,6 +1339,13 @@ async function handleCreateCase(e) {
     Loading.show('Registrando nuevo caso...');
     await API.registrarCasoAprendiz({ tipo_caso_id, descripcion, prioridad });
     Loading.hide();
+    
+    // Limpiar automáticamente todos los campos del formulario tras registro exitoso
+    selectElem.value = '';
+    descElem.value = '';
+    prioElem.value = 'MEDIA';
+    if (helpContainer) helpContainer.classList.add('hidden');
+
     closeCreateCaseModal();
     Toast.success('Caso de atención registrado exitosamente.', 'Caso Creado');
     loadMyCases();
@@ -1311,6 +1354,7 @@ async function handleCreateCase(e) {
     Toast.error(err.message, 'Fallo al registrar caso');
   }
 }
+
 
 function openEditCaseModal(casoId) {
   const caso = myCasesCache.find(c => c.id === casoId);

@@ -16,7 +16,18 @@ async def test_variables_and_responses_flow(client):
     cat_res = await client.get("/api/v1/variables/categorias", headers=headers)
     assert cat_res.status_code == 200
     categories = cat_res.json()
-    vivienda_cat = [c for c in categories if c["codigo"] == "VIVIENDA"][0]
+    vivienda_list = [c for c in categories if c["codigo"] == "VIVIENDA"]
+    if not vivienda_list:
+        create_cat_res = await client.post("/api/v1/variables/categorias", headers=headers, json={
+            "codigo": "VIVIENDA",
+            "nombre": "Vivienda y Habitabilidad",
+            "descripcion": "Preguntas sobre el estado de la vivienda"
+        })
+        assert create_cat_res.status_code == 201
+        vivienda_cat = create_cat_res.json()
+    else:
+        vivienda_cat = vivienda_list[0]
+
 
     # 3. Create a dynamic variable with version 1 options
     var_res = await client.post(
