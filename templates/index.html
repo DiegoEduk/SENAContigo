@@ -170,12 +170,12 @@
         </div>
     </footer>
 
-    <script src="../static/js/api.js"></script>
+    <script src="/static/js/api.js"></script>
     <script>
         function getPageUrl(page) {
           const isFile = window.location.protocol === 'file:';
           if (page === 'index' || page === '') return isFile ? 'index.html' : '/';
-          if (page === 'usuarios' || page === 'dashboard') return isFile ? 'dashboard.html' : '/usuarios';
+          if (page === 'usuarios' || page === 'dashboard') return isFile ? 'dashboard.html' : '/dashboard';
           if (page === 'aprendiz' || page === 'portal-aprendiz') return isFile ? 'aprendiz.html' : '/aprendiz';
           return isFile ? `${page}.html` : `/${page}`;
         }
@@ -199,7 +199,7 @@
               if (rol === 'aprendiz') {
                 window.location.href = getPageUrl('aprendiz');
               } else {
-                window.location.href = getPageUrl('usuarios');
+                window.location.href = getPageUrl('dashboard');
               }
             }
           }
@@ -244,7 +244,7 @@
               if (rol === 'aprendiz') {
                 window.location.href = getPageUrl('aprendiz');
               } else {
-                window.location.href = getPageUrl('usuarios');
+                window.location.href = getPageUrl('dashboard');
               }
             }, 500);
           } catch (err) {

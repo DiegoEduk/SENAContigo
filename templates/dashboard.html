@@ -57,7 +57,7 @@
                 </div>
             </div>
             
-            <div id="usuariosHeaderControls" class="flex items-center space-x-4 hidden">
+            <div id="usuariosHeaderControls" class="flex items-center space-x-4">
                 <div class="text-right hidden sm:block">
                     <span id="navUserName" class="block text-xs font-bold text-white">Usuario</span>
                     <span id="navUserMail" class="text-[10px] text-slate-300">correo@sena.edu.co</span>
@@ -69,51 +69,8 @@
         </div>
     </header>
 
-    <!-- Unauthenticated Login Container for Usuarios / Staff -->
-    <div id="usuariosLoginContainer" class="max-w-md mx-auto my-auto px-4 py-12 w-full">
-        <div class="bg-sena-dark text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-800 space-y-6">
-            <div class="text-center space-y-2">
-                <img src="../static/logosena.png" alt="Logo SENA" class="h-12 mx-auto mb-2 object-contain bg-white p-1 rounded-lg">
-                <span class="text-[10px] uppercase font-black tracking-widest text-sena-primary bg-slate-800 px-3 py-1 rounded-full border border-slate-700">Acceso Administrativo / Staff</span>
-                <h3 class="text-xl font-black text-white mt-1">Portal de Usuarios SENA</h3>
-                <p class="text-xs text-slate-300">Ingrese con su correo institucional y contraseña de acceso</p>
-            </div>
-
-            <form id="formStaffLogin" onsubmit="handleStaffLogin(event)" class="space-y-4">
-                <div>
-                    <label for="inputCorreo" class="block text-xs font-bold text-slate-300 mb-1">Correo Electrónico <span class="text-red-400">*</span></label>
-                    <div class="relative">
-                        <i class="fas fa-envelope absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
-                        <input type="email" id="inputCorreo" required placeholder="correo@senacontigo.edu.co" class="w-full text-xs pl-9 pr-3 py-3 bg-slate-800 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-sena-primary transition border border-slate-700">
-                    </div>
-                </div>
-
-                <div>
-                    <label for="inputPassword" class="block text-xs font-bold text-slate-300 mb-1">Contraseña <span class="text-red-400">*</span></label>
-                    <div class="relative">
-                        <i class="fas fa-lock absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
-                        <input type="password" id="inputPassword" required placeholder="••••••••" class="w-full text-xs pl-9 pr-10 py-3 bg-slate-800 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-sena-primary transition border border-slate-700">
-                        <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3.5 top-3.5 text-slate-400 hover:text-white text-xs">
-                            <i id="eyeIcon" class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <button type="submit" class="w-full py-3.5 bg-sena-primary hover:bg-sena-secondary text-sena-dark font-black text-xs uppercase tracking-wider rounded-xl transition shadow-md hover:shadow-lg flex items-center justify-center gap-2">
-                    <i class="fas fa-shield-halved text-sm"></i> Acceso Administrativo
-                </button>
-            </form>
-
-            <div class="text-center pt-2 border-t border-slate-800">
-                <a href="/" class="text-xs text-slate-400 hover:text-white transition inline-flex items-center gap-1 font-semibold">
-                    <i class="fas fa-arrow-left text-[10px]"></i> Volver al inicio institucional
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Grid Workspace (Solo visible tras autenticación) -->
-    <div id="usuariosWorkspace" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full grid grid-cols-1 lg:grid-cols-12 gap-6 hidden">
+    <!-- Main Grid Workspace -->
+    <div id="usuariosWorkspace" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         <!-- Sidebar Navigation -->
         <aside id="sidebar" class="hidden lg:block lg:col-span-3 space-y-3 sidebar-transition">
@@ -1073,7 +1030,7 @@
         </div>
     </div>
 
-    <script src="../static/js/api.js"></script>
-    <script src="../static/js/dashboard.js"></script>
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/dashboard.js"></script>
 </body>
 </html>

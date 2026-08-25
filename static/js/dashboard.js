@@ -3,7 +3,7 @@
  */
 
 let currentUser = null;
-let currentTab = 'resumen';
+let currentTab = 'tabulacion';
 let chartEstadoActual = null;
 let chartEvolucion = null;
 let searchTimeout = null;
@@ -11,7 +11,7 @@ let searchTimeout = null;
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     if (!API.getToken()) {
-      showLoginView();
+      redirectToLogin();
       return;
     }
 
@@ -29,84 +29,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    showWorkspaceView();
+    setupUserInterface();
+    setupDynamicFilters();
+    loadCurrentTab();
   } catch (err) {
     console.error('Error inicializando dashboard:', err);
-    showLoginView();
+    redirectToLogin();
   }
 });
 
-function showLoginView() {
-  const loginEl = document.getElementById('usuariosLoginContainer');
-  const workEl = document.getElementById('usuariosWorkspace');
-  const headEl = document.getElementById('usuariosHeaderControls');
-  if (loginEl) loginEl.classList.remove('hidden');
-  if (workEl) workEl.classList.add('hidden');
-  if (headEl) headEl.classList.add('hidden');
-}
-
-function showWorkspaceView() {
-  const loginEl = document.getElementById('usuariosLoginContainer');
-  const workEl = document.getElementById('usuariosWorkspace');
-  const headEl = document.getElementById('usuariosHeaderControls');
-  if (loginEl) loginEl.classList.add('hidden');
-  if (workEl) workEl.classList.remove('hidden');
-  if (headEl) headEl.classList.remove('hidden');
-  setupUserInterface();
-  setupDynamicFilters();
-  loadCurrentTab();
-}
-
-function togglePasswordVisibility() {
-  const pass = document.getElementById('inputPassword');
-  const icon = document.getElementById('eyeIcon');
-  if (!pass || !icon) return;
-  if (pass.type === 'password') {
-    pass.type = 'text';
-    icon.classList.remove('fa-eye');
-    icon.classList.add('fa-eye-slash');
-  } else {
-    pass.type = 'password';
-    icon.classList.remove('fa-eye-slash');
-    icon.classList.add('fa-eye');
-  }
-}
-
-async function handleStaffLogin(e) {
-  e.preventDefault();
-  const correo = document.getElementById('inputCorreo').value.trim();
-  const password = document.getElementById('inputPassword').value;
-
-  if (!correo || !password) {
-    Toast.warning('Por favor ingrese su correo y contraseña.');
-    return;
-  }
-
-  try {
-    Loading.show('Autenticando usuario...');
-    const res = await API.login(correo, password);
-    Loading.hide();
-
-    API.setToken(res.access_token);
-    API.setUser(res.usuario);
-
-    Toast.success(`¡Bienvenido(a), ${res.usuario.nombres}!`, 'Inicio de Sesión Exitoso');
-    
-    currentUser = await API.getMe();
-    const roles = (currentUser.roles || []).map(r => (typeof r === 'string' ? r : r.nombre).toLowerCase());
-    if (currentUser.rol) roles.push(currentUser.rol.toLowerCase());
-    const hasAdminRole = roles.some(r => ['superadmin', 'direccion', 'coordinador', 'instructor', 'lider_bienestar', 'lider_contratacion'].includes(r));
-    
-    if (roles.includes('aprendiz') && !hasAdminRole) {
-      window.location.href = window.location.protocol === 'file:' ? 'aprendiz.html' : '/aprendiz';
-      return;
-    }
-
-    showWorkspaceView();
-  } catch (err) {
-    Loading.hide();
-    Toast.error(err.message || 'Error al autenticar usuario.', 'Autenticación Fallida');
-  }
+function redirectToLogin() {
+  localStorage.removeItem('senacontigo_token');
+  localStorage.removeItem('senacontigo_user');
+  window.location.href = window.location.protocol === 'file:' ? 'index.html' : '/';
 }
 
 function setupUserInterface() {
@@ -140,7 +75,10 @@ function setupUserInterface() {
       scopeEl.innerHTML = `<p><i class="fas fa-file-contract text-sena-primary mr-1"></i> Módulo de Contratación</p>`;
     } else if (roles.includes('lider_bienestar')) {
       scopeEl.innerHTML = `<p><i class="fas fa-heart text-sena-primary mr-1"></i> Módulo de Bienestar</p>`;
-      // Filter sidebar items according to user role permissions
+    }
+  }
+
+  // Filter sidebar items according to user role permissions
   const allowedTabs = ['tabulacion', 'beneficios', 'casos', 'contratos'];
 
   // Hide non-permitted nav buttons
