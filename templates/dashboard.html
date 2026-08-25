@@ -144,6 +144,10 @@
                     <i class="fas fa-headset w-4 text-center text-slate-500"></i> Casos de Atención & Alertas
                 </button>
 
+                <button onclick="navSwitch('tabulacion')" id="nav-tabulacion" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2.5 transition">
+                    <i class="fas fa-table-list w-4 text-center text-sena-primary"></i> Tabulación & Diagnóstico
+                </button>
+
                 <button onclick="navSwitch('variables')" id="nav-variables" class="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2.5 transition">
                     <i class="fas fa-sliders w-4 text-center text-slate-500"></i> Variables Dinámicas
                 </button>
@@ -218,6 +222,90 @@
                     </div>
                     <div class="relative h-64 w-full">
                         <canvas id="chartEstadoActual"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION TABULACIÓN & DIAGNÓSTICO -->
+            <section id="sec-tabulacion" class="hidden space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-3xl shadow-sm border border-sena-border">
+                    <div>
+                        <h3 class="text-lg font-black text-sena-dark flex items-center gap-2">
+                            <i class="fas fa-table-list text-sena-primary"></i> Tabulación & Diagnóstico Socioeconómico
+                        </h3>
+                        <p class="text-xs text-slate-500">Análisis estadístico de 20 preguntas en 7 categorías con filtrado RBAC por roles institucionales.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="handleExportTabulationPDF()" class="px-4 py-2.5 bg-sena-dark text-white hover:bg-slate-900 font-bold text-xs rounded-xl shadow transition flex items-center gap-2">
+                            <i class="fas fa-file-pdf text-red-400 text-sm"></i> Exportar Informe PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPI Cards Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-sena-border">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Población Caracterizada</span>
+                        <h3 id="tabKpiCaracterizados" class="text-3xl font-black text-slate-800">0</h3>
+                        <p class="text-[11px] text-slate-500 mt-1">Aprendices encuestados</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-sena-border">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">IGVS Promedio</span>
+                        <h3 id="tabKpiIgvs" class="text-3xl font-black text-sena-dark">0.0%</h3>
+                        <p class="text-[11px] text-slate-500 mt-1">Vulnerabilidad Global</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-sena-border">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Riesgo Alto / Crítico</span>
+                        <h3 id="tabKpiRiesgoAlto" class="text-3xl font-black text-amber-600">0.0%</h3>
+                        <p class="text-[11px] text-slate-500 mt-1">Población IGVS ≥ 50%</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-sena-border">
+                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Alertas Prioritarias</span>
+                        <div class="flex items-baseline gap-2 mt-1">
+                            <span id="tabKpiAlimentaria" class="text-xl font-black text-red-600">0</span> <span class="text-[10px] text-slate-400">Nutrición</span>
+                            <span id="tabKpiDesercion" class="text-xl font-black text-purple-600">0</span> <span class="text-[10px] text-slate-400">Deserción</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-1">Intervención Urgente</p>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Chart 1: Distribución de Riesgo IGVS -->
+                    <div class="bg-white p-6 rounded-3xl shadow-md space-y-3">
+                        <h4 class="text-xs font-black text-sena-dark uppercase tracking-wider flex items-center gap-2">
+                            <i class="fas fa-chart-pie text-sena-primary"></i> Clasificación por Niveles de Riesgo (IGVS)
+                        </h4>
+                        <div class="relative h-64 w-full flex items-center justify-center">
+                            <canvas id="chartTabulacionRiesgo"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Chart 2: Promedio de Afectación por Categoría -->
+                    <div class="bg-white p-6 rounded-3xl shadow-md space-y-3">
+                        <h4 class="text-xs font-black text-sena-dark uppercase tracking-wider flex items-center gap-2">
+                            <i class="fas fa-chart-bar text-sena-primary"></i> Afectación Promedio por Categoría (0 a 4)
+                        </h4>
+                        <div class="relative h-64 w-full">
+                            <canvas id="chartTabulacionCategorias"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Categories & Questions Container -->
+                <div class="bg-white p-6 rounded-3xl shadow-md space-y-6">
+                    <div class="flex justify-between items-center border-b border-sena-border pb-4">
+                        <div>
+                            <h4 class="text-sm font-black text-sena-dark">Tabulaciones Frecuenciales (7 Categorías, 20 Preguntas)</h4>
+                            <p class="text-xs text-slate-500">Desglose de frecuencia absoluta (n), relativa (%) y nivel de afectación.</p>
+                        </div>
+                    </div>
+
+                    <div id="tabulacionCategoriasContainer" class="space-y-6">
+                        <div class="text-center py-8 text-slate-400 text-xs">Cargando datos de tabulación...</div>
                     </div>
                 </div>
             </section>

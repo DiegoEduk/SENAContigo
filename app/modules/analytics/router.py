@@ -1,12 +1,15 @@
+from datetime import datetime
 from typing import Optional
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user_token
 from app.core.security import TokenData
-from app.modules.analytics.schemas import DashboardSummary
+from app.modules.analytics.schemas import DashboardSummary, TabulacionResponse
 from app.modules.analytics.services import AnalyticsService
+from app.core.pdf_generator import generate_tabulation_pdf
 
 router = APIRouter(prefix="/analytics", tags=["Dashboard y Analítica"])
 
@@ -29,3 +32,80 @@ async def get_dashboard_summary(
     return await AnalyticsService.get_dashboard_summary(
         db, regional_id=regional_id, centro_id=centro_id, ficha_id=ficha_id
     )
+
+
+@router.get("/tabulation", response_model=TabulacionResponse)
+async def get_tabulation_data(
+    regional_id: Optional[str] = None,
+    centro_id: Optional[str] = None,
+    ficha_id: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user_token)
+):
+    """Obtener la tabulación detallada de las 20 preguntas y 7 categorías con frecuencia y niveles de afectación."""
+    # Enforce scoping según el rol
+    if current_user.rol in ["direccion", "Dirección"] and current_user.regional_id:
+        regional_id = current_user.regional_id
+    elif current_user.rol in ["coordinador", "Coordinador", "lider_bienestar", "lider_contratacion"] and current_user.centro_id:
+        centro_id = current_user.centro_id
+
+    return await AnalyticsService.get_tabulation(
+        db, regional_id=regional_id, centro_id=centro_id, ficha_id=ficha_id
+    )
+
+
+@router.get("/tabulation/export-pdf")
+async def export_tabulation_pdf(
+    regional_id: Optional[str] = None,
+    centro_id: Optional[str] = None,
+    ficha_id: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user_token)
+):
+    """Generar y descargar el informe institucional de tabulación en formato PDF."""
+    # Enforce scoping según el rol
+    if current_user.rol in ["direccion", "Dirección"] and current_user.regional_id:
+        regional_id = current_user.regional_id
+    elif current_user.rol in ["coordinador", "Coordinador", "lider_bienestar", "lider_contratacion"] and current_user.centro_id:
+        centro_id = current_user.centro_id
+
+    tabulation_obj = await AnalyticsService.get_tabulation(
+        db, regional_id=regional_id, centro_id=centro_id, ficha_id=ficha_id
+    )
+
+    tabulation_dict = tabulation_obj.model_dump()
+
+    # Nombres legibles para el informe
+    regional_nombre = "Todas las Regionales"
+    centro_nombre = "Todos los Centros"
+    ficha_nombre = ficha_id or "Todas las Fichas"
+
+    if regional_id:
+        from app.modules.organization.models import Regional
+        res_r = await db.execute(select(Regional).where(Regional.codigo_regional == regional_id))
+        reg_obj = res_r.scalar_one_or_none()
+        if reg_obj:
+            regional_nombre = reg_obj.nombre
+
+    if centro_id:
+        from app.modules.organization.models import CentroFormacion
+        res_c = await db.execute(select(CentroFormacion).where(CentroFormacion.codigo_centro == centro_id))
+        c_obj = res_c.scalar_one_or_none()
+        if c_obj:
+            centro_nombre = c_obj.nombre
+
+    pdf_bytes = generate_tabulation_pdf(
+        tabulation_data=tabulation_dict,
+        regional_nombre=regional_nombre,
+        centro_nombre=centro_nombre,
+        ficha_codigo=ficha_nombre,
+        generado_por=f"{current_user.correo} ({current_user.rol})"
+    )
+
+    filename = f"Informe_Tabulacion_SENAContigo_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
+

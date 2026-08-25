@@ -144,15 +144,15 @@ function setupUserInterface() {
 
   // Filter sidebar items according to user role permissions
   const menuPermissions = {
-    superadmin: ['resumen', 'aprendices', 'fichas', 'contratos', 'beneficios', 'casos', 'variables', 'encuestas', 'analytics', 'audit'],
-    direccion: ['resumen', 'aprendices', 'fichas', 'contratos', 'beneficios', 'casos', 'variables', 'encuestas', 'analytics'],
-    coordinador: ['resumen', 'aprendices', 'fichas', 'contratos', 'beneficios', 'casos', 'variables', 'encuestas'],
-    instructor: ['resumen', 'aprendices', 'fichas', 'casos'],
-    lider_contratacion: ['resumen', 'contratos', 'aprendices'],
-    lider_bienestar: ['resumen', 'beneficios', 'casos', 'aprendices']
+    superadmin: ['resumen', 'tabulacion', 'aprendices', 'fichas', 'contratos', 'beneficios', 'casos', 'variables', 'encuestas', 'analytics', 'audit'],
+    direccion: ['resumen', 'tabulacion', 'aprendices', 'fichas', 'contratos', 'beneficios', 'casos', 'variables', 'encuestas', 'analytics'],
+    coordinador: ['resumen', 'tabulacion', 'aprendices', 'fichas', 'contratos', 'beneficios', 'casos', 'variables', 'encuestas'],
+    instructor: ['resumen', 'tabulacion', 'aprendices', 'fichas', 'casos'],
+    lider_contratacion: ['resumen', 'tabulacion', 'contratos', 'aprendices'],
+    lider_bienestar: ['resumen', 'tabulacion', 'beneficios', 'casos', 'aprendices']
   };
 
-  let allowedTabs = ['resumen', 'aprendices', 'fichas', 'contratos', 'beneficios', 'casos', 'variables', 'encuestas', 'analytics', 'audit'];
+  let allowedTabs = ['resumen', 'tabulacion', 'aprendices', 'fichas', 'contratos', 'beneficios', 'casos', 'variables', 'encuestas', 'analytics', 'audit'];
   
   if (!roles.includes('superadmin')) {
     allowedTabs = [];
@@ -207,6 +207,7 @@ function navSwitch(tabName) {
   if (breadcrumbEl) {
     const titles = {
       resumen: 'Resumen General',
+      tabulacion: 'Tabulación & Diagnóstico Socioeconómico',
       aprendices: 'Aprendices & Matrículas',
       fichas: 'Fichas Formativas',
       contratos: 'Contratación de Aprendices',
@@ -235,6 +236,9 @@ function loadCurrentTab() {
   switch (currentTab) {
     case 'resumen':
       loadResumenData();
+      break;
+    case 'tabulacion':
+      loadTabulationData();
       break;
     case 'aprendices':
       loadAprendicesData();
@@ -877,3 +881,185 @@ async function handleAsignarBeneficio(e) {
     Toast.error(err.message, 'Fallo otorgando beneficio');
   }
 }
+
+// SECTION TABULACIÓN & DIAGNÓSTICO
+let chartTabRiesgo = null;
+let chartTabCategorias = null;
+
+async function loadTabulationData() {
+  try {
+    Loading.show('Cargando tabulación socioeconómica...');
+    const data = await API.getAnalyticsTabulation();
+    Loading.hide();
+
+    // Render KPIs
+    const kpis = data.kpis || {};
+    document.getElementById('tabKpiCaracterizados').innerText = kpis.total_aprendices_caracterizados || 0;
+    document.getElementById('tabKpiIgvs').innerText = `${kpis.indice_vulnerabilidad_promedio || 0}%`;
+    document.getElementById('tabKpiRiesgoAlto').innerText = `${kpis.porcentaje_vulnerabilidad_alta_critica || 0}%`;
+    document.getElementById('tabKpiAlimentaria').innerText = kpis.aprendices_alerta_alimentaria || 0;
+    document.getElementById('tabKpiDesercion').innerText = kpis.aprendices_riesgo_desercion || 0;
+
+    // Render Charts
+    renderTabulationCharts(data);
+
+    // Render Categories & Questions Breakdown
+    renderTabulationCategories(data.categorias || []);
+  } catch (err) {
+    Loading.hide();
+    console.error('Error al cargar tabulación:', err);
+    Toast.error(err.message || 'No se pudo cargar la tabulación.');
+  }
+}
+
+function renderTabulationCharts(data) {
+  const dist = data.distribucion_niveles_riesgo || { Bajo: 0, Medio: 0, Alto: 0, Crítico: 0 };
+  
+  // 1. Chart Riesgo IGVS
+  const ctxRiesgo = document.getElementById('chartTabulacionRiesgo')?.getContext('2d');
+  if (ctxRiesgo) {
+    if (chartTabRiesgo) chartTabRiesgo.destroy();
+    chartTabRiesgo = new Chart(ctxRiesgo, {
+      type: 'doughnut',
+      data: {
+        labels: ['Bajo (<25%)', 'Medio (25-49%)', 'Alto (50-74%)', 'Crítico (≥75%)'],
+        datasets: [{
+          data: [dist.Bajo || 0, dist.Medio || 0, dist.Alto || 0, dist.Crítico || 0],
+          backgroundColor: ['#22c55e', '#eab308', '#f97316', '#ef4444'],
+          borderWidth: 2,
+          borderColor: '#ffffff'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 11, weight: 'bold' } } }
+        }
+      }
+    });
+  }
+
+  // 2. Chart Afectación Categorías
+  const categorias = data.categorias || [];
+  const catLabels = categorias.map(c => c.nombre_categoria);
+  const catValues = categorias.map(c => c.promedio_afectacion_categoria);
+
+  const ctxCat = document.getElementById('chartTabulacionCategorias')?.getContext('2d');
+  if (ctxCat) {
+    if (chartTabCategorias) chartTabCategorias.destroy();
+    chartTabCategorias = new Chart(ctxCat, {
+      type: 'bar',
+      data: {
+        labels: catLabels,
+        datasets: [{
+          label: 'Afectación Promedio (0 a 4)',
+          data: catValues,
+          backgroundColor: '#00324D',
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { min: 0, max: 4, ticks: { stepSize: 1 } },
+          x: { ticks: { font: { size: 10 } } }
+        },
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+  }
+}
+
+function renderTabulationCategories(categorias) {
+  const container = document.getElementById('tabulacionCategoriasContainer');
+  if (!container) return;
+
+  if (!categorias.length) {
+    container.innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">No hay datos de respuestas registradas aún.</div>`;
+    return;
+  }
+
+  let html = '';
+  categorias.forEach(cat => {
+    html += `
+      <div class="border border-sena-border rounded-2xl p-5 bg-slate-50/50 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
+          <div>
+            <span class="text-[10px] font-black uppercase tracking-wider text-sena-primary bg-sena-dark px-2.5 py-0.5 rounded-full">Categoría ${cat.categoria_id}</span>
+            <h4 class="text-base font-black text-slate-800 mt-1">${cat.nombre_categoria}</h4>
+          </div>
+          <div class="text-right">
+            <span class="text-xs font-bold text-slate-500 block">Promedio de Afectación</span>
+            <span class="text-lg font-black text-sena-dark">${cat.promedio_afectacion_categoria} / 4.0</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    `;
+
+    cat.preguntas.forEach(preg => {
+      html += `
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+          <div class="flex justify-between items-start gap-2">
+            <h5 class="text-xs font-bold text-slate-800 leading-snug">P${preg.variable_id}. ${preg.titulo_pregunta}</h5>
+            <span class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-slate-100 text-slate-600">Total: ${preg.total_respuestas}</span>
+          </div>
+
+          <div class="space-y-2">
+      `;
+
+      preg.opciones.forEach(op => {
+        let badgeColor = 'bg-emerald-100 text-emerald-800';
+        if (op.nivel_afectacion === 1) badgeColor = 'bg-blue-100 text-blue-800';
+        if (op.nivel_afectacion === 2) badgeColor = 'bg-amber-100 text-amber-800';
+        if (op.nivel_afectacion === 3) badgeColor = 'bg-orange-100 text-orange-800';
+        if (op.nivel_afectacion === 4) badgeColor = 'bg-red-100 text-red-800';
+
+        html += `
+          <div class="space-y-1">
+            <div class="flex justify-between text-[11px] font-semibold text-slate-700">
+              <span class="flex items-center gap-1.5">
+                <span class="text-[9px] font-black px-1.5 py-0.2 rounded ${badgeColor}">Niv ${op.nivel_afectacion}</span>
+                ${op.texto}
+              </span>
+              <span class="font-mono text-slate-500">${op.frecuencia_absoluta} (${op.frecuencia_relativa}%)</span>
+            </div>
+            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+              <div class="bg-sena-dark h-full rounded-full transition-all duration-500" style="width: ${op.frecuencia_relativa}%"></div>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `
+          </div>
+        </div>
+      `;
+    });
+
+    html += `
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+async function handleExportTabulationPDF() {
+  try {
+    Loading.show('Generando informe en formato PDF...');
+    await API.downloadTabulationPDF();
+    Loading.hide();
+    Toast.success('Informe PDF descargado exitosamente.', 'Descarga Completa');
+  } catch (err) {
+    Loading.hide();
+    console.error('Error exportando PDF:', err);
+    Toast.error(err.message || 'No se pudo generar el informe PDF.');
+  }
+}
+

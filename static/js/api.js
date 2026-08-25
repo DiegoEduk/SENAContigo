@@ -495,6 +495,38 @@ const API = {
     return this.request(`/analytics/dashboard${q ? '?' + q : ''}`);
   },
 
+  getAnalyticsTabulation(params = {}) {
+    const q = new URLSearchParams(params).toString();
+    return this.request(`/analytics/tabulation${q ? '?' + q : ''}`);
+  },
+
+  async downloadTabulationPDF(params = {}) {
+    const q = new URLSearchParams(params).toString();
+    const token = this.getToken();
+    const url = `${getApiBaseUrl()}/analytics/tabulation/export-pdf${q ? '?' + q : ''}`;
+    
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!res.ok) {
+      throw new Error('Error al generar el informe en PDF.');
+    }
+
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = `Informe_Tabulacion_SENAContigo_${new Date().toISOString().slice(0, 10)}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
+  },
+
   getAnalyticsEvolucion() {
     return this.request('/analytics/evolucion-longitudinal');
   },
