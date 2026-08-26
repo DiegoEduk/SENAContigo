@@ -130,7 +130,7 @@ function navSwitch(tabName) {
   if (breadcrumbEl) {
     const titles = {
       tabulacion: '1. Tabulación & Diagnóstico Socioeconómico',
-      beneficios: '2. Análisis de Beneficios Institucionales',
+      beneficios: '2. Análisis de Apoyos Institucionales',
       casos: '3. Casos de Atención & Alertas Tempranas',
       contratos: '4. Análisis de Contratación de Aprendices'
     };
@@ -1516,7 +1516,7 @@ async function loadBeneficiosAprendicesData() {
           <button onclick="verMasAprendiz(${ap.id})" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-[11px] rounded-lg transition shadow-sm flex items-center gap-1">
             <i class="fas fa-eye text-sena-primary"></i> Ver más
           </button>
-          <button onclick="abrirModalAgregarAprendiz(${ap.id}, '${ap.nombre_completo.replace(/'/g, "\\'")}', '${ap.tipo_documento} ${ap.numero_documento}', ${ap.matricula_id || 0})" class="px-2.5 py-1.5 bg-sena-primary hover:bg-sena-secondary text-sena-dark font-extrabold text-[11px] rounded-lg transition shadow-sm flex items-center gap-1">
+          <button onclick="abrirModalAgregarAprendiz(${ap.id}, '${ap.nombre_completo.replace(/'/g, "\\'")}', '${ap.tipo_documento} ${ap.numero_documento}', ${ap.matricula_id || 0}, 'beneficios')" class="px-2.5 py-1.5 bg-sena-primary hover:bg-sena-secondary text-sena-dark font-extrabold text-[11px] rounded-lg transition shadow-sm flex items-center gap-1">
             <i class="fas fa-plus"></i> Agregar
           </button>
         </td>
@@ -1599,7 +1599,7 @@ async function loadCasosAprendicesData() {
             <button onclick="verMasAprendiz(${ap.id})" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-[11px] rounded-lg transition shadow-sm flex items-center gap-1">
               <i class="fas fa-eye text-sena-primary"></i> Ver más
             </button>
-            <button onclick="abrirModalAgregarAprendiz(${ap.id}, '${ap.nombre_completo.replace(/'/g, "\\'")}', '${ap.tipo_documento} ${ap.numero_documento}', ${ap.matricula_id || 0})" class="px-2.5 py-1.5 bg-sena-primary hover:bg-sena-secondary text-sena-dark font-extrabold text-[11px] rounded-lg transition shadow-sm flex items-center gap-1">
+            <button onclick="abrirModalAgregarAprendiz(${ap.id}, '${ap.nombre_completo.replace(/'/g, "\\'")}', '${ap.tipo_documento} ${ap.numero_documento}', ${ap.matricula_id || 0}, 'casos')" class="px-2.5 py-1.5 bg-sena-primary hover:bg-sena-secondary text-sena-dark font-extrabold text-[11px] rounded-lg transition shadow-sm flex items-center gap-1">
               <i class="fas fa-plus"></i> Agregar
             </button>
           </td>
@@ -1683,7 +1683,7 @@ async function loadContratacionAprendicesData() {
             <button onclick="verMasAprendiz(${ap.id})" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-[11px] rounded-lg transition shadow-sm flex items-center gap-1">
               <i class="fas fa-eye text-sena-primary"></i> Ver más
             </button>
-            <button onclick="abrirModalAgregarAprendiz(${ap.id}, '${ap.nombre_completo.replace(/'/g, "\\'")}', '${ap.tipo_documento} ${ap.numero_documento}', ${ap.matricula_id || 0})" class="px-2.5 py-1.5 bg-sena-primary hover:bg-sena-secondary text-sena-dark font-extrabold text-[11px] rounded-lg transition shadow-sm flex items-center gap-1">
+            <button onclick="abrirModalAgregarAprendiz(${ap.id}, '${ap.nombre_completo.replace(/'/g, "\\'")}', '${ap.tipo_documento} ${ap.numero_documento}', ${ap.matricula_id || 0}, 'contratacion')" class="px-2.5 py-1.5 bg-sena-primary hover:bg-sena-secondary text-sena-dark font-extrabold text-[11px] rounded-lg transition shadow-sm flex items-center gap-1">
               <i class="fas fa-plus"></i> Agregar
             </button>
           </td>
@@ -1760,7 +1760,7 @@ async function verMasAprendiz(aprendizId) {
         </div>
       `).join('');
     } else {
-      benList.innerHTML = `<span class="text-slate-400">Sin beneficios institucionales registrados.</span>`;
+      benList.innerHTML = `<span class="text-slate-400">Sin apoyos institucionales registrados.</span>`;
     }
 
     // Casos List
@@ -1811,35 +1811,50 @@ function closeModalAprendiz360() {
 }
 
 // MODAL AGREGAR REGISTRO A APRENDIZ
-async function abrirModalAgregarAprendiz(aprendizId, nombreCompleto, docStr, matriculaId) {
+async function abrirModalAgregarAprendiz(aprendizId, nombreCompleto, docStr, matriculaId, modulo = 'beneficios') {
   const modal = document.getElementById('modalAgregarAprendizRegistro');
   if (!modal) return;
 
   document.getElementById('mAddAprendizId').value = aprendizId;
   document.getElementById('mAddMatriculaId').value = matriculaId || 0;
+  document.getElementById('mAddModulo').value = modulo;
   document.getElementById('mAddAprendizNombre').innerText = nombreCompleto;
   document.getElementById('mAddAprendizDoc').innerText = docStr;
 
-  // Cargar lista de beneficios disponibles
-  const selBeneficio = document.getElementById('mAddBeneficioId');
-  if (selBeneficio) {
-    selBeneficio.innerHTML = `<option value="">Cargando beneficios...</option>`;
-    try {
-      const beneficios = await API.getBeneficios();
-      if (beneficios && beneficios.length) {
-        selBeneficio.innerHTML = beneficios.map(b => `<option value="${b.id}">${b.nombre} (${b.tipo_beneficio})</option>`).join('');
-      } else {
-        selBeneficio.innerHTML = `<option value="">No hay beneficios creados en catálogo</option>`;
-      }
-    } catch (e) {
-      selBeneficio.innerHTML = `<option value="">Error cargando beneficios</option>`;
-    }
-  }
+  const titleEl = document.getElementById('mAddModalTitle');
+  const subEl = document.getElementById('mAddModalSubtitle');
 
-  // Preseleccionar primer tab (Beneficio)
-  const radioBen = document.querySelector('input[name="tipoRegistro"][value="beneficio"]');
-  if (radioBen) radioBen.checked = true;
-  toggleTipoRegistroForm('beneficio');
+  if (modulo === 'beneficios') {
+    if (titleEl) titleEl.innerHTML = `<i class="fas fa-hand-holding-heart text-sena-primary"></i> Registrar Apoyo Institucional`;
+    if (subEl) subEl.innerText = `Asigna un beneficio o apoyo institucional directamente al aprendiz seleccionado.`;
+    
+    // Cargar lista de beneficios disponibles
+    const selBeneficio = document.getElementById('mAddBeneficioId');
+    if (selBeneficio) {
+      selBeneficio.innerHTML = `<option value="">Cargando beneficios...</option>`;
+      try {
+        const beneficios = await API.getBeneficios();
+        if (beneficios && beneficios.length) {
+          selBeneficio.innerHTML = beneficios.map(b => `<option value="${b.id}">${b.nombre} (${b.tipo_beneficio})</option>`).join('');
+        } else {
+          selBeneficio.innerHTML = `<option value="">No hay beneficios creados en catálogo</option>`;
+        }
+      } catch (e) {
+        selBeneficio.innerHTML = `<option value="">Error cargando beneficios</option>`;
+      }
+    }
+    toggleTipoRegistroForm('beneficio');
+
+  } else if (modulo === 'casos') {
+    if (titleEl) titleEl.innerHTML = `<i class="fas fa-life-ring text-amber-500"></i> Registrar Caso de Atención`;
+    if (subEl) subEl.innerText = `Crea un nuevo caso de atención o alerta para seguimiento del aprendiz seleccionado.`;
+    toggleTipoRegistroForm('caso');
+
+  } else if (modulo === 'contratacion') {
+    if (titleEl) titleEl.innerHTML = `<i class="fas fa-file-contract text-indigo-600"></i> Registrar Contrato de Aprendizaje`;
+    if (subEl) subEl.innerText = `Registra una nueva vinculación o contrato de aprendizaje patrocinador.`;
+    toggleTipoRegistroForm('contrato');
+  }
 
   modal.classList.remove('hidden');
 }
@@ -1866,10 +1881,10 @@ async function guardarRegistroAprendiz(e) {
   e.preventDefault();
   const aprendizId = parseInt(document.getElementById('mAddAprendizId').value);
   const matriculaId = parseInt(document.getElementById('mAddMatriculaId').value);
-  const tipo = document.querySelector('input[name="tipoRegistro"]:checked')?.value || 'beneficio';
+  const modulo = document.getElementById('mAddModulo')?.value || 'beneficios';
 
   try {
-    if (tipo === 'beneficio') {
+    if (modulo === 'beneficios') {
       const beneficioId = parseInt(document.getElementById('mAddBeneficioId').value);
       if (!beneficioId) {
         Toast.error('Selecciona un beneficio institucional.');
@@ -1880,7 +1895,7 @@ async function guardarRegistroAprendiz(e) {
       await API.assignBeneficio({ aprendiz_id: aprendizId, beneficio_id: beneficioId, observaciones: obs, estado: 'OTORGADO' });
       Loading.hide();
       Toast.success('Beneficio asignado exitosamente al aprendiz.');
-    } else if (tipo === 'caso') {
+    } else if (modulo === 'casos') {
       const prioridad = document.getElementById('mAddCasoPrioridad').value;
       const descripcion = document.getElementById('mAddCasoDescripcion').value;
       if (!descripcion.trim()) {
@@ -1891,7 +1906,7 @@ async function guardarRegistroAprendiz(e) {
       await API.createCaso({ aprendiz_id: aprendizId, prioridad: prioridad, descripcion: descripcion });
       Loading.hide();
       Toast.success('Caso de atención registrado exitosamente.');
-    } else if (tipo === 'contrato') {
+    } else if (modulo === 'contratacion') {
       const empresa = document.getElementById('mAddContratoEmpresa').value;
       const depto = document.getElementById('mAddContratoDepto').value;
       const ciudad = document.getElementById('mAddContratoCiudad').value;

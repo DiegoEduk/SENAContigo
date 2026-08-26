@@ -82,7 +82,7 @@
                 </button>
 
                 <button onclick="navSwitch('beneficios')" id="nav-beneficios" class="w-full text-left px-3.5 py-3 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2.5 transition">
-                    <i class="fas fa-hand-holding-heart w-4 text-center text-slate-500 text-sm"></i> 2. Beneficios Institucionales
+                    <i class="fas fa-hand-holding-heart w-4 text-center text-slate-500 text-sm"></i> 2. Apoyos Institucionales
                 </button>
 
                 <button onclick="navSwitch('casos')" id="nav-casos" class="w-full text-left px-3.5 py-3 rounded-xl text-xs font-bold text-slate-600 hover:bg-sena-bg flex items-center gap-2.5 transition">
@@ -283,12 +283,12 @@
                 </div>
             </section>
 
-            <!-- MÓDULO 2: BENEFICIOS INSTITUCIONALES -->
+            <!-- MÓDULO 2: APOYOS INSTITUCIONALES -->
             <section id="sec-beneficios" class="hidden space-y-6">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-3xl shadow-sm border border-sena-border">
                     <div>
                         <h3 class="text-lg font-black text-sena-dark flex items-center gap-2">
-                            <i class="fas fa-hand-holding-heart text-sena-primary"></i> Análisis de Beneficios Institucionales
+                            <i class="fas fa-hand-holding-heart text-sena-primary"></i> Análisis de Apoyos Institucionales
                         </h3>
                         <p class="text-xs text-slate-500">Indicadores estadísticos de adjudicación de apoyos de bienestar, cobertura y programas de auxilio.</p>
                     </div>
@@ -349,7 +349,7 @@
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-sena-border pb-4">
                         <div>
                             <h4 class="text-sm font-black text-sena-dark flex items-center gap-2">
-                                <i class="fas fa-users text-sena-primary"></i> Detalle de Aprendices - Beneficios Institucionales
+                                <i class="fas fa-users text-sena-primary"></i> Detalle de Aprendices - Apoyos Institucionales
                             </h4>
                             <p class="text-xs text-slate-500">Listado detallado de aprendices que conforman las métricas según los filtros aplicados.</p>
                         </div>
@@ -1093,10 +1093,10 @@
                     </div>
                 </div>
 
-                <!-- 3. Beneficios Institucionales -->
+                <!-- 3. Apoyos Institucionales -->
                 <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3 md:col-span-2">
                     <h4 class="text-xs font-black text-sena-dark uppercase tracking-wider flex items-center gap-2 border-b border-slate-200 pb-2">
-                        <i class="fas fa-hand-holding-heart text-sena-primary"></i> Histórico de Beneficios Institucionales
+                        <i class="fas fa-hand-holding-heart text-sena-primary"></i> Histórico de Apoyos Institucionales
                     </h4>
                     <div id="m360BeneficiosList" class="space-y-2 text-xs">
                         <span class="text-slate-400">Sin beneficios asignados</span>
@@ -1140,10 +1140,10 @@
             </button>
 
             <div>
-                <h3 class="text-lg font-black text-sena-dark flex items-center gap-2">
+                <h3 id="mAddModalTitle" class="text-lg font-black text-sena-dark flex items-center gap-2">
                     <i class="fas fa-plus-circle text-sena-primary"></i> Registrar Información Adicional
                 </h3>
-                <p class="text-xs text-slate-500 mt-1">Selecciona el tipo de información que deseas asociar al aprendiz.</p>
+                <p id="mAddModalSubtitle" class="text-xs text-slate-500 mt-1">Registra información asociada al aprendiz seleccionado.</p>
                 <div class="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
                     <div>
                         <span id="mAddAprendizNombre" class="text-xs font-black text-slate-800 block"></span>
@@ -1156,29 +1156,7 @@
             <form onsubmit="guardarRegistroAprendiz(event)" class="space-y-4">
                 <input type="hidden" id="mAddAprendizId">
                 <input type="hidden" id="mAddMatriculaId">
-
-                <div>
-                    <label class="block text-xs font-black text-sena-dark mb-2">Tipo de Información a Registrar *</label>
-                    <div class="grid grid-cols-3 gap-2">
-                        <label class="flex flex-col items-center justify-center p-3 border-2 border-sena-border rounded-xl cursor-pointer hover:border-sena-primary transition text-center select-none has-[:checked]:border-sena-primary has-[:checked]:bg-sena-primary/10">
-                            <input type="radio" name="tipoRegistro" value="beneficio" onchange="toggleTipoRegistroForm('beneficio')" checked class="sr-only">
-                            <i class="fas fa-hand-holding-heart text-sena-primary mb-1 text-base"></i>
-                            <span class="text-[11px] font-bold text-slate-800">Beneficio</span>
-                        </label>
-
-                        <label class="flex flex-col items-center justify-center p-3 border-2 border-sena-border rounded-xl cursor-pointer hover:border-sena-primary transition text-center select-none has-[:checked]:border-sena-primary has-[:checked]:bg-sena-primary/10">
-                            <input type="radio" name="tipoRegistro" value="caso" onchange="toggleTipoRegistroForm('caso')" class="sr-only">
-                            <i class="fas fa-life-ring text-amber-500 mb-1 text-base"></i>
-                            <span class="text-[11px] font-bold text-slate-800">Caso Atención</span>
-                        </label>
-
-                        <label class="flex flex-col items-center justify-center p-3 border-2 border-sena-border rounded-xl cursor-pointer hover:border-sena-primary transition text-center select-none has-[:checked]:border-sena-primary has-[:checked]:bg-sena-primary/10">
-                            <input type="radio" name="tipoRegistro" value="contrato" onchange="toggleTipoRegistroForm('contrato')" class="sr-only">
-                            <i class="fas fa-file-contract text-indigo-600 mb-1 text-base"></i>
-                            <span class="text-[11px] font-bold text-slate-800">Contrato</span>
-                        </label>
-                    </div>
-                </div>
+                <input type="hidden" id="mAddModulo" value="beneficios">
 
                 <!-- FORMULARIO DINÁMICO: BENEFICIO -->
                 <div id="formAddBeneficio" class="space-y-3 pt-2 border-t border-slate-100">
