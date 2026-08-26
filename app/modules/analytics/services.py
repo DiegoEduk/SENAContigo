@@ -753,8 +753,53 @@ class AnalyticsService:
         f_list = to_list(ficha_id)
         p_list = to_list(programa_codigo)
 
-        # Base query for distinct aprendices with matricula & program
-        stmt_base = (
+        import math
+
+        # Base query to find distinct aprendiz_ids
+        stmt_ids = select(Aprendiz.id).distinct()
+        stmt_ids = (
+            stmt_ids.join(Matricula, Aprendiz.id == Matricula.aprendiz_id)
+            .join(Ficha, Matricula.ficha_id == Ficha.ficha_caracterizacion)
+            .join(
+                ProgramaFormacion,
+                (Ficha.programa_codigo == ProgramaFormacion.codigo_programa) &
+                (Ficha.programa_version == ProgramaFormacion.version)
+            )
+        )
+
+        if reg_list:
+            stmt_ids = stmt_ids.join(CentroFormacion, Ficha.centro_id == CentroFormacion.codigo_centro).where(CentroFormacion.regional_id.in_(reg_list))
+        if c_list:
+            stmt_ids = stmt_ids.where(Ficha.centro_id.in_(c_list))
+        if p_list:
+            stmt_ids = stmt_ids.where(Ficha.programa_codigo.in_(p_list))
+        if f_list:
+            stmt_ids = stmt_ids.where(Ficha.ficha_caracterizacion.in_(f_list))
+
+        if q and q.strip():
+            query_str = f"%{q.strip().lower()}%"
+            stmt_ids = stmt_ids.where(
+                or_(
+                    func.lower(Aprendiz.numero_documento).like(query_str),
+                    func.lower(Aprendiz.nombres).like(query_str),
+                    func.lower(Aprendiz.apellidos).like(query_str),
+                    func.lower(Aprendiz.nombres + ' ' + Aprendiz.apellidos).like(query_str)
+                )
+            )
+
+        # Count total distinct aprendices
+        subq = stmt_ids.subquery()
+        count_stmt = select(func.count()).select_from(subq)
+        res_count = await session.execute(count_stmt)
+        total_items = res_count.scalar() or 0
+
+        page = max(1, page)
+        limit = max(1, min(100, limit))
+        offset = (page - 1) * limit
+        total_pages = math.ceil(total_items / limit) if total_items > 0 else 1
+
+        # Fetch paginated aprendiz details
+        stmt_paginated = (
             select(
                 Aprendiz.id.label("apr_id"),
                 Aprendiz.tipo_documento,
@@ -775,77 +820,83 @@ class AnalyticsService:
         )
 
         if reg_list:
-            stmt_base = stmt_base.join(CentroFormacion, Ficha.centro_id == CentroFormacion.codigo_centro).where(CentroFormacion.regional_id.in_(reg_list))
+            stmt_paginated = stmt_paginated.join(CentroFormacion, Ficha.centro_id == CentroFormacion.codigo_centro).where(CentroFormacion.regional_id.in_(reg_list))
         if c_list:
-            stmt_base = stmt_base.where(Ficha.centro_id.in_(c_list))
+            stmt_paginated = stmt_paginated.where(Ficha.centro_id.in_(c_list))
         if p_list:
-            stmt_base = stmt_base.where(Ficha.programa_codigo.in_(p_list))
+            stmt_paginated = stmt_paginated.where(Ficha.programa_codigo.in_(p_list))
         if f_list:
-            stmt_base = stmt_base.where(Ficha.ficha_caracterizacion.in_(f_list))
+            stmt_paginated = stmt_paginated.where(Ficha.ficha_caracterizacion.in_(f_list))
 
-        # Search filter q (documento o nombre completo)
         if q and q.strip():
             query_str = f"%{q.strip().lower()}%"
-            full_name_expr = func.lower(Aprendiz.nombres + ' ' + Aprendiz.apellidos)
-            stmt_base = stmt_base.where(
+            stmt_paginated = stmt_paginated.where(
                 or_(
                     func.lower(Aprendiz.numero_documento).like(query_str),
                     func.lower(Aprendiz.nombres).like(query_str),
                     func.lower(Aprendiz.apellidos).like(query_str),
-                    full_name_expr.like(query_str)
+                    func.lower(Aprendiz.nombres + ' ' + Aprendiz.apellidos).like(query_str)
                 )
             )
 
-        # Execute total count query
-        subq = stmt_base.subquery()
-        count_stmt = select(func.count(func.distinct(subq.c.apr_id)))
-        res_count = await session.execute(count_stmt)
-        total_items = res_count.scalar() or 0
+        stmt_paginated = (
+            stmt_paginated
+            .group_by(
+                Aprendiz.id,
+                Aprendiz.tipo_documento,
+                Aprendiz.numero_documento,
+                Aprendiz.nombres,
+                Aprendiz.apellidos,
+                Ficha.ficha_caracterizacion,
+                ProgramaFormacion.nombre,
+                ProgramaFormacion.nivel_formacion
+            )
+            .order_by(Aprendiz.id)
+            .offset(offset)
+            .limit(limit)
+        )
 
-        # Execute paginated data query
-        page = max(1, page)
-        limit = max(1, min(100, limit))
-        offset = (page - 1) * limit
-
-        stmt_paginated = select(subq).group_by(subq.c.apr_id).offset(offset).limit(limit)
         res_data = await session.execute(stmt_paginated)
         rows = res_data.all()
 
         aprendiz_ids = [r.apr_id for r in rows]
 
-        # Fetch module-specific context dictionary
+        # Fetch module-specific context dictionary safely
         context_dict = {}
         if aprendiz_ids:
-            if modulo == "beneficios":
-                b_stmt = select(AprendizBeneficio, Beneficio).join(
-                    Beneficio, AprendizBeneficio.beneficio_id == Beneficio.id
-                ).where(AprendizBeneficio.aprendiz_id.in_(aprendiz_ids))
-                b_res = await session.execute(b_stmt)
-                for ab, ben in b_res.all():
-                    txt = f"{ben.nombre} ({ab.estado})"
-                    if ab.aprendiz_id not in context_dict:
-                        context_dict[ab.aprendiz_id] = []
-                    context_dict[ab.aprendiz_id].append(txt)
+            try:
+                if modulo == "beneficios":
+                    b_stmt = select(AprendizBeneficio.aprendiz_id, AprendizBeneficio.estado, Beneficio.nombre).join(
+                        Beneficio, AprendizBeneficio.beneficio_id == Beneficio.id
+                    ).where(AprendizBeneficio.aprendiz_id.in_(aprendiz_ids))
+                    b_res = await session.execute(b_stmt)
+                    for apr_id, est, ben_nom in b_res.all():
+                        txt = f"{ben_nom or 'Beneficio'} ({est or 'ACTIVO'})"
+                        if apr_id not in context_dict:
+                            context_dict[apr_id] = []
+                        context_dict[apr_id].append(txt)
 
-            elif modulo == "casos":
-                c_stmt = select(Caso).where(Caso.aprendiz_id.in_(aprendiz_ids))
-                c_res = await session.execute(c_stmt)
-                for caso in c_res.scalars().all():
-                    txt = f"{caso.prioridad} - {caso.estado} ({caso.titulo if hasattr(caso, 'titulo') and caso.titulo else 'Caso #' + str(caso.id)})"
-                    if caso.aprendiz_id not in context_dict:
-                        context_dict[caso.aprendiz_id] = []
-                    context_dict[caso.aprendiz_id].append(txt)
+                elif modulo == "casos":
+                    c_stmt = select(Caso.id, Caso.aprendiz_id, Caso.prioridad, Caso.estado).where(Caso.aprendiz_id.in_(aprendiz_ids))
+                    c_res = await session.execute(c_stmt)
+                    for caso_id, apr_id, prio, est in c_res.all():
+                        txt = f"{prio or 'MEDIA'} - {est or 'NUEVO'} (Caso #{caso_id})"
+                        if apr_id not in context_dict:
+                            context_dict[apr_id] = []
+                        context_dict[apr_id].append(txt)
 
-            elif modulo == "contratacion":
-                ca_stmt = select(ContratoAprendizaje, Matricula.aprendiz_id).join(
-                    Matricula, ContratoAprendizaje.matricula_id == Matricula.id
-                ).where(Matricula.aprendiz_id.in_(aprendiz_ids))
-                ca_res = await session.execute(ca_stmt)
-                for ca, apr_id in ca_res.all():
-                    txt = f"{ca.estado_contrato} - {ca.nombre_empresa}"
-                    if apr_id not in context_dict:
-                        context_dict[apr_id] = []
-                    context_dict[apr_id].append(txt)
+                elif modulo == "contratacion":
+                    ca_stmt = select(ContratoAprendizaje.estado_contrato, ContratoAprendizaje.nombre_empresa, Matricula.aprendiz_id).join(
+                        Matricula, ContratoAprendizaje.matricula_id == Matricula.id
+                    ).where(Matricula.aprendiz_id.in_(aprendiz_ids))
+                    ca_res = await session.execute(ca_stmt)
+                    for est, emp, apr_id in ca_res.all():
+                        txt = f"{est or 'EN PATROCINIO'} - {emp or 'Sin Empresa'}"
+                        if apr_id not in context_dict:
+                            context_dict[apr_id] = []
+                        context_dict[apr_id].append(txt)
+            except Exception as e:
+                logger.warning(f"Error cargando contexto de {modulo} para aprendices: {e}")
 
         # Build response items
         items = []
