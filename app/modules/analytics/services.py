@@ -602,8 +602,8 @@ class AnalyticsService:
 
         for c in casos:
             est = (c.estado or "Abierto").capitalize()
-            prio = (c.nivel_prioridad or "Media").capitalize()
-            tipo = c.tipo_atencion or "General"
+            prio = (c.prioridad or "Media").capitalize()
+            tipo = c.tipo_caso_id or "General"
 
             dist_estado[est] = dist_estado.get(est, 0) + 1
             dist_prioridad[prio] = dist_prioridad.get(prio, 0) + 1
@@ -668,9 +668,9 @@ class AnalyticsService:
         aprendices_ids = set(res_apr.scalars().all())
         total_apr = len(aprendices_ids)
 
-        stmt_con = select(ContratoAprendizaje)
+        stmt_con = select(ContratoAprendizaje).join(Matricula, ContratoAprendizaje.matricula_id == Matricula.id)
         if aprendices_ids:
-            stmt_con = stmt_con.where(ContratoAprendizaje.aprendiz_id.in_(aprendices_ids))
+            stmt_con = stmt_con.where(Matricula.aprendiz_id.in_(aprendices_ids))
 
         res_con = await session.execute(stmt_con)
         contratos = res_con.scalars().all()
