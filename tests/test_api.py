@@ -146,5 +146,43 @@ async def test_four_dashboard_modules(client):
     assert "tasa_patrocinio_porcentaje" in data_con
 
 
+@pytest.mark.asyncio
+async def test_module_apprentices_endpoints(client):
+    login_res = await client.post(
+        "/api/v1/auth/login",
+        json={"correo": "admin@senacontigo.edu.co", "password": "Admin123456*"}
+    )
+    token = login_res.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Beneficios aprendices
+    res_ben_apr = await client.get("/api/v1/analytics/beneficios/aprendices", headers=headers)
+    assert res_ben_apr.status_code == 200
+    data_ben_apr = res_ben_apr.json()
+    assert "items" in data_ben_apr
+    assert "total" in data_ben_apr
+
+    # Casos aprendices
+    res_cas_apr = await client.get("/api/v1/analytics/casos/aprendices", headers=headers)
+    assert res_cas_apr.status_code == 200
+    data_cas_apr = res_cas_apr.json()
+    assert "items" in data_cas_apr
+    assert "total" in data_cas_apr
+
+    # Contratacion aprendices
+    res_con_apr = await client.get("/api/v1/analytics/contratacion/aprendices", headers=headers)
+    assert res_con_apr.status_code == 200
+    data_con_apr = res_con_apr.json()
+    assert "items" in data_con_apr
+    assert "total" in data_con_apr
+
+    # Buscador de aprendices por documento o nombre
+    res_search = await client.get("/api/v1/analytics/beneficios/aprendices?q=1000", headers=headers)
+    assert res_search.status_code == 200
+    data_search = res_search.json()
+    assert "items" in data_search
+
+
+
 
 

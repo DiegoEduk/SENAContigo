@@ -127,3 +127,28 @@ class ContratacionAnalyticsResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ApprenticeRow(BaseModel):
+    id: int
+    tipo_documento: str
+    numero_documento: str
+    nombres: str
+    apellidos: str
+    nombre_completo: str
+    numero_ficha: str
+    nombre_programa: str
+    nivel_formacion: str
+    detalle_modulo: Optional[str] = None
+    nivel_riesgo: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ApprenticeListResponse(BaseModel):
+    items: List[ApprenticeRow] = []
+    total: int = 0
+    page: int = 1
+    limit: int = 10
+    total_pages: int = 1
+    model_config = ConfigDict(from_attributes=True)
+
+
+

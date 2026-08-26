@@ -543,6 +543,21 @@ const API = {
     return this.request(`/analytics/contratacion${q}`);
   },
 
+  getAnalyticsBeneficiosAprendices(params = {}) {
+    const q = this.buildQueryString(params);
+    return this.request(`/analytics/beneficios/aprendices${q}`);
+  },
+
+  getAnalyticsCasosAprendices(params = {}) {
+    const q = this.buildQueryString(params);
+    return this.request(`/analytics/casos/aprendices${q}`);
+  },
+
+  getAnalyticsContratacionAprendices(params = {}) {
+    const q = this.buildQueryString(params);
+    return this.request(`/analytics/contratacion/aprendices${q}`);
+  },
+
   async downloadTabulationPDF(params = {}) {
     const q = this.buildQueryString(params);
     const token = this.getToken();

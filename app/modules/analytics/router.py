@@ -9,7 +9,8 @@ from app.core.dependencies import get_current_user_token
 from app.core.security import TokenData
 from app.modules.analytics.schemas import (
     DashboardSummary, TabulacionResponse, AllowedFiltersResponse, FilterOptionsResponse,
-    BeneficiosAnalyticsResponse, CasosAnalyticsResponse, ContratacionAnalyticsResponse
+    BeneficiosAnalyticsResponse, CasosAnalyticsResponse, ContratacionAnalyticsResponse,
+    ApprenticeListResponse
 )
 from app.modules.analytics.services import AnalyticsService
 from app.core.pdf_generator import generate_tabulation_pdf
@@ -237,4 +238,110 @@ async def get_contratacion_analytics(
         ficha_id=ficha_id,
         programa_codigo=programa_codigo
     )
+
+
+@router.get("/beneficios/aprendices", response_model=ApprenticeListResponse)
+async def get_beneficios_aprendices(
+    q: Optional[str] = None,
+    regional_id: Optional[List[str]] = Query(None),
+    centro_id: Optional[List[str]] = Query(None),
+    ficha_id: Optional[List[str]] = Query(None),
+    programa_codigo: Optional[List[str]] = Query(None),
+    nivel_riesgo: Optional[List[str]] = Query(None),
+    categoria_id: Optional[List[str]] = Query(None),
+    page: int = 1,
+    limit: int = 10,
+    db: AsyncSession = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user_token)
+):
+    """Obtener la tabla detallada de aprendices para el módulo de Beneficios Institucionales."""
+    if current_user.rol in ["direccion", "Dirección"] and current_user.regional_id:
+        regional_id = [current_user.regional_id]
+    elif current_user.rol in ["coordinador", "Coordinador", "instructor", "lider_bienestar", "lider_contratacion"] and current_user.centro_id:
+        centro_id = [current_user.centro_id]
+
+    return await AnalyticsService.get_module_apprentices(
+        db,
+        modulo="beneficios",
+        q=q,
+        regional_id=regional_id,
+        centro_id=centro_id,
+        ficha_id=ficha_id,
+        programa_codigo=programa_codigo,
+        nivel_riesgo=nivel_riesgo,
+        categoria_id=categoria_id,
+        page=page,
+        limit=limit
+    )
+
+
+@router.get("/casos/aprendices", response_model=ApprenticeListResponse)
+async def get_casos_aprendices(
+    q: Optional[str] = None,
+    regional_id: Optional[List[str]] = Query(None),
+    centro_id: Optional[List[str]] = Query(None),
+    ficha_id: Optional[List[str]] = Query(None),
+    programa_codigo: Optional[List[str]] = Query(None),
+    nivel_riesgo: Optional[List[str]] = Query(None),
+    categoria_id: Optional[List[str]] = Query(None),
+    page: int = 1,
+    limit: int = 10,
+    db: AsyncSession = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user_token)
+):
+    """Obtener la tabla detallada de aprendices para el módulo de Casos de Atención & Alertas."""
+    if current_user.rol in ["direccion", "Dirección"] and current_user.regional_id:
+        regional_id = [current_user.regional_id]
+    elif current_user.rol in ["coordinador", "Coordinador", "instructor", "lider_bienestar", "lider_contratacion"] and current_user.centro_id:
+        centro_id = [current_user.centro_id]
+
+    return await AnalyticsService.get_module_apprentices(
+        db,
+        modulo="casos",
+        q=q,
+        regional_id=regional_id,
+        centro_id=centro_id,
+        ficha_id=ficha_id,
+        programa_codigo=programa_codigo,
+        nivel_riesgo=nivel_riesgo,
+        categoria_id=categoria_id,
+        page=page,
+        limit=limit
+    )
+
+
+@router.get("/contratacion/aprendices", response_model=ApprenticeListResponse)
+async def get_contratacion_aprendices(
+    q: Optional[str] = None,
+    regional_id: Optional[List[str]] = Query(None),
+    centro_id: Optional[List[str]] = Query(None),
+    ficha_id: Optional[List[str]] = Query(None),
+    programa_codigo: Optional[List[str]] = Query(None),
+    nivel_riesgo: Optional[List[str]] = Query(None),
+    categoria_id: Optional[List[str]] = Query(None),
+    page: int = 1,
+    limit: int = 10,
+    db: AsyncSession = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user_token)
+):
+    """Obtener la tabla detallada de aprendices para el módulo de Contratación de Aprendices."""
+    if current_user.rol in ["direccion", "Dirección"] and current_user.regional_id:
+        regional_id = [current_user.regional_id]
+    elif current_user.rol in ["coordinador", "Coordinador", "instructor", "lider_bienestar", "lider_contratacion"] and current_user.centro_id:
+        centro_id = [current_user.centro_id]
+
+    return await AnalyticsService.get_module_apprentices(
+        db,
+        modulo="contratacion",
+        q=q,
+        regional_id=regional_id,
+        centro_id=centro_id,
+        ficha_id=ficha_id,
+        programa_codigo=programa_codigo,
+        nivel_riesgo=nivel_riesgo,
+        categoria_id=categoria_id,
+        page=page,
+        limit=limit
+    )
+
 

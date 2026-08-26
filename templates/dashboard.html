@@ -279,11 +279,7 @@
 
                     <div id="tabulacionCategoriasContainer" class="space-y-6">
                         <div class="text-center py-8 text-slate-400 text-xs">Cargando datos de tabulación...</div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- MÓDULO 2: BENEFICIOS INSTITUCIONALES -->
+                       <!-- MÓDULO 2: BENEFICIOS INSTITUCIONALES -->
             <section id="sec-beneficios" class="hidden space-y-6">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-3xl shadow-sm border border-sena-border">
                     <div>
@@ -291,6 +287,14 @@
                             <i class="fas fa-hand-holding-heart text-sena-primary"></i> Análisis de Beneficios Institucionales
                         </h3>
                         <p class="text-xs text-slate-500">Indicadores estadísticos de adjudicación de apoyos de bienestar, cobertura y programas de auxilio.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="openModalBeneficio()" class="px-3 py-2 bg-slate-800 text-white font-bold text-xs rounded-xl hover:bg-slate-900 transition flex items-center gap-1.5">
+                            <i class="fas fa-plus"></i> Nuevo Beneficio
+                        </button>
+                        <button onclick="openModalAsignarBeneficio()" class="px-4 py-2 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary transition shadow flex items-center gap-2">
+                            <i class="fas fa-hand-holding-heart"></i> Otorgar Beneficio
+                        </button>
                     </div>
                 </div>
 
@@ -335,6 +339,52 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Tabla Detallada de Aprendices (Beneficios) -->
+                <div class="bg-white p-6 rounded-3xl shadow-md space-y-4">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-sena-border pb-4">
+                        <div>
+                            <h4 class="text-sm font-black text-sena-dark flex items-center gap-2">
+                                <i class="fas fa-users text-sena-primary"></i> Detalle de Aprendices - Beneficios Institucionales
+                            </h4>
+                            <p class="text-xs text-slate-500">Listado detallado de aprendices que conforman las métricas según los filtros aplicados.</p>
+                        </div>
+                        <div class="relative w-full sm:w-80">
+                            <i class="fas fa-search absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+                            <input type="text" id="searchBeneficiosAprendiz" oninput="debounceBeneficiosAprendices()" placeholder="Buscar por documento o nombre completo..." class="w-full text-xs pl-9 pr-3 py-2 bg-slate-50 border border-sena-border rounded-xl focus:outline-none focus:ring-2 focus:ring-sena-primary font-medium">
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left text-slate-600">
+                            <thead class="bg-sena-bg text-sena-dark font-extrabold uppercase text-[11px]">
+                                <tr>
+                                    <th class="p-3.5">Documento</th>
+                                    <th class="p-3.5">Nombre Completo</th>
+                                    <th class="p-3.5">Número de Ficha</th>
+                                    <th class="p-3.5">Programa de Formación</th>
+                                    <th class="p-3.5">Nivel de Formación</th>
+                                    <th class="p-3.5">Beneficios Otorgados</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tblBeneficiosAprendices" class="divide-y divide-slate-100 font-medium">
+                                <tr><td colspan="6" class="p-4 text-center text-slate-400">Cargando aprendices...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row justify-between items-center text-xs text-slate-500 gap-3 pt-2 border-t border-slate-100">
+                        <span id="infoPagBeneficios">Mostrando 0 de 0 aprendices</span>
+                        <div class="flex gap-2">
+                            <button id="btnPrevBeneficios" onclick="changePageBeneficios(-1)" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg transition disabled:opacity-50">
+                                <i class="fas fa-chevron-left mr-1"></i> Anterior
+                            </button>
+                            <button id="btnNextBeneficios" onclick="changePageBeneficios(1)" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg transition disabled:opacity-50">
+                                Siguiente <i class="fas fa-chevron-right ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <!-- MÓDULO 3: CASOS DE ATENCIÓN & ALERTAS -->
@@ -345,6 +395,11 @@
                             <i class="fas fa-headset text-sena-primary"></i> Casos de Atención & Alertas Tempranas
                         </h3>
                         <p class="text-xs text-slate-500">Métricas de seguimiento psicosocial, alertas de deserción y tasa de resolución institucional.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="openModalCaso()" class="px-4 py-2 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary transition shadow flex items-center gap-2">
+                            <i class="fas fa-plus"></i> Nuevo Caso Manual
+                        </button>
                     </div>
                 </div>
 
@@ -395,6 +450,52 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Tabla Detallada de Aprendices (Casos & Alertas) -->
+                <div class="bg-white p-6 rounded-3xl shadow-md space-y-4">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-sena-border pb-4">
+                        <div>
+                            <h4 class="text-sm font-black text-sena-dark flex items-center gap-2">
+                                <i class="fas fa-users text-sena-primary"></i> Detalle de Aprendices - Casos de Atención & Alertas
+                            </h4>
+                            <p class="text-xs text-slate-500">Listado detallado de aprendices que conforman las métricas según los filtros aplicados.</p>
+                        </div>
+                        <div class="relative w-full sm:w-80">
+                            <i class="fas fa-search absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+                            <input type="text" id="searchCasosAprendiz" oninput="debounceCasosAprendices()" placeholder="Buscar por documento o nombre completo..." class="w-full text-xs pl-9 pr-3 py-2 bg-slate-50 border border-sena-border rounded-xl focus:outline-none focus:ring-2 focus:ring-sena-primary font-medium">
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left text-slate-600">
+                            <thead class="bg-sena-bg text-sena-dark font-extrabold uppercase text-[11px]">
+                                <tr>
+                                    <th class="p-3.5">Documento</th>
+                                    <th class="p-3.5">Nombre Completo</th>
+                                    <th class="p-3.5">Número de Ficha</th>
+                                    <th class="p-3.5">Programa de Formación</th>
+                                    <th class="p-3.5">Nivel de Formación</th>
+                                    <th class="p-3.5">Estado / Prioridad de Casos</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tblCasosAprendices" class="divide-y divide-slate-100 font-medium">
+                                <tr><td colspan="6" class="p-4 text-center text-slate-400">Cargando aprendices...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row justify-between items-center text-xs text-slate-500 gap-3 pt-2 border-t border-slate-100">
+                        <span id="infoPagCasos">Mostrando 0 de 0 aprendices</span>
+                        <div class="flex gap-2">
+                            <button id="btnPrevCasos" onclick="changePageCasos(-1)" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg transition disabled:opacity-50">
+                                <i class="fas fa-chevron-left mr-1"></i> Anterior
+                            </button>
+                            <button id="btnNextCasos" onclick="changePageCasos(1)" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg transition disabled:opacity-50">
+                                Siguiente <i class="fas fa-chevron-right ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <!-- MÓDULO 4: CONTRATACIÓN DE APRENDICES -->
@@ -405,6 +506,11 @@
                             <i class="fas fa-file-contract text-sena-primary"></i> Análisis de Contratación de Aprendices
                         </h3>
                         <p class="text-xs text-slate-500">Métricas de patrocinio empresarial, vinculación laboral y relación de contratos formativos.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="openModalContrato()" class="px-4 py-2 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary transition shadow flex items-center gap-2">
+                            <i class="fas fa-plus"></i> Registrar Contrato
+                        </button>
                     </div>
                 </div>
 
@@ -456,116 +562,49 @@
                     </div>
                 </div>
 
-
-
-            <!-- SECTION 4: CONTRATACIÓN DE APRENDICES -->
-            <section id="sec-contratos" class="hidden space-y-6">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <h3 class="text-lg font-black text-sena-dark flex items-center gap-2">
-                            <i class="fas fa-file-contract text-sena-dark"></i> Contratación de Aprendices
-                        </h3>
-                        <p class="text-xs text-slate-500">Histórico de contratos de aprendizaje, patrocinio y ubicación de etapa práctica.</p>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="exportToCSV('contratos_sena.csv', window.currentContratosList || [])" class="px-3 py-2 bg-slate-800 text-white font-bold text-xs rounded-xl hover:bg-slate-900 transition flex items-center gap-1.5">
-                            <i class="fas fa-file-csv"></i> Exportar CSV
-                        </button>
-                        <button onclick="openModalContrato()" class="px-4 py-2 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary transition shadow flex items-center gap-2">
-                            <i class="fas fa-plus"></i> Registrar Contrato
-                        </button>
-                    </div>
-                </div>
-
+                <!-- Tabla Detallada de Aprendices (Contratación) -->
                 <div class="bg-white p-6 rounded-3xl shadow-md space-y-4">
-                    <div class="flex flex-col sm:flex-row gap-3">
-                        <div class="relative flex-1">
-                            <i class="fas fa-search absolute left-3.5 top-3 text-slate-400 text-xs"></i>
-                            <input type="text" id="searchContratos" oninput="loadContratos()" placeholder="Buscar por empresa, aprendiz o ciudad..." class="w-full text-xs pl-9 pr-3 py-2.5 border border-sena-border rounded-xl focus:outline-none focus:ring-2 focus:ring-sena-primary">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-sena-border pb-4">
+                        <div>
+                            <h4 class="text-sm font-black text-sena-dark flex items-center gap-2">
+                                <i class="fas fa-users text-sena-primary"></i> Detalle de Aprendices - Contratación de Aprendices
+                            </h4>
+                            <p class="text-xs text-slate-500">Listado detallado de aprendices que conforman las métricas según los filtros aplicados.</p>
                         </div>
-                        <select id="filterEstadoContrato" onchange="loadContratos()" class="text-xs py-2.5 px-3 border border-sena-border rounded-xl">
-                            <option value="">Todos los estados</option>
-                            <option value="EN PATROCINIO">EN PATROCINIO</option>
-                            <option value="EN ETAPA PRACTICA">EN ETAPA PRACTICA</option>
-                            <option value="ACTIVO">ACTIVO</option>
-                            <option value="FINALIZADO">FINALIZADO</option>
-                            <option value="SUSPENDIDO">SUSPENDIDO</option>
-                            <option value="CANCELADO">CANCELADO</option>
-                        </select>
+                        <div class="relative w-full sm:w-80">
+                            <i class="fas fa-search absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+                            <input type="text" id="searchContratacionAprendiz" oninput="debounceContratacionAprendices()" placeholder="Buscar por documento o nombre completo..." class="w-full text-xs pl-9 pr-3 py-2 bg-slate-50 border border-sena-border rounded-xl focus:outline-none focus:ring-2 focus:ring-sena-primary font-medium">
+                        </div>
                     </div>
 
                     <div class="overflow-x-auto">
                         <table class="w-full text-xs text-left text-slate-600">
                             <thead class="bg-sena-bg text-sena-dark font-extrabold uppercase text-[11px]">
                                 <tr>
-                                    <th class="p-3.5">Empresa</th>
-                                    <th class="p-3.5">Aprendiz</th>
-                                    <th class="p-3.5">Ficha</th>
-                                    <th class="p-3.5">Ubicación Práctica</th>
-                                    <th class="p-3.5">Inicio / Fin</th>
-                                    <th class="p-3.5">Estado</th>
-                                    <th class="p-3.5 text-right">Acciones</th>
+                                    <th class="p-3.5">Documento</th>
+                                    <th class="p-3.5">Nombre Completo</th>
+                                    <th class="p-3.5">Número de Ficha</th>
+                                    <th class="p-3.5">Programa de Formación</th>
+                                    <th class="p-3.5">Nivel de Formación</th>
+                                    <th class="p-3.5">Empresa / Estado de Patrocinio</th>
                                 </tr>
                             </thead>
-                            <tbody id="tblContratos" class="divide-y divide-slate-100">
-                                <tr><td colspan="7" class="p-4 text-center">Cargando contratos...</td></tr>
+                            <tbody id="tblContratacionAprendices" class="divide-y divide-slate-100 font-medium">
+                                <tr><td colspan="6" class="p-4 text-center text-slate-400">Cargando aprendices...</td></tr>
                             </tbody>
                         </table>
                     </div>
-                </div>
-            </section>
 
-            <!-- SECTION 5: BENEFICIOS INSTITUCIONALES -->
-            <section id="sec-beneficios" class="hidden space-y-6">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <h3 class="text-lg font-black text-sena-dark">Beneficios Institucionales Directos</h3>
-                        <p class="text-xs text-slate-500">Catálogo de auxilios, apoyos y asignación a aprendices.</p>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="openModalBeneficio()" class="px-3 py-2 bg-slate-800 text-white font-bold text-xs rounded-xl hover:bg-slate-900 transition flex items-center gap-1.5">
-                            <i class="fas fa-plus"></i> Nuevo Beneficio
-                        </button>
-                        <button onclick="openModalAsignarBeneficio()" class="px-4 py-2 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary transition shadow flex items-center gap-2">
-                            <i class="fas fa-hand-holding-heart"></i> Otorgar Beneficio
-                        </button>
-                    </div>
-                </div>
-
-                <div id="listBeneficios" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Dynamic Beneficios Cards -->
-                </div>
-            </section>
-
-            <!-- SECTION 6: CASOS DE ATENCIÓN & ALERTAS -->
-            <section id="sec-casos" class="hidden space-y-6">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <h3 class="text-lg font-black text-sena-dark">Gestión de Casos & Reglas de Atención</h3>
-                        <p class="text-xs text-slate-500">Alertas automáticas y casos de acompañamiento al aprendiz.</p>
-                    </div>
-                    <button onclick="openModalCaso()" class="px-4 py-2 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary transition shadow flex items-center gap-2">
-                        <i class="fas fa-plus"></i> Nuevo Caso Manual
-                    </button>
-                </div>
-
-                <div class="bg-white p-6 rounded-3xl shadow-md space-y-4">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-xs text-left text-slate-600">
-                            <thead class="bg-sena-bg text-sena-dark font-extrabold uppercase text-[11px]">
-                                <tr>
-                                    <th class="p-3.5">Título / Caso</th>
-                                    <th class="p-3.5">Aprendiz</th>
-                                    <th class="p-3.5">Prioridad</th>
-                                    <th class="p-3.5">Estado</th>
-                                    <th class="p-3.5">Fecha</th>
-                                    <th class="p-3.5 text-right">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tblCasos" class="divide-y divide-slate-100">
-                                <tr><td colspan="6" class="p-4 text-center">Cargando casos...</td></tr>
-                            </tbody>
-                        </table>
+                    <div class="flex flex-col sm:flex-row justify-between items-center text-xs text-slate-500 gap-3 pt-2 border-t border-slate-100">
+                        <span id="infoPagContratacion">Mostrando 0 de 0 aprendices</span>
+                        <div class="flex gap-2">
+                            <button id="btnPrevContratacion" onclick="changePageContratacion(-1)" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg transition disabled:opacity-50">
+                                <i class="fas fa-chevron-left mr-1"></i> Anterior
+                            </button>
+                            <button id="btnNextContratacion" onclick="changePageContratacion(1)" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg transition disabled:opacity-50">
+                                Siguiente <i class="fas fa-chevron-right ml-1"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </section>

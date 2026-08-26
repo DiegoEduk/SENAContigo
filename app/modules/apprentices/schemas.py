@@ -57,3 +57,19 @@ class AprendizRead(AprendizBase):
     updated_at: datetime
     matriculas: List[MatriculaRead] = []
     model_config = ConfigDict(from_attributes=True)
+
+class ApprenticeRow(BaseModel):
+    tipo_documento: str
+    numero_documento: str
+    nombre_completo: str
+    ficha_numero: str
+    programa: str
+    nivel_formacion: Optional[str] = None
+    class Config:
+        orm_mode = True
+
+class ApprenticeListResponse(BaseModel):
+    total: int
+    page: int
+    page_size: int
+    items: List[ApprenticeRow]

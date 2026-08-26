@@ -7,10 +7,11 @@ from app.modules.academic.models import Ficha
 from app.modules.apprentices.models import Aprendiz
 from app.modules.contracts.models import ContratoAprendizaje
 from app.modules.cases.models import Caso
+from app.modules.apprentices.models import Matricula
 from app.modules.responses.models import Respuesta
 from app.modules.variables.models import OpcionVariable
 from app.core.security import TokenData
-from app.modules.analytics.schemas import DashboardSummary
+from app.modules.analytics.schemas import DashboardSummary, TabulacionResponse, AllowedFiltersResponse, FilterOptionsResponse, BeneficiosAnalyticsResponse, CasosAnalyticsResponse, ContratacionAnalyticsResponse, ApprenticeListResponse, ApprenticeRow
 
 
 class AnalyticsService:
@@ -715,4 +716,168 @@ class AnalyticsService:
             distribucion_por_estado_contrato=dist_estado,
             top_empresas_patrocinadoras=top_empresas
         )
+
+    @staticmethod
+    async def get_module_apprentices(
+        session: AsyncSession,
+        modulo: str,
+        q: Optional[str] = None,
+        regional_id: Optional[Any] = None,
+        centro_id: Optional[Any] = None,
+        ficha_id: Optional[Any] = None,
+        programa_codigo: Optional[Any] = None,
+        nivel_riesgo: Optional[Any] = None,
+        categoria_id: Optional[Any] = None,
+        page: int = 1,
+        limit: int = 10
+    ) -> ApprenticeListResponse:
+        from math import ceil
+        from sqlalchemy import or_
+        from app.modules.academic.models import Ficha, ProgramaFormacion
+        from app.modules.organization.models import CentroFormacion
+        from app.modules.benefits.models import AprendizBeneficio, Beneficio
+        from app.modules.cases.models import Caso
+        from app.modules.contracts.models import ContratoAprendizaje
+
+        def to_list(val):
+            if val is None:
+                return []
+            if isinstance(val, (list, tuple)):
+                return [str(v) for v in val if str(v).strip()]
+            if isinstance(val, str):
+                return [v.strip() for v in val.split(",") if v.strip()]
+            return [str(val)]
+
+        reg_list = to_list(regional_id)
+        c_list = to_list(centro_id)
+        f_list = to_list(ficha_id)
+        p_list = to_list(programa_codigo)
+
+        # Base query for distinct aprendices with matricula & program
+        stmt_base = (
+            select(
+                Aprendiz,
+                Ficha.ficha_caracterizacion,
+                ProgramaFormacion.nombre.label("nombre_programa"),
+                ProgramaFormacion.nivel_formacion
+            )
+            .join(Matricula, Aprendiz.id == Matricula.aprendiz_id)
+            .join(Ficha, Matricula.ficha_id == Ficha.ficha_caracterizacion)
+            .join(
+                ProgramaFormacion,
+                (Ficha.programa_codigo == ProgramaFormacion.codigo_programa) &
+                (Ficha.programa_version == ProgramaFormacion.version)
+            )
+        )
+
+        if reg_list:
+            stmt_base = stmt_base.join(CentroFormacion, Ficha.centro_id == CentroFormacion.codigo_centro).where(CentroFormacion.regional_id.in_(reg_list))
+        if c_list:
+            stmt_base = stmt_base.where(Ficha.centro_id.in_(c_list))
+        if p_list:
+            stmt_base = stmt_base.where(Ficha.programa_codigo.in_(p_list))
+        if f_list:
+            stmt_base = stmt_base.where(Ficha.ficha_caracterizacion.in_(f_list))
+
+        # Search filter q (documento o nombre completo)
+        if q and q.strip():
+            query_str = f"%{q.strip().lower()}%"
+            stmt_base = stmt_base.where(
+                or_(
+                    func.lower(Aprendiz.numero_documento).like(query_str),
+                    func.lower(Aprendiz.nombres).like(query_str),
+                    func.lower(Aprendiz.apellidos).like(query_str),
+                    func.lower(func.concat(Aprendiz.nombres, ' ', Aprendiz.apellidos)).like(query_str)
+                )
+            )
+
+        # Execute total count query
+        count_stmt = select(func.count(func.distinct(Aprendiz.id))).select_from(stmt_base.subquery())
+        res_count = await session.execute(count_stmt)
+        total_items = res_count.scalar() or 0
+
+        # Execute paginated data query
+        page = max(1, page)
+        limit = max(1, min(100, limit))
+        offset = (page - 1) * limit
+
+        stmt_paginated = stmt_base.distinct(Aprendiz.id).offset(offset).limit(limit)
+        res_data = await session.execute(stmt_paginated)
+        rows = res_data.all()
+
+        aprendiz_ids = [r[0].id for r in rows]
+
+        # Fetch module-specific context dictionary
+        context_dict = {}
+        if aprendiz_ids:
+            if modulo == "beneficios":
+                b_stmt = select(AprendizBeneficio, Beneficio).join(
+                    Beneficio, AprendizBeneficio.beneficio_id == Beneficio.id
+                ).where(AprendizBeneficio.aprendiz_id.in_(aprendiz_ids))
+                b_res = await session.execute(b_stmt)
+                for ab, ben in b_res.all():
+                    txt = f"{ben.nombre} ({ab.estado})"
+                    if ab.aprendiz_id not in context_dict:
+                        context_dict[ab.aprendiz_id] = []
+                    context_dict[ab.aprendiz_id].append(txt)
+
+            elif modulo == "casos":
+                c_stmt = select(Caso).where(Caso.aprendiz_id.in_(aprendiz_ids))
+                c_res = await session.execute(c_stmt)
+                for caso in c_res.scalars().all():
+                    txt = f"{caso.prioridad} - {caso.estado} ({caso.titulo if hasattr(caso, 'titulo') and caso.titulo else 'Caso #' + str(caso.id)})"
+                    if caso.aprendiz_id not in context_dict:
+                        context_dict[caso.aprendiz_id] = []
+                    context_dict[caso.aprendiz_id].append(txt)
+
+            elif modulo == "contratacion":
+                ca_stmt = select(ContratoAprendizaje, Matricula.aprendiz_id).join(
+                    Matricula, ContratoAprendizaje.matricula_id == Matricula.id
+                ).where(Matricula.aprendiz_id.in_(aprendiz_ids))
+                ca_res = await session.execute(ca_stmt)
+                for ca, apr_id in ca_res.all():
+                    txt = f"{ca.estado_contrato} - {ca.nombre_empresa}"
+                    if apr_id not in context_dict:
+                        context_dict[apr_id] = []
+                    context_dict[apr_id].append(txt)
+
+        # Build response items
+        items = []
+        for apr, ficha_num, prog_nombre, prog_nivel in rows:
+            mod_info_list = context_dict.get(apr.id, [])
+            if mod_info_list:
+                mod_detail = ", ".join(mod_info_list)
+            else:
+                if modulo == "beneficios":
+                    mod_detail = "Sin beneficios asignados"
+                elif modulo == "casos":
+                    mod_detail = "Sin casos de atención"
+                else:
+                    mod_detail = "Sin contrato registrado"
+
+            items.append(
+                ApprenticeRow(
+                    id=apr.id,
+                    tipo_documento=apr.tipo_documento or "CC",
+                    numero_documento=apr.numero_documento,
+                    nombres=apr.nombres,
+                    apellidos=apr.apellidos,
+                    nombre_completo=f"{apr.nombres} {apr.apellidos}",
+                    numero_ficha=ficha_num,
+                    nombre_programa=prog_nombre,
+                    nivel_formacion=prog_nivel,
+                    detalle_modulo=mod_detail
+                )
+            )
+
+        total_pages = ceil(total_items / limit) if total_items > 0 else 1
+
+        return ApprenticeListResponse(
+            items=items,
+            total=total_items,
+            page=page,
+            limit=limit,
+            total_pages=total_pages
+        )
+
 

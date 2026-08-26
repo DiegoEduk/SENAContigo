@@ -1221,6 +1221,7 @@ async function loadBeneficiosData() {
     document.getElementById('benKpiCobertura').innerText = `${data.tasa_cobertura_porcentaje || 0}%`;
 
     renderBeneficiosCharts(data);
+    loadBeneficiosAprendicesData();
   } catch (err) {
     Loading.hide();
     console.error('Error cargando analítica de beneficios:', err);
@@ -1296,6 +1297,7 @@ async function loadCasosData() {
     document.getElementById('casosKpiCriticos').innerText = data.casos_criticos_altos_abiertos || 0;
 
     renderCasosCharts(data);
+    loadCasosAprendicesData();
   } catch (err) {
     Loading.hide();
     console.error('Error cargando analítica de casos:', err);
@@ -1367,7 +1369,7 @@ async function loadContratacionData() {
     document.getElementById('conKpiVencer').innerText = data.contratos_por_vencer_30d || 0;
 
     renderContratacionCharts(data);
-    renderTopEmpresasTable(data.top_empresas_patrocinadoras || []);
+    loadContratacionAprendicesData();
   } catch (err) {
     Loading.hide();
     console.error('Error cargando analítica de contratación:', err);
@@ -1461,6 +1463,226 @@ function renderTopEmpresasTable(empresas) {
 
   container.innerHTML = html;
 }
+
+// MANEJO DE TABLAS DETALLADAS DE APRENDICES POR MÓDULO CON BUSCADOR Y PAGINACIÓN
+let pageBeneficiosAprendices = 1;
+let pageCasosAprendices = 1;
+let pageContratacionAprendices = 1;
+
+let searchBeneficiosTimeout = null;
+let searchCasosTimeout = null;
+let searchContratacionTimeout = null;
+
+// 1. Módulo 2: Beneficios Institucionales
+async function loadBeneficiosAprendicesData() {
+  const tbl = document.getElementById('tblBeneficiosAprendices');
+  const infoPag = document.getElementById('infoPagBeneficios');
+  const btnPrev = document.getElementById('btnPrevBeneficios');
+  const btnNext = document.getElementById('btnNextBeneficios');
+  if (!tbl) return;
+
+  tbl.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Cargando aprendices...</td></tr>`;
+
+  try {
+    const filterParams = getActiveFilterParams();
+    const qVal = document.getElementById('searchBeneficiosAprendiz')?.value || '';
+    if (qVal) filterParams.q = qVal;
+    filterParams.page = pageBeneficiosAprendices;
+    filterParams.limit = 10;
+
+    const res = await API.getAnalyticsBeneficiosAprendices(filterParams);
+    const items = res.items || [];
+    const total = res.total || 0;
+    const page = res.page || 1;
+    const totalPages = res.total_pages || 1;
+
+    if (!items.length) {
+      tbl.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No se encontraron aprendices con los criterios especificados.</td></tr>`;
+      if (infoPag) infoPag.innerText = `Mostrando 0 de ${total} aprendices`;
+      if (btnPrev) btnPrev.disabled = true;
+      if (btnNext) btnNext.disabled = true;
+      return;
+    }
+
+    tbl.innerHTML = items.map(ap => `
+      <tr class="hover:bg-slate-50 transition">
+        <td class="p-3.5 font-mono font-bold text-sena-dark">${ap.tipo_documento} ${ap.numero_documento}</td>
+        <td class="p-3.5 font-bold text-slate-800">${ap.nombre_completo}</td>
+        <td class="p-3.5 font-mono">${ap.numero_ficha}</td>
+        <td class="p-3.5">${ap.nombre_programa}</td>
+        <td class="p-3.5"><span class="badge-state bg-slate-100 text-slate-700 font-bold">${ap.nivel_formacion}</span></td>
+        <td class="p-3.5"><span class="badge-state bg-emerald-100 text-emerald-900 border border-emerald-300 font-bold">${ap.detalle_modulo || 'Sin información'}</span></td>
+      </tr>
+    `).join('');
+
+    const fromCount = (page - 1) * 10 + 1;
+    const toCount = Math.min(page * 10, total);
+    if (infoPag) infoPag.innerText = `Mostrando ${fromCount} - ${toCount} de ${total} aprendices`;
+    if (btnPrev) btnPrev.disabled = (page <= 1);
+    if (btnNext) btnNext.disabled = (page >= totalPages);
+  } catch (err) {
+    console.error('Error cargando aprendices de beneficios:', err);
+    tbl.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Error al cargar la tabla de aprendices: ${err.message}</td></tr>`;
+  }
+}
+
+function debounceBeneficiosAprendices() {
+  clearTimeout(searchBeneficiosTimeout);
+  searchBeneficiosTimeout = setTimeout(() => {
+    pageBeneficiosAprendices = 1;
+    loadBeneficiosAprendicesData();
+  }, 300);
+}
+
+function changePageBeneficios(delta) {
+  pageBeneficiosAprendices = Math.max(1, pageBeneficiosAprendices + delta);
+  loadBeneficiosAprendicesData();
+}
+
+// 2. Módulo 3: Casos de Atención & Alertas
+async function loadCasosAprendicesData() {
+  const tbl = document.getElementById('tblCasosAprendices');
+  const infoPag = document.getElementById('infoPagCasos');
+  const btnPrev = document.getElementById('btnPrevCasos');
+  const btnNext = document.getElementById('btnNextCasos');
+  if (!tbl) return;
+
+  tbl.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Cargando aprendices...</td></tr>`;
+
+  try {
+    const filterParams = getActiveFilterParams();
+    const qVal = document.getElementById('searchCasosAprendiz')?.value || '';
+    if (qVal) filterParams.q = qVal;
+    filterParams.page = pageCasosAprendices;
+    filterParams.limit = 10;
+
+    const res = await API.getAnalyticsCasosAprendices(filterParams);
+    const items = res.items || [];
+    const total = res.total || 0;
+    const page = res.page || 1;
+    const totalPages = res.total_pages || 1;
+
+    if (!items.length) {
+      tbl.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No se encontraron aprendices con los criterios especificados.</td></tr>`;
+      if (infoPag) infoPag.innerText = `Mostrando 0 de ${total} aprendices`;
+      if (btnPrev) btnPrev.disabled = true;
+      if (btnNext) btnNext.disabled = true;
+      return;
+    }
+
+    tbl.innerHTML = items.map(ap => {
+      let badgeStyle = 'bg-blue-100 text-blue-900 border border-blue-300';
+      if ((ap.detalle_modulo || '').includes('CRITICA') || (ap.detalle_modulo || '').includes('ALTA')) {
+        badgeStyle = 'bg-red-100 text-red-900 border border-red-300';
+      }
+      return `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="p-3.5 font-mono font-bold text-sena-dark">${ap.tipo_documento} ${ap.numero_documento}</td>
+          <td class="p-3.5 font-bold text-slate-800">${ap.nombre_completo}</td>
+          <td class="p-3.5 font-mono">${ap.numero_ficha}</td>
+          <td class="p-3.5">${ap.nombre_programa}</td>
+          <td class="p-3.5"><span class="badge-state bg-slate-100 text-slate-700 font-bold">${ap.nivel_formacion}</span></td>
+          <td class="p-3.5"><span class="badge-state ${badgeStyle} font-bold">${ap.detalle_modulo || 'Sin casos'}</span></td>
+        </tr>
+      `;
+    }).join('');
+
+    const fromCount = (page - 1) * 10 + 1;
+    const toCount = Math.min(page * 10, total);
+    if (infoPag) infoPag.innerText = `Mostrando ${fromCount} - ${toCount} de ${total} aprendices`;
+    if (btnPrev) btnPrev.disabled = (page <= 1);
+    if (btnNext) btnNext.disabled = (page >= totalPages);
+  } catch (err) {
+    console.error('Error cargando aprendices de casos:', err);
+    tbl.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Error al cargar la tabla de aprendices: ${err.message}</td></tr>`;
+  }
+}
+
+function debounceCasosAprendices() {
+  clearTimeout(searchCasosTimeout);
+  searchCasosTimeout = setTimeout(() => {
+    pageCasosAprendices = 1;
+    loadCasosAprendicesData();
+  }, 300);
+}
+
+function changePageCasos(delta) {
+  pageCasosAprendices = Math.max(1, pageCasosAprendices + delta);
+  loadCasosAprendicesData();
+}
+
+// 3. Módulo 4: Contratación de Aprendices
+async function loadContratacionAprendicesData() {
+  const tbl = document.getElementById('tblContratacionAprendices');
+  const infoPag = document.getElementById('infoPagContratacion');
+  const btnPrev = document.getElementById('btnPrevContratacion');
+  const btnNext = document.getElementById('btnNextContratacion');
+  if (!tbl) return;
+
+  tbl.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Cargando aprendices...</td></tr>`;
+
+  try {
+    const filterParams = getActiveFilterParams();
+    const qVal = document.getElementById('searchContratacionAprendiz')?.value || '';
+    if (qVal) filterParams.q = qVal;
+    filterParams.page = pageContratacionAprendices;
+    filterParams.limit = 10;
+
+    const res = await API.getAnalyticsContratacionAprendices(filterParams);
+    const items = res.items || [];
+    const total = res.total || 0;
+    const page = res.page || 1;
+    const totalPages = res.total_pages || 1;
+
+    if (!items.length) {
+      tbl.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No se encontraron aprendices con los criterios especificados.</td></tr>`;
+      if (infoPag) infoPag.innerText = `Mostrando 0 de ${total} aprendices`;
+      if (btnPrev) btnPrev.disabled = true;
+      if (btnNext) btnNext.disabled = true;
+      return;
+    }
+
+    tbl.innerHTML = items.map(ap => {
+      let badgeStyle = 'bg-slate-100 text-slate-700';
+      if ((ap.detalle_modulo || '').includes('PATROCINIO') || (ap.detalle_modulo || '').includes('PRACTICA') || (ap.detalle_modulo || '').includes('ACTIVO')) {
+        badgeStyle = 'bg-indigo-100 text-indigo-900 border border-indigo-300';
+      }
+      return `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="p-3.5 font-mono font-bold text-sena-dark">${ap.tipo_documento} ${ap.numero_documento}</td>
+          <td class="p-3.5 font-bold text-slate-800">${ap.nombre_completo}</td>
+          <td class="p-3.5 font-mono">${ap.numero_ficha}</td>
+          <td class="p-3.5">${ap.nombre_programa}</td>
+          <td class="p-3.5"><span class="badge-state bg-slate-100 text-slate-700 font-bold">${ap.nivel_formacion}</span></td>
+          <td class="p-3.5"><span class="badge-state ${badgeStyle} font-bold">${ap.detalle_modulo || 'Sin contrato'}</span></td>
+        </tr>
+      `;
+    }).join('');
+
+    const fromCount = (page - 1) * 10 + 1;
+    const toCount = Math.min(page * 10, total);
+    if (infoPag) infoPag.innerText = `Mostrando ${fromCount} - ${toCount} de ${total} aprendices`;
+    if (btnPrev) btnPrev.disabled = (page <= 1);
+    if (btnNext) btnNext.disabled = (page >= totalPages);
+  } catch (err) {
+    console.error('Error cargando aprendices de contratación:', err);
+    tbl.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Error al cargar la tabla de aprendices: ${err.message}</td></tr>`;
+  }
+}
+
+function debounceContratacionAprendices() {
+  clearTimeout(searchContratacionTimeout);
+  searchContratacionTimeout = setTimeout(() => {
+    pageContratacionAprendices = 1;
+    loadContratacionAprendicesData();
+  }, 300);
+}
+
+function changePageContratacion(delta) {
+  pageContratacionAprendices = Math.max(1, pageContratacionAprendices + delta);
+  loadContratacionAprendicesData();
+}
+
 
 
 
