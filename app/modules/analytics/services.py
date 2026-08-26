@@ -756,7 +756,11 @@ class AnalyticsService:
         # Base query for distinct aprendices with matricula & program
         stmt_base = (
             select(
-                Aprendiz,
+                Aprendiz.id.label("apr_id"),
+                Aprendiz.tipo_documento,
+                Aprendiz.numero_documento,
+                Aprendiz.nombres,
+                Aprendiz.apellidos,
                 Ficha.ficha_caracterizacion,
                 ProgramaFormacion.nombre.label("nombre_programa"),
                 ProgramaFormacion.nivel_formacion
@@ -782,17 +786,19 @@ class AnalyticsService:
         # Search filter q (documento o nombre completo)
         if q and q.strip():
             query_str = f"%{q.strip().lower()}%"
+            full_name_expr = func.lower(Aprendiz.nombres + ' ' + Aprendiz.apellidos)
             stmt_base = stmt_base.where(
                 or_(
                     func.lower(Aprendiz.numero_documento).like(query_str),
                     func.lower(Aprendiz.nombres).like(query_str),
                     func.lower(Aprendiz.apellidos).like(query_str),
-                    func.lower(func.concat(Aprendiz.nombres, ' ', Aprendiz.apellidos)).like(query_str)
+                    full_name_expr.like(query_str)
                 )
             )
 
         # Execute total count query
-        count_stmt = select(func.count(func.distinct(Aprendiz.id))).select_from(stmt_base.subquery())
+        subq = stmt_base.subquery()
+        count_stmt = select(func.count(func.distinct(subq.c.apr_id)))
         res_count = await session.execute(count_stmt)
         total_items = res_count.scalar() or 0
 
@@ -801,11 +807,11 @@ class AnalyticsService:
         limit = max(1, min(100, limit))
         offset = (page - 1) * limit
 
-        stmt_paginated = stmt_base.distinct(Aprendiz.id).offset(offset).limit(limit)
+        stmt_paginated = select(subq).group_by(subq.c.apr_id).offset(offset).limit(limit)
         res_data = await session.execute(stmt_paginated)
         rows = res_data.all()
 
-        aprendiz_ids = [r[0].id for r in rows]
+        aprendiz_ids = [r.apr_id for r in rows]
 
         # Fetch module-specific context dictionary
         context_dict = {}
@@ -843,8 +849,9 @@ class AnalyticsService:
 
         # Build response items
         items = []
-        for apr, ficha_num, prog_nombre, prog_nivel in rows:
-            mod_info_list = context_dict.get(apr.id, [])
+        for r in rows:
+            apr_id = r.apr_id
+            mod_info_list = context_dict.get(apr_id, [])
             if mod_info_list:
                 mod_detail = ", ".join(mod_info_list)
             else:
@@ -857,15 +864,15 @@ class AnalyticsService:
 
             items.append(
                 ApprenticeRow(
-                    id=apr.id,
-                    tipo_documento=apr.tipo_documento or "CC",
-                    numero_documento=apr.numero_documento,
-                    nombres=apr.nombres,
-                    apellidos=apr.apellidos,
-                    nombre_completo=f"{apr.nombres} {apr.apellidos}",
-                    numero_ficha=ficha_num,
-                    nombre_programa=prog_nombre,
-                    nivel_formacion=prog_nivel,
+                    id=apr_id,
+                    tipo_documento=r.tipo_documento or "CC",
+                    numero_documento=r.numero_documento,
+                    nombres=r.nombres,
+                    apellidos=r.apellidos,
+                    nombre_completo=f"{r.nombres} {r.apellidos}",
+                    numero_ficha=r.ficha_caracterizacion,
+                    nombre_programa=r.nombre_programa,
+                    nivel_formacion=r.nivel_formacion,
                     detalle_modulo=mod_detail
                 )
             )
