@@ -11,7 +11,7 @@ from app.modules.apprentices.models import Matricula
 from app.modules.responses.models import Respuesta
 from app.modules.variables.models import OpcionVariable
 from app.core.security import TokenData
-from app.modules.analytics.schemas import DashboardSummary, TabulacionResponse, AllowedFiltersResponse, FilterOptionsResponse, BeneficiosAnalyticsResponse, CasosAnalyticsResponse, ContratacionAnalyticsResponse, ApprenticeListResponse, ApprenticeRow
+from app.modules.analytics.schemas import DashboardSummary, TabulacionResponse, AllowedFiltersResponse, FilterOptionsResponse, BeneficiosAnalyticsResponse, CasosAnalyticsResponse, ContratacionAnalyticsResponse, ApprenticeListResponse, ApprenticeRow, Apprentice360Response
 
 
 class AnalyticsService:
@@ -755,6 +755,8 @@ class AnalyticsService:
 
         import math
 
+        is_searching = bool(q and len(q.strip()) > 4)
+
         # Base query to find distinct aprendiz_ids
         stmt_ids = select(Aprendiz.id).distinct()
         stmt_ids = (
@@ -767,6 +769,15 @@ class AnalyticsService:
             )
         )
 
+        # Filter by module record existence if not searching
+        if not is_searching:
+            if modulo == "beneficios":
+                stmt_ids = stmt_ids.join(AprendizBeneficio, Aprendiz.id == AprendizBeneficio.aprendiz_id)
+            elif modulo == "casos":
+                stmt_ids = stmt_ids.join(Caso, Aprendiz.id == Caso.aprendiz_id)
+            elif modulo == "contratacion":
+                stmt_ids = stmt_ids.join(ContratoAprendizaje, Matricula.id == ContratoAprendizaje.matricula_id)
+
         if reg_list:
             stmt_ids = stmt_ids.join(CentroFormacion, Ficha.centro_id == CentroFormacion.codigo_centro).where(CentroFormacion.regional_id.in_(reg_list))
         if c_list:
@@ -776,7 +787,7 @@ class AnalyticsService:
         if f_list:
             stmt_ids = stmt_ids.where(Ficha.ficha_caracterizacion.in_(f_list))
 
-        if q and q.strip():
+        if is_searching:
             query_str = f"%{q.strip().lower()}%"
             stmt_ids = stmt_ids.where(
                 or_(
@@ -808,7 +819,8 @@ class AnalyticsService:
                 Aprendiz.apellidos,
                 Ficha.ficha_caracterizacion,
                 ProgramaFormacion.nombre.label("nombre_programa"),
-                ProgramaFormacion.nivel_formacion
+                ProgramaFormacion.nivel_formacion,
+                Matricula.id.label("matricula_id")
             )
             .join(Matricula, Aprendiz.id == Matricula.aprendiz_id)
             .join(Ficha, Matricula.ficha_id == Ficha.ficha_caracterizacion)
@@ -819,6 +831,14 @@ class AnalyticsService:
             )
         )
 
+        if not is_searching:
+            if modulo == "beneficios":
+                stmt_paginated = stmt_paginated.join(AprendizBeneficio, Aprendiz.id == AprendizBeneficio.aprendiz_id)
+            elif modulo == "casos":
+                stmt_paginated = stmt_paginated.join(Caso, Aprendiz.id == Caso.aprendiz_id)
+            elif modulo == "contratacion":
+                stmt_paginated = stmt_paginated.join(ContratoAprendizaje, Matricula.id == ContratoAprendizaje.matricula_id)
+
         if reg_list:
             stmt_paginated = stmt_paginated.join(CentroFormacion, Ficha.centro_id == CentroFormacion.codigo_centro).where(CentroFormacion.regional_id.in_(reg_list))
         if c_list:
@@ -828,7 +848,7 @@ class AnalyticsService:
         if f_list:
             stmt_paginated = stmt_paginated.where(Ficha.ficha_caracterizacion.in_(f_list))
 
-        if q and q.strip():
+        if is_searching:
             query_str = f"%{q.strip().lower()}%"
             stmt_paginated = stmt_paginated.where(
                 or_(
@@ -849,7 +869,8 @@ class AnalyticsService:
                 Aprendiz.apellidos,
                 Ficha.ficha_caracterizacion,
                 ProgramaFormacion.nombre,
-                ProgramaFormacion.nivel_formacion
+                ProgramaFormacion.nivel_formacion,
+                Matricula.id
             )
             .order_by(Aprendiz.id)
             .offset(offset)
@@ -924,7 +945,8 @@ class AnalyticsService:
                     numero_ficha=r.ficha_caracterizacion,
                     nombre_programa=r.nombre_programa,
                     nivel_formacion=r.nivel_formacion,
-                    detalle_modulo=mod_detail
+                    detalle_modulo=mod_detail,
+                    matricula_id=getattr(r, "matricula_id", None)
                 )
             )
 
@@ -937,5 +959,181 @@ class AnalyticsService:
             limit=limit,
             total_pages=total_pages
         )
+
+    @staticmethod
+    async def get_aprendiz_360_detail(session: AsyncSession, aprendiz_id: int) -> Apprentice360Response:
+        from app.modules.apprentices.models import Aprendiz, Matricula
+        from app.modules.academic.models import Ficha, ProgramaFormacion
+        from app.modules.organization.models import CentroFormacion, Regional
+        from app.modules.benefits.models import AprendizBeneficio, Beneficio
+        from app.modules.cases.models import Caso
+        from app.modules.contracts.models import ContratoAprendizaje
+        from app.modules.analytics.schemas import (
+            Apprentice360Response, BenefitDetailItem, CaseDetailItem, ContractDetailItem
+        )
+        from fastapi import HTTPException
+
+        # 1. Basic Aprendiz info
+        apr_stmt = select(Aprendiz).where(Aprendiz.id == aprendiz_id)
+        apr_res = await session.execute(apr_stmt)
+        apr = apr_res.scalar_one_or_none()
+        if not apr:
+            raise HTTPException(status_code=404, detail="Aprendiz no encontrado")
+
+        # 2. Academic / Matricula info
+        mat_stmt = (
+            select(
+                Matricula.id.label("matricula_id"),
+                Ficha.ficha_caracterizacion,
+                ProgramaFormacion.nombre.label("nombre_programa"),
+                ProgramaFormacion.nivel_formacion,
+                CentroFormacion.nombre.label("nombre_centro"),
+                Regional.nombre.label("nombre_regional")
+            )
+            .join(Ficha, Matricula.ficha_id == Ficha.ficha_caracterizacion)
+            .join(
+                ProgramaFormacion,
+                (Ficha.programa_codigo == ProgramaFormacion.codigo_programa) &
+                (Ficha.programa_version == ProgramaFormacion.version)
+            )
+            .outerjoin(CentroFormacion, Ficha.centro_id == CentroFormacion.codigo_centro)
+            .outerjoin(Regional, CentroFormacion.regional_id == Regional.codigo_regional)
+            .where(Matricula.aprendiz_id == aprendiz_id)
+        )
+        mat_res = await session.execute(mat_stmt)
+        mat_row = mat_res.first()
+
+        matricula_id = mat_row.matricula_id if mat_row else None
+        numero_ficha = mat_row.ficha_caracterizacion if mat_row else None
+        nombre_programa = mat_row.nombre_programa if mat_row else None
+        nivel_formacion = mat_row.nivel_formacion if mat_row else None
+        nombre_centro = mat_row.nombre_centro if mat_row else None
+        nombre_regional = mat_row.nombre_regional if mat_row else None
+
+        # 3. Benefits list
+        b_items = []
+        try:
+            b_stmt = (
+                select(
+                    AprendizBeneficio.id,
+                    AprendizBeneficio.estado,
+                    AprendizBeneficio.fecha_asignacion,
+                    AprendizBeneficio.observaciones,
+                    Beneficio.codigo,
+                    Beneficio.nombre,
+                    Beneficio.tipo_beneficio
+                )
+                .join(Beneficio, AprendizBeneficio.beneficio_id == Beneficio.id)
+                .where(AprendizBeneficio.aprendiz_id == aprendiz_id)
+                .order_by(AprendizBeneficio.id.desc())
+            )
+            b_res = await session.execute(b_stmt)
+            for ab_id, ab_est, ab_fecha, ab_obs, b_cod, b_nom, b_tipo in b_res.all():
+                b_items.append(
+                    BenefitDetailItem(
+                        id=ab_id,
+                        codigo=b_cod,
+                        nombre=b_nom or "Beneficio Institucional",
+                        tipo_beneficio=b_tipo or "APOYO",
+                        fecha_asignacion=str(ab_fecha) if ab_fecha else None,
+                        estado=ab_est or "OTORGADO",
+                        observaciones=ab_obs
+                    )
+                )
+        except Exception as e:
+            print(f"Error al obtener beneficios de aprendiz {aprendiz_id}: {e}")
+
+        # 4. Cases list
+        c_items = []
+        try:
+            c_stmt = (
+                select(
+                    Caso.id,
+                    Caso.prioridad,
+                    Caso.estado,
+                    Caso.origen,
+                    Caso.fecha_creacion,
+                    Caso.fecha_cierre,
+                    Caso.responsable_id
+                )
+                .where(Caso.aprendiz_id == aprendiz_id)
+                .order_by(Caso.id.desc())
+            )
+            c_res = await session.execute(c_stmt)
+            for c_id, c_prio, c_est, c_orig, c_fcrea, c_fcierre, c_resp in c_res.all():
+                c_items.append(
+                    CaseDetailItem(
+                        id=c_id,
+                        prioridad=c_prio or "MEDIA",
+                        estado=c_est or "NUEVO",
+                        origen=c_orig or "MANUAL",
+                        descripcion=f"Caso #{c_id}",
+                        fecha_creacion=str(c_fcrea) if c_fcrea else None,
+                        fecha_cierre=str(c_fcierre) if c_fcierre else None,
+                        responsable_nombre="Responsable Asignado" if c_resp else "Sin asignar"
+                    )
+                )
+        except Exception as e:
+            print(f"Error al obtener casos de aprendiz {aprendiz_id}: {e}")
+
+        # 5. Contracts list
+        con_items = []
+        try:
+            ca_stmt = (
+                select(
+                    ContratoAprendizaje.id,
+                    ContratoAprendizaje.nombre_empresa,
+                    ContratoAprendizaje.departamento,
+                    ContratoAprendizaje.ciudad,
+                    ContratoAprendizaje.fecha_inicio_contrato,
+                    ContratoAprendizaje.fecha_fin_contrato,
+                    ContratoAprendizaje.estado_contrato,
+                    ContratoAprendizaje.observaciones
+                )
+                .join(Matricula, ContratoAprendizaje.matricula_id == Matricula.id)
+                .where(Matricula.aprendiz_id == aprendiz_id)
+                .order_by(ContratoAprendizaje.id.desc())
+            )
+            ca_res = await session.execute(ca_stmt)
+            for ca_id, ca_emp, ca_dep, ca_ciu, ca_fini, ca_ffin, ca_est, ca_obs in ca_res.all():
+                con_items.append(
+                    ContractDetailItem(
+                        id=ca_id,
+                        nombre_empresa=ca_emp or "Empresa Patrocinadora",
+                        departamento=ca_dep or "",
+                        ciudad=ca_ciu or "",
+                        fecha_inicio_contrato=str(ca_fini) if ca_fini else None,
+                        fecha_fin_contrato=str(ca_ffin) if ca_ffin else None,
+                        estado_contrato=ca_est or "EN PATROCINIO",
+                        observaciones=ca_obs
+                    )
+                )
+        except Exception as e:
+            print(f"Error al obtener contratos de aprendiz {aprendiz_id}: {e}")
+
+        return Apprentice360Response(
+            id=apr.id,
+            tipo_documento=apr.tipo_documento or "CC",
+            numero_documento=apr.numero_documento,
+            nombres=apr.nombres,
+            apellidos=apr.apellidos,
+            nombre_completo=f"{apr.nombres} {apr.apellidos}",
+            correo=apr.correo,
+            celular=getattr(apr, "celular", None),
+            direccion_vivienda=getattr(apr, "direccion_vivienda", None),
+            ciudad=getattr(apr, "ciudad", None),
+            departamento=getattr(apr, "departamento", None),
+            matricula_id=matricula_id,
+            numero_ficha=numero_ficha,
+            nombre_programa=nombre_programa,
+            nivel_formacion=nivel_formacion,
+            nombre_centro=nombre_centro,
+            nombre_regional=nombre_regional,
+            nivel_riesgo="BAJO",
+            beneficios=b_items,
+            casos=c_items,
+            contratos=con_items
+        )
+
 
 

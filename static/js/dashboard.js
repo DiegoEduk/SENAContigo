@@ -1485,8 +1485,8 @@ async function loadBeneficiosAprendicesData() {
 
   try {
     const filterParams = getActiveFilterParams();
-    const qVal = document.getElementById('searchBeneficiosAprendiz')?.value || '';
-    if (qVal) filterParams.q = qVal;
+    const qVal = document.getElementById('searchBeneficiosAprendiz')?.value?.trim() || '';
+    if (qVal.length > 4) filterParams.q = qVal;
     filterParams.page = pageBeneficiosAprendices;
     filterParams.limit = 10;
 
@@ -1512,6 +1512,14 @@ async function loadBeneficiosAprendicesData() {
         <td class="p-3.5">${ap.nombre_programa}</td>
         <td class="p-3.5"><span class="badge-state bg-slate-100 text-slate-700 font-bold">${ap.nivel_formacion}</span></td>
         <td class="p-3.5"><span class="badge-state bg-emerald-100 text-emerald-900 border border-emerald-300 font-bold">${ap.detalle_modulo || 'Sin información'}</span></td>
+        <td class="p-3.5 text-right flex justify-end gap-1.5">
+          <button onclick="verMasAprendiz(${ap.id})" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-[11px] rounded-lg transition shadow-sm flex items-center gap-1">
+            <i class="fas fa-eye text-sena-primary"></i> Ver más
+          </button>
+          <button onclick="abrirModalAgregarAprendiz(${ap.id}, '${ap.nombre_completo.replace(/'/g, "\\'")}', '${ap.tipo_documento} ${ap.numero_documento}', ${ap.matricula_id || 0})" class="px-2.5 py-1.5 bg-sena-primary hover:bg-sena-secondary text-sena-dark font-extrabold text-[11px] rounded-lg transition shadow-sm flex items-center gap-1">
+            <i class="fas fa-plus"></i> Agregar
+          </button>
+        </td>
       </tr>
     `).join('');
 
@@ -1522,12 +1530,16 @@ async function loadBeneficiosAprendicesData() {
     if (btnNext) btnNext.disabled = (page >= totalPages);
   } catch (err) {
     console.error('Error cargando aprendices de beneficios:', err);
-    tbl.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Error al cargar la tabla de aprendices: ${err.message}</td></tr>`;
+    tbl.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-red-500">Error al cargar la tabla de aprendices: ${err.message}</td></tr>`;
   }
 }
 
 function debounceBeneficiosAprendices() {
   clearTimeout(searchBeneficiosTimeout);
+  const qVal = document.getElementById('searchBeneficiosAprendiz')?.value?.trim() || '';
+  if (qVal.length > 0 && qVal.length <= 4) {
+    return;
+  }
   searchBeneficiosTimeout = setTimeout(() => {
     pageBeneficiosAprendices = 1;
     loadBeneficiosAprendicesData();
@@ -1547,12 +1559,12 @@ async function loadCasosAprendicesData() {
   const btnNext = document.getElementById('btnNextCasos');
   if (!tbl) return;
 
-  tbl.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Cargando aprendices...</td></tr>`;
+  tbl.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">Cargando aprendices...</td></tr>`;
 
   try {
     const filterParams = getActiveFilterParams();
-    const qVal = document.getElementById('searchCasosAprendiz')?.value || '';
-    if (qVal) filterParams.q = qVal;
+    const qVal = document.getElementById('searchCasosAprendiz')?.value?.trim() || '';
+    if (qVal.length > 4) filterParams.q = qVal;
     filterParams.page = pageCasosAprendices;
     filterParams.limit = 10;
 
@@ -1563,7 +1575,7 @@ async function loadCasosAprendicesData() {
     const totalPages = res.total_pages || 1;
 
     if (!items.length) {
-      tbl.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No se encontraron aprendices con los criterios especificados.</td></tr>`;
+      tbl.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">No se encontraron aprendices con los criterios especificados.</td></tr>`;
       if (infoPag) infoPag.innerText = `Mostrando 0 de ${total} aprendices`;
       if (btnPrev) btnPrev.disabled = true;
       if (btnNext) btnNext.disabled = true;
@@ -1583,6 +1595,14 @@ async function loadCasosAprendicesData() {
           <td class="p-3.5">${ap.nombre_programa}</td>
           <td class="p-3.5"><span class="badge-state bg-slate-100 text-slate-700 font-bold">${ap.nivel_formacion}</span></td>
           <td class="p-3.5"><span class="badge-state ${badgeStyle} font-bold">${ap.detalle_modulo || 'Sin casos'}</span></td>
+          <td class="p-3.5 text-right flex justify-end gap-1.5">
+            <button onclick="verMasAprendiz(${ap.id})" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-[11px] rounded-lg transition shadow-sm flex items-center gap-1">
+              <i class="fas fa-eye text-sena-primary"></i> Ver más
+            </button>
+            <button onclick="abrirModalAgregarAprendiz(${ap.id}, '${ap.nombre_completo.replace(/'/g, "\\'")}', '${ap.tipo_documento} ${ap.numero_documento}', ${ap.matricula_id || 0})" class="px-2.5 py-1.5 bg-sena-primary hover:bg-sena-secondary text-sena-dark font-extrabold text-[11px] rounded-lg transition shadow-sm flex items-center gap-1">
+              <i class="fas fa-plus"></i> Agregar
+            </button>
+          </td>
         </tr>
       `;
     }).join('');
@@ -1594,12 +1614,16 @@ async function loadCasosAprendicesData() {
     if (btnNext) btnNext.disabled = (page >= totalPages);
   } catch (err) {
     console.error('Error cargando aprendices de casos:', err);
-    tbl.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Error al cargar la tabla de aprendices: ${err.message}</td></tr>`;
+    tbl.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-red-500">Error al cargar la tabla de aprendices: ${err.message}</td></tr>`;
   }
 }
 
 function debounceCasosAprendices() {
   clearTimeout(searchCasosTimeout);
+  const qVal = document.getElementById('searchCasosAprendiz')?.value?.trim() || '';
+  if (qVal.length > 0 && qVal.length <= 4) {
+    return;
+  }
   searchCasosTimeout = setTimeout(() => {
     pageCasosAprendices = 1;
     loadCasosAprendicesData();
@@ -1619,12 +1643,12 @@ async function loadContratacionAprendicesData() {
   const btnNext = document.getElementById('btnNextContratacion');
   if (!tbl) return;
 
-  tbl.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Cargando aprendices...</td></tr>`;
+  tbl.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">Cargando aprendices...</td></tr>`;
 
   try {
     const filterParams = getActiveFilterParams();
-    const qVal = document.getElementById('searchContratacionAprendiz')?.value || '';
-    if (qVal) filterParams.q = qVal;
+    const qVal = document.getElementById('searchContratacionAprendiz')?.value?.trim() || '';
+    if (qVal.length > 4) filterParams.q = qVal;
     filterParams.page = pageContratacionAprendices;
     filterParams.limit = 10;
 
@@ -1635,7 +1659,7 @@ async function loadContratacionAprendicesData() {
     const totalPages = res.total_pages || 1;
 
     if (!items.length) {
-      tbl.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No se encontraron aprendices con los criterios especificados.</td></tr>`;
+      tbl.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">No se encontraron aprendices con los criterios especificados.</td></tr>`;
       if (infoPag) infoPag.innerText = `Mostrando 0 de ${total} aprendices`;
       if (btnPrev) btnPrev.disabled = true;
       if (btnNext) btnNext.disabled = true;
@@ -1655,6 +1679,14 @@ async function loadContratacionAprendicesData() {
           <td class="p-3.5">${ap.nombre_programa}</td>
           <td class="p-3.5"><span class="badge-state bg-slate-100 text-slate-700 font-bold">${ap.nivel_formacion}</span></td>
           <td class="p-3.5"><span class="badge-state ${badgeStyle} font-bold">${ap.detalle_modulo || 'Sin contrato'}</span></td>
+          <td class="p-3.5 text-right flex justify-end gap-1.5">
+            <button onclick="verMasAprendiz(${ap.id})" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-[11px] rounded-lg transition shadow-sm flex items-center gap-1">
+              <i class="fas fa-eye text-sena-primary"></i> Ver más
+            </button>
+            <button onclick="abrirModalAgregarAprendiz(${ap.id}, '${ap.nombre_completo.replace(/'/g, "\\'")}', '${ap.tipo_documento} ${ap.numero_documento}', ${ap.matricula_id || 0})" class="px-2.5 py-1.5 bg-sena-primary hover:bg-sena-secondary text-sena-dark font-extrabold text-[11px] rounded-lg transition shadow-sm flex items-center gap-1">
+              <i class="fas fa-plus"></i> Agregar
+            </button>
+          </td>
         </tr>
       `;
     }).join('');
@@ -1666,12 +1698,250 @@ async function loadContratacionAprendicesData() {
     if (btnNext) btnNext.disabled = (page >= totalPages);
   } catch (err) {
     console.error('Error cargando aprendices de contratación:', err);
-    tbl.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Error al cargar la tabla de aprendices: ${err.message}</td></tr>`;
+    tbl.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-red-500">Error al cargar la tabla de aprendices: ${err.message}</td></tr>`;
   }
 }
 
 function debounceContratacionAprendices() {
   clearTimeout(searchContratacionTimeout);
+  const qVal = document.getElementById('searchContratacionAprendiz')?.value?.trim() || '';
+  if (qVal.length > 0 && qVal.length <= 4) {
+    return;
+  }
+  searchContratacionTimeout = setTimeout(() => {
+    pageContratacionAprendices = 1;
+    loadContratacionAprendicesData();
+  }, 300);
+}
+
+function changePageContratacion(delta) {
+  pageContratacionAprendices = Math.max(1, pageContratacionAprendices + delta);
+  loadContratacionAprendicesData();
+}
+
+// MODALES Y VISTA 360° DE APRENDIZ
+async function verMasAprendiz(aprendizId) {
+  const modal = document.getElementById('modalAprendiz360');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+
+  document.getElementById('m360Nombre').innerText = 'Cargando datos...';
+  document.getElementById('m360Doc').innerText = '';
+  document.getElementById('m360Ficha').innerText = '';
+  document.getElementById('m360Nivel').innerText = '';
+
+  try {
+    const data = await API.getAprendiz360(aprendizId);
+
+    document.getElementById('m360Nombre').innerText = data.nombre_completo || 'Aprendiz';
+    document.getElementById('m360Doc').innerText = `${data.tipo_documento || 'CC'} ${data.numero_documento || ''}`;
+    document.getElementById('m360Ficha').innerText = data.numero_ficha ? `Ficha: ${data.numero_ficha}` : 'Sin Ficha';
+    document.getElementById('m360Nivel').innerText = data.nivel_formacion || 'TECNÓLOGO';
+
+    document.getElementById('m360Correo').innerText = data.correo || 'No registrado';
+    document.getElementById('m360Celular').innerText = data.celular || 'No registrado';
+    document.getElementById('m360Direccion').innerText = data.direccion_vivienda || 'No registrada';
+    document.getElementById('m360Ubicacion').innerText = `${data.ciudad || ''} ${data.departamento ? '- ' + data.departamento : ''}`.trim() || 'No registrada';
+
+    document.getElementById('m360Programa').innerText = data.nombre_programa || 'No registrado';
+    document.getElementById('m360Centro').innerText = data.nombre_centro || 'No asignado';
+    document.getElementById('m360Regional').innerText = data.nombre_regional || 'No asignada';
+
+    // Beneficios List
+    const benList = document.getElementById('m360BeneficiosList');
+    if (data.beneficios && data.beneficios.length) {
+      benList.innerHTML = data.beneficios.map(b => `
+        <div class="p-2.5 bg-white rounded-xl border border-slate-200 flex justify-between items-center">
+          <div>
+            <span class="font-bold text-slate-800">${b.nombre}</span>
+            ${b.observaciones ? `<p class="text-[11px] text-slate-500">${b.observaciones}</p>` : ''}
+          </div>
+          <span class="badge-state bg-emerald-100 text-emerald-800 font-bold">${b.estado}</span>
+        </div>
+      `).join('');
+    } else {
+      benList.innerHTML = `<span class="text-slate-400">Sin beneficios institucionales registrados.</span>`;
+    }
+
+    // Casos List
+    const casosList = document.getElementById('m360CasosList');
+    if (data.casos && data.casos.length) {
+      casosList.innerHTML = data.casos.map(c => {
+        let pColor = 'bg-blue-100 text-blue-800';
+        if (c.prioridad === 'ALTA' || c.prioridad === 'CRITICA') pColor = 'bg-red-100 text-red-800';
+        return `
+          <div class="p-2.5 bg-white rounded-xl border border-slate-200 flex justify-between items-center">
+            <div>
+              <span class="font-bold text-slate-800">Caso #${c.id} - Prioridad: ${c.prioridad}</span>
+              ${c.descripcion ? `<p class="text-[11px] text-slate-500">${c.descripcion}</p>` : ''}
+            </div>
+            <span class="badge-state ${pColor} font-bold">${c.estado}</span>
+          </div>
+        `;
+      }).join('');
+    } else {
+      casosList.innerHTML = `<span class="text-slate-400">Sin casos de atención registrados.</span>`;
+    }
+
+    // Contratos List
+    const conList = document.getElementById('m360ContratosList');
+    if (data.contratos && data.contratos.length) {
+      conList.innerHTML = data.contratos.map(co => `
+        <div class="p-2.5 bg-white rounded-xl border border-slate-200 flex justify-between items-center">
+          <div>
+            <span class="font-bold text-slate-800">${co.nombre_empresa}</span>
+            <p class="text-[11px] text-slate-500">${co.ciudad}, ${co.departamento} | Inicio: ${co.fecha_inicio_contrato || 'N/A'}</p>
+          </div>
+          <span class="badge-state bg-indigo-100 text-indigo-800 font-bold">${co.estado_contrato}</span>
+        </div>
+      `).join('');
+    } else {
+      conList.innerHTML = `<span class="text-slate-400">Sin contrato de aprendizaje registrado.</span>`;
+    }
+
+  } catch (err) {
+    console.error('Error cargando perfil 360 del aprendiz:', err);
+    Toast.error('No se pudo cargar la información detallada del aprendiz.');
+    closeModalAprendiz360();
+  }
+}
+
+function closeModalAprendiz360() {
+  document.getElementById('modalAprendiz360')?.classList.add('hidden');
+}
+
+// MODAL AGREGAR REGISTRO A APRENDIZ
+async function abrirModalAgregarAprendiz(aprendizId, nombreCompleto, docStr, matriculaId) {
+  const modal = document.getElementById('modalAgregarAprendizRegistro');
+  if (!modal) return;
+
+  document.getElementById('mAddAprendizId').value = aprendizId;
+  document.getElementById('mAddMatriculaId').value = matriculaId || 0;
+  document.getElementById('mAddAprendizNombre').innerText = nombreCompleto;
+  document.getElementById('mAddAprendizDoc').innerText = docStr;
+
+  // Cargar lista de beneficios disponibles
+  const selBeneficio = document.getElementById('mAddBeneficioId');
+  if (selBeneficio) {
+    selBeneficio.innerHTML = `<option value="">Cargando beneficios...</option>`;
+    try {
+      const beneficios = await API.getBeneficios();
+      if (beneficios && beneficios.length) {
+        selBeneficio.innerHTML = beneficios.map(b => `<option value="${b.id}">${b.nombre} (${b.tipo_beneficio})</option>`).join('');
+      } else {
+        selBeneficio.innerHTML = `<option value="">No hay beneficios creados en catálogo</option>`;
+      }
+    } catch (e) {
+      selBeneficio.innerHTML = `<option value="">Error cargando beneficios</option>`;
+    }
+  }
+
+  // Preseleccionar primer tab (Beneficio)
+  const radioBen = document.querySelector('input[name="tipoRegistro"][value="beneficio"]');
+  if (radioBen) radioBen.checked = true;
+  toggleTipoRegistroForm('beneficio');
+
+  modal.classList.remove('hidden');
+}
+
+function closeModalAgregarAprendiz() {
+  document.getElementById('modalAgregarAprendizRegistro')?.classList.add('hidden');
+}
+
+function toggleTipoRegistroForm(tipo) {
+  document.getElementById('formAddBeneficio')?.classList.add('hidden');
+  document.getElementById('formAddCaso')?.classList.add('hidden');
+  document.getElementById('formAddContrato')?.classList.add('hidden');
+
+  if (tipo === 'beneficio') {
+    document.getElementById('formAddBeneficio')?.classList.remove('hidden');
+  } else if (tipo === 'caso') {
+    document.getElementById('formAddCaso')?.classList.remove('hidden');
+  } else if (tipo === 'contrato') {
+    document.getElementById('formAddContrato')?.classList.remove('hidden');
+  }
+}
+
+async function guardarRegistroAprendiz(e) {
+  e.preventDefault();
+  const aprendizId = parseInt(document.getElementById('mAddAprendizId').value);
+  const matriculaId = parseInt(document.getElementById('mAddMatriculaId').value);
+  const tipo = document.querySelector('input[name="tipoRegistro"]:checked')?.value || 'beneficio';
+
+  try {
+    if (tipo === 'beneficio') {
+      const beneficioId = parseInt(document.getElementById('mAddBeneficioId').value);
+      if (!beneficioId) {
+        Toast.error('Selecciona un beneficio institucional.');
+        return;
+      }
+      const obs = document.getElementById('mAddBeneficioObs').value;
+      Loading.show('Otorgando beneficio...');
+      await API.assignBeneficio({ aprendiz_id: aprendizId, beneficio_id: beneficioId, observaciones: obs, estado: 'OTORGADO' });
+      Loading.hide();
+      Toast.success('Beneficio asignado exitosamente al aprendiz.');
+    } else if (tipo === 'caso') {
+      const prioridad = document.getElementById('mAddCasoPrioridad').value;
+      const descripcion = document.getElementById('mAddCasoDescripcion').value;
+      if (!descripcion.trim()) {
+        Toast.error('Ingresa la descripción del caso.');
+        return;
+      }
+      Loading.show('Registrando caso de atención...');
+      await API.createCaso({ aprendiz_id: aprendizId, prioridad: prioridad, descripcion: descripcion });
+      Loading.hide();
+      Toast.success('Caso de atención registrado exitosamente.');
+    } else if (tipo === 'contrato') {
+      const empresa = document.getElementById('mAddContratoEmpresa').value;
+      const depto = document.getElementById('mAddContratoDepto').value;
+      const ciudad = document.getElementById('mAddContratoCiudad').value;
+      const fechaIni = document.getElementById('mAddContratoFechaInicio').value;
+      const fechaFin = document.getElementById('mAddContratoFechaFin').value;
+      const estado = document.getElementById('mAddContratoEstado').value;
+
+      if (!empresa.trim() || !depto.trim() || !ciudad.trim() || !fechaIni) {
+        Toast.error('Por favor completa todos los campos requeridos del contrato.');
+        return;
+      }
+
+      if (!matriculaId) {
+        Toast.error('El aprendiz no cuenta con un ID de matrícula activo.');
+        return;
+      }
+
+      Loading.show('Registrando contrato...');
+      await API.createContrato({
+        matricula_id: matriculaId,
+        nombre_empresa: empresa,
+        departamento: depto,
+        ciudad: ciudad,
+        fecha_inicio_contrato: fechaIni,
+        fecha_fin_contrato: fechaFin || null,
+        estado_contrato: estado
+      });
+      Loading.hide();
+      Toast.success('Contrato de aprendizaje registrado exitosamente.');
+    }
+
+    closeModalAgregarAprendiz();
+    // Refrescar tablas
+    loadBeneficiosAprendicesData();
+    loadCasosAprendicesData();
+    loadContratacionAprendicesData();
+  } catch (err) {
+    Loading.hide();
+    console.error('Error guardando registro:', err);
+    Toast.error(err.message || 'Error al guardar el registro.');
+  }
+}
+
+
+function debounceContratacionAprendices() {
+  clearTimeout(searchContratacionTimeout);
+  const qVal = document.getElementById('searchContratacionAprendiz')?.value?.trim() || '';
+  if (qVal.length > 0 && qVal.length <= 4) {
+    return;
+  }
   searchContratacionTimeout = setTimeout(() => {
     pageContratacionAprendices = 1;
     loadContratacionAprendicesData();

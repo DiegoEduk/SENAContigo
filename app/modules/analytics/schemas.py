@@ -139,6 +139,7 @@ class ApprenticeRow(BaseModel):
     nivel_formacion: str
     detalle_modulo: Optional[str] = None
     nivel_riesgo: Optional[str] = None
+    matricula_id: Optional[int] = None
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -149,6 +150,67 @@ class ApprenticeListResponse(BaseModel):
     limit: int = 10
     total_pages: int = 1
     model_config = ConfigDict(from_attributes=True)
+
+
+class BenefitDetailItem(BaseModel):
+    id: int
+    codigo: Optional[str] = None
+    nombre: str
+    tipo_beneficio: str
+    fecha_asignacion: Optional[str] = None
+    estado: str
+    observaciones: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CaseDetailItem(BaseModel):
+    id: int
+    prioridad: str
+    estado: str
+    origen: Optional[str] = None
+    descripcion: Optional[str] = None
+    fecha_creacion: Optional[str] = None
+    fecha_cierre: Optional[str] = None
+    responsable_nombre: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ContractDetailItem(BaseModel):
+    id: int
+    nombre_empresa: str
+    departamento: str
+    ciudad: str
+    fecha_inicio_contrato: Optional[str] = None
+    fecha_fin_contrato: Optional[str] = None
+    estado_contrato: str
+    observaciones: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class Apprentice360Response(BaseModel):
+    id: int
+    tipo_documento: str
+    numero_documento: str
+    nombres: str
+    apellidos: str
+    nombre_completo: str
+    correo: Optional[str] = None
+    celular: Optional[str] = None
+    direccion_vivienda: Optional[str] = None
+    ciudad: Optional[str] = None
+    departamento: Optional[str] = None
+    matricula_id: Optional[int] = None
+    numero_ficha: Optional[str] = None
+    nombre_programa: Optional[str] = None
+    nivel_formacion: Optional[str] = None
+    nombre_centro: Optional[str] = None
+    nombre_regional: Optional[str] = None
+    nivel_riesgo: Optional[str] = None
+    beneficios: List[BenefitDetailItem] = []
+    casos: List[CaseDetailItem] = []
+    contratos: List[ContractDetailItem] = []
+    model_config = ConfigDict(from_attributes=True)
+
 
 
 

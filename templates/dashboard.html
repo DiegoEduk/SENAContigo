@@ -355,7 +355,7 @@
                         </div>
                         <div class="relative w-full sm:w-80">
                             <i class="fas fa-search absolute left-3.5 top-3 text-slate-400 text-xs"></i>
-                            <input type="text" id="searchBeneficiosAprendiz" oninput="debounceBeneficiosAprendices()" placeholder="Buscar por documento o nombre completo..." class="w-full text-xs pl-9 pr-3 py-2 bg-slate-50 border border-sena-border rounded-xl focus:outline-none focus:ring-2 focus:ring-sena-primary font-medium">
+                            <input type="text" id="searchBeneficiosAprendiz" oninput="debounceBeneficiosAprendices()" placeholder="Buscar por documento o nombre (más de 4 caracteres)..." class="w-full text-xs pl-9 pr-3 py-2 bg-slate-50 border border-sena-border rounded-xl focus:outline-none focus:ring-2 focus:ring-sena-primary font-medium">
                         </div>
                     </div>
 
@@ -369,10 +369,11 @@
                                     <th class="p-3.5">Programa de Formación</th>
                                     <th class="p-3.5">Nivel de Formación</th>
                                     <th class="p-3.5">Beneficios Otorgados</th>
+                                    <th class="p-3.5 text-right">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="tblBeneficiosAprendices" class="divide-y divide-slate-100 font-medium">
-                                <tr><td colspan="6" class="p-4 text-center text-slate-400">Cargando aprendices...</td></tr>
+                                <tr><td colspan="7" class="p-4 text-center text-slate-400">Cargando aprendices...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -466,7 +467,7 @@
                         </div>
                         <div class="relative w-full sm:w-80">
                             <i class="fas fa-search absolute left-3.5 top-3 text-slate-400 text-xs"></i>
-                            <input type="text" id="searchCasosAprendiz" oninput="debounceCasosAprendices()" placeholder="Buscar por documento o nombre completo..." class="w-full text-xs pl-9 pr-3 py-2 bg-slate-50 border border-sena-border rounded-xl focus:outline-none focus:ring-2 focus:ring-sena-primary font-medium">
+                            <input type="text" id="searchCasosAprendiz" oninput="debounceCasosAprendices()" placeholder="Buscar por documento o nombre (más de 4 caracteres)..." class="w-full text-xs pl-9 pr-3 py-2 bg-slate-50 border border-sena-border rounded-xl focus:outline-none focus:ring-2 focus:ring-sena-primary font-medium">
                         </div>
                     </div>
 
@@ -480,10 +481,11 @@
                                     <th class="p-3.5">Programa de Formación</th>
                                     <th class="p-3.5">Nivel de Formación</th>
                                     <th class="p-3.5">Estado / Prioridad de Casos</th>
+                                    <th class="p-3.5 text-right">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="tblCasosAprendices" class="divide-y divide-slate-100 font-medium">
-                                <tr><td colspan="6" class="p-4 text-center text-slate-400">Cargando aprendices...</td></tr>
+                                <tr><td colspan="7" class="p-4 text-center text-slate-400">Cargando aprendices...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -577,7 +579,7 @@
                         </div>
                         <div class="relative w-full sm:w-80">
                             <i class="fas fa-search absolute left-3.5 top-3 text-slate-400 text-xs"></i>
-                            <input type="text" id="searchContratacionAprendiz" oninput="debounceContratacionAprendices()" placeholder="Buscar por documento o nombre completo..." class="w-full text-xs pl-9 pr-3 py-2 bg-slate-50 border border-sena-border rounded-xl focus:outline-none focus:ring-2 focus:ring-sena-primary font-medium">
+                            <input type="text" id="searchContratacionAprendiz" oninput="debounceContratacionAprendices()" placeholder="Buscar por documento o nombre (más de 4 caracteres)..." class="w-full text-xs pl-9 pr-3 py-2 bg-slate-50 border border-sena-border rounded-xl focus:outline-none focus:ring-2 focus:ring-sena-primary font-medium">
                         </div>
                     </div>
 
@@ -591,10 +593,11 @@
                                     <th class="p-3.5">Programa de Formación</th>
                                     <th class="p-3.5">Nivel de Formación</th>
                                     <th class="p-3.5">Empresa / Estado de Patrocinio</th>
+                                    <th class="p-3.5 text-right">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="tblContratacionAprendices" class="divide-y divide-slate-100 font-medium">
-                                <tr><td colspan="6" class="p-4 text-center text-slate-400">Cargando aprendices...</td></tr>
+                                <tr><td colspan="7" class="p-4 text-center text-slate-400">Cargando aprendices...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1034,6 +1037,217 @@
                 <div class="flex justify-end gap-2 pt-2">
                     <button type="button" onclick="closeModalAsignarBeneficio()" class="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-800">Cancelar</button>
                     <button type="submit" class="px-4 py-1.5 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary">Otorgar Beneficio</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL VISTA 360° APRENDIZ -->
+    <div id="modalAprendiz360" class="fixed inset-0 bg-sena-dark/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white max-w-4xl w-full rounded-3xl p-6 sm:p-8 space-y-6 border border-sena-border shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeModalAprendiz360()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-700 text-lg font-bold">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <!-- Header Info -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-sena-border pb-4">
+                <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 bg-sena-primary/20 rounded-2xl flex items-center justify-center text-sena-dark text-xl font-black">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <div>
+                        <h3 id="m360Nombre" class="text-xl font-black text-sena-dark">Cargando Aprendiz...</h3>
+                        <div class="flex flex-wrap items-center gap-2 mt-1">
+                            <span id="m360Doc" class="text-xs font-mono font-bold px-2.5 py-0.5 bg-slate-100 text-slate-700 rounded-lg"></span>
+                            <span id="m360Ficha" class="text-xs font-mono font-bold px-2.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-lg"></span>
+                            <span id="m360Nivel" class="text-xs font-bold px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-lg"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Grid 360 -->
+            <div id="m360Content" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- 1. Info Personal & Contacto -->
+                <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3">
+                    <h4 class="text-xs font-black text-sena-dark uppercase tracking-wider flex items-center gap-2 border-b border-slate-200 pb-2">
+                        <i class="fas fa-address-card text-sena-primary"></i> Información Personal & Contacto
+                    </h4>
+                    <div class="space-y-1.5 text-xs text-slate-700 font-medium">
+                        <p><strong class="text-slate-500 block text-[10px] uppercase">Correo Electrónico:</strong> <span id="m360Correo">-</span></p>
+                        <p><strong class="text-slate-500 block text-[10px] uppercase">Celular:</strong> <span id="m360Celular">-</span></p>
+                        <p><strong class="text-slate-500 block text-[10px] uppercase">Dirección de Vivienda:</strong> <span id="m360Direccion">-</span></p>
+                        <p><strong class="text-slate-500 block text-[10px] uppercase">Ubicación:</strong> <span id="m360Ubicacion">-</span></p>
+                    </div>
+                </div>
+
+                <!-- 2. Formación Académica -->
+                <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3">
+                    <h4 class="text-xs font-black text-sena-dark uppercase tracking-wider flex items-center gap-2 border-b border-slate-200 pb-2">
+                        <i class="fas fa-graduation-cap text-sena-primary"></i> Formación Académica
+                    </h4>
+                    <div class="space-y-1.5 text-xs text-slate-700 font-medium">
+                        <p><strong class="text-slate-500 block text-[10px] uppercase">Programa:</strong> <span id="m360Programa">-</span></p>
+                        <p><strong class="text-slate-500 block text-[10px] uppercase">Centro de Formación:</strong> <span id="m360Centro">-</span></p>
+                        <p><strong class="text-slate-500 block text-[10px] uppercase">Regional SENA:</strong> <span id="m360Regional">-</span></p>
+                    </div>
+                </div>
+
+                <!-- 3. Beneficios Institucionales -->
+                <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3 md:col-span-2">
+                    <h4 class="text-xs font-black text-sena-dark uppercase tracking-wider flex items-center gap-2 border-b border-slate-200 pb-2">
+                        <i class="fas fa-hand-holding-heart text-sena-primary"></i> Histórico de Beneficios Institucionales
+                    </h4>
+                    <div id="m360BeneficiosList" class="space-y-2 text-xs">
+                        <span class="text-slate-400">Sin beneficios asignados</span>
+                    </div>
+                </div>
+
+                <!-- 4. Casos de Atención -->
+                <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3 md:col-span-2">
+                    <h4 class="text-xs font-black text-sena-dark uppercase tracking-wider flex items-center gap-2 border-b border-slate-200 pb-2">
+                        <i class="fas fa-life-ring text-sena-primary"></i> Casos de Atención & Alertas
+                    </h4>
+                    <div id="m360CasosList" class="space-y-2 text-xs">
+                        <span class="text-slate-400">Sin casos de atención</span>
+                    </div>
+                </div>
+
+                <!-- 5. Contratos de Aprendizaje -->
+                <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-3 md:col-span-2">
+                    <h4 class="text-xs font-black text-sena-dark uppercase tracking-wider flex items-center gap-2 border-b border-slate-200 pb-2">
+                        <i class="fas fa-file-contract text-sena-primary"></i> Contratos de Aprendizaje
+                    </h4>
+                    <div id="m360ContratosList" class="space-y-2 text-xs">
+                        <span class="text-slate-400">Sin contrato registrado</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-4 border-t border-slate-100">
+                <button onclick="closeModalAprendiz360()" class="px-5 py-2 bg-slate-800 text-white font-bold text-xs rounded-xl hover:bg-slate-900 transition">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL AGREGAR REGISTRO A APRENDIZ -->
+    <div id="modalAgregarAprendizRegistro" class="fixed inset-0 bg-sena-dark/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white max-w-xl w-full rounded-3xl p-6 sm:p-8 space-y-6 border border-sena-border shadow-2xl relative">
+            <button onclick="closeModalAgregarAprendiz()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-700 text-lg font-bold">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <div>
+                <h3 class="text-lg font-black text-sena-dark flex items-center gap-2">
+                    <i class="fas fa-plus-circle text-sena-primary"></i> Registrar Información Adicional
+                </h3>
+                <p class="text-xs text-slate-500 mt-1">Selecciona el tipo de información que deseas asociar al aprendiz.</p>
+                <div class="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <span id="mAddAprendizNombre" class="text-xs font-black text-slate-800 block"></span>
+                        <span id="mAddAprendizDoc" class="text-[11px] font-mono text-slate-500"></span>
+                    </div>
+                    <span class="badge-state bg-sena-primary/20 text-sena-dark font-bold">Aprendiz Seleccionado</span>
+                </div>
+            </div>
+
+            <form onsubmit="guardarRegistroAprendiz(event)" class="space-y-4">
+                <input type="hidden" id="mAddAprendizId">
+                <input type="hidden" id="mAddMatriculaId">
+
+                <div>
+                    <label class="block text-xs font-black text-sena-dark mb-2">Tipo de Información a Registrar *</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="flex flex-col items-center justify-center p-3 border-2 border-sena-border rounded-xl cursor-pointer hover:border-sena-primary transition text-center select-none has-[:checked]:border-sena-primary has-[:checked]:bg-sena-primary/10">
+                            <input type="radio" name="tipoRegistro" value="beneficio" onchange="toggleTipoRegistroForm('beneficio')" checked class="sr-only">
+                            <i class="fas fa-hand-holding-heart text-sena-primary mb-1 text-base"></i>
+                            <span class="text-[11px] font-bold text-slate-800">Beneficio</span>
+                        </label>
+
+                        <label class="flex flex-col items-center justify-center p-3 border-2 border-sena-border rounded-xl cursor-pointer hover:border-sena-primary transition text-center select-none has-[:checked]:border-sena-primary has-[:checked]:bg-sena-primary/10">
+                            <input type="radio" name="tipoRegistro" value="caso" onchange="toggleTipoRegistroForm('caso')" class="sr-only">
+                            <i class="fas fa-life-ring text-amber-500 mb-1 text-base"></i>
+                            <span class="text-[11px] font-bold text-slate-800">Caso Atención</span>
+                        </label>
+
+                        <label class="flex flex-col items-center justify-center p-3 border-2 border-sena-border rounded-xl cursor-pointer hover:border-sena-primary transition text-center select-none has-[:checked]:border-sena-primary has-[:checked]:bg-sena-primary/10">
+                            <input type="radio" name="tipoRegistro" value="contrato" onchange="toggleTipoRegistroForm('contrato')" class="sr-only">
+                            <i class="fas fa-file-contract text-indigo-600 mb-1 text-base"></i>
+                            <span class="text-[11px] font-bold text-slate-800">Contrato</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- FORMULARIO DINÁMICO: BENEFICIO -->
+                <div id="formAddBeneficio" class="space-y-3 pt-2 border-t border-slate-100">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700">Beneficio Institucional *</label>
+                        <select id="mAddBeneficioId" class="w-full text-xs p-2.5 bg-slate-50 border border-sena-border rounded-xl font-medium focus:ring-2 focus:ring-sena-primary focus:outline-none"></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700">Observaciones</label>
+                        <textarea id="mAddBeneficioObs" rows="2" class="w-full text-xs p-2.5 bg-slate-50 border border-sena-border rounded-xl font-medium focus:ring-2 focus:ring-sena-primary focus:outline-none" placeholder="Resolución u observaciones..."></textarea>
+                    </div>
+                </div>
+
+                <!-- FORMULARIO DINÁMICO: CASO -->
+                <div id="formAddCaso" class="space-y-3 pt-2 border-t border-slate-100 hidden">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700">Prioridad *</label>
+                        <select id="mAddCasoPrioridad" class="w-full text-xs p-2.5 bg-slate-50 border border-sena-border rounded-xl font-medium focus:ring-2 focus:ring-sena-primary focus:outline-none">
+                            <option value="BAJA">Baja</option>
+                            <option value="MEDIA" selected>Media</option>
+                            <option value="ALTA">Alta</option>
+                            <option value="CRITICA">Crítica</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700">Descripción del Caso *</label>
+                        <textarea id="mAddCasoDescripcion" rows="3" class="w-full text-xs p-2.5 bg-slate-50 border border-sena-border rounded-xl font-medium focus:ring-2 focus:ring-sena-primary focus:outline-none" placeholder="Motivo o detalle de la situación..."></textarea>
+                    </div>
+                </div>
+
+                <!-- FORMULARIO DINÁMICO: CONTRATO -->
+                <div id="formAddContrato" class="space-y-3 pt-2 border-t border-slate-100 hidden">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700">Empresa Patrocinadora *</label>
+                        <input type="text" id="mAddContratoEmpresa" placeholder="Nombre de la empresa" class="w-full text-xs p-2.5 bg-slate-50 border border-sena-border rounded-xl font-medium focus:ring-2 focus:ring-sena-primary focus:outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700">Departamento *</label>
+                            <input type="text" id="mAddContratoDepto" placeholder="Ej. Antioquia" class="w-full text-xs p-2.5 bg-slate-50 border border-sena-border rounded-xl font-medium focus:ring-2 focus:ring-sena-primary focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700">Ciudad *</label>
+                            <input type="text" id="mAddContratoCiudad" placeholder="Ej. Medellín" class="w-full text-xs p-2.5 bg-slate-50 border border-sena-border rounded-xl font-medium focus:ring-2 focus:ring-sena-primary focus:outline-none">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700">Fecha Inicio *</label>
+                            <input type="date" id="mAddContratoFechaInicio" class="w-full text-xs p-2.5 bg-slate-50 border border-sena-border rounded-xl font-medium focus:ring-2 focus:ring-sena-primary focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700">Fecha Fin</label>
+                            <input type="date" id="mAddContratoFechaFin" class="w-full text-xs p-2.5 bg-slate-50 border border-sena-border rounded-xl font-medium focus:ring-2 focus:ring-sena-primary focus:outline-none">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700">Estado del Contrato</label>
+                        <select id="mAddContratoEstado" class="w-full text-xs p-2.5 bg-slate-50 border border-sena-border rounded-xl font-medium focus:ring-2 focus:ring-sena-primary focus:outline-none">
+                            <option value="EN PATROCINIO" selected>En Patrocinio</option>
+                            <option value="EN ETAPA PRACTICA">En Etapa Práctica</option>
+                            <option value="FINALIZADO">Finalizado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeModalAgregarAprendiz()" class="px-4 py-2 text-xs text-slate-500 hover:text-slate-800 font-bold">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 bg-sena-primary text-sena-dark font-black text-xs rounded-xl hover:bg-sena-secondary transition shadow">Guardar Registro</button>
                 </div>
             </form>
         </div>

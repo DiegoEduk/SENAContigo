@@ -558,6 +558,11 @@ const API = {
     return this.request(`/analytics/contratacion/aprendices${q}`);
   },
 
+  getAprendiz360(aprendizId) {
+    return this.request(`/analytics/aprendices/${aprendizId}/360`);
+  },
+
+
   async downloadTabulationPDF(params = {}) {
     const q = this.buildQueryString(params);
     const token = this.getToken();

@@ -10,7 +10,7 @@ from app.core.security import TokenData
 from app.modules.analytics.schemas import (
     DashboardSummary, TabulacionResponse, AllowedFiltersResponse, FilterOptionsResponse,
     BeneficiosAnalyticsResponse, CasosAnalyticsResponse, ContratacionAnalyticsResponse,
-    ApprenticeListResponse
+    ApprenticeListResponse, Apprentice360Response
 )
 from app.modules.analytics.services import AnalyticsService
 from app.core.pdf_generator import generate_tabulation_pdf
@@ -343,5 +343,16 @@ async def get_contratacion_aprendices(
         page=page,
         limit=limit
     )
+
+
+@router.get("/aprendices/{aprendiz_id}/360", response_model=Apprentice360Response)
+async def get_aprendiz_360(
+    aprendiz_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user_token)
+):
+    """Obtener el perfil 360 completo de un aprendiz por su ID."""
+    return await AnalyticsService.get_aprendiz_360_detail(db, aprendiz_id)
+
 
 
